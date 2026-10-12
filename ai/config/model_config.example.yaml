@@ -1,0 +1,35 @@
+architecture: UNet
+encoder: resnet50
+decoder_attention: scse
+gradcam_target_layer: decoder.blocks.4.conv2.0
+framework: pytorch
+library: segmentation_models_pytorch
+model_version: Scenario 1 Ver.22
+checkpoint_filename: PIXEL-T_Scenario1_UNet_ResNet50_Ver22_best.pth
+checkpoint_sha256: 46521AE90D12F57F77A7B9921881910B41071DBBB1EFF4D2172A2C437564C581
+
+input:
+  size: 512
+  channels: 3
+  color_space: RGB
+
+preprocessing:
+  resize: 512
+  normalize: imagenet
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]
+
+inference:
+  activation: sigmoid
+  threshold: 0.55
+
+tta:
+  enabled: true
+  multiscale: true
+  scales: [0.85, 0.95, 1.0, 1.05, 1.15]
+
+postprocessing:
+  enabled: true
+  min_area: 25
+  contour_smoothing: true
+  smoothing_epsilon: 0.005

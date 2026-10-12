@@ -1,0 +1,2 @@
+Best Epoch,Best Dice Validation (EMA),Best Threshold,Test Dice (TTA+PostProc),Test IoU (TTA+PostProc),Accuracy,Precision,Recall,HD95,pos_weight (BCE),Tversky alpha,Tversky beta,Focal Tversky gamma,EMA decay,TTA
+83,0.9507,0.55,0.951,0.9136,0.9918,0.9568,0.9685,12.9049,15.87,0.3,0.7,0.75,0.999,True
