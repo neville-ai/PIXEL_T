@@ -40,6 +40,35 @@ export default {
           error: '#C94A4A',
           info: '#2878A8',
         },
+        // Foreground KHUSUS untuk teks badge kecil (11-12px, weight 500-600).
+        //
+        // Nilai `semantic` di atas TIDAK berubah: hex yang sama tetap dipakai
+        // untuk border (`border-semantic-X/20`) dan tint background
+        // (`bg-semantic-X/10`), sehingga makna semantik dan hue-nya tetap
+        // terlihat (StyleGuide 5.4, 31).
+        //
+        // Yang diturunkan hanya warna TEKS, karena teks berukuran kecil
+        // membutuhkan kontras >= 4.5:1 (StyleGuide 38 "memiliki contrast
+        // yang cukup") dan nilai semantic tunggal tidak sanggup memenuhinya
+        // pada tint /10 di kedua theme:
+        //   - theme light : background tint terang -> teks harus lebih gelap
+        //   - theme dark  : background tint gelap  -> teks harus lebih terang
+        // Setiap nilai diturunkan dari hue semantic yang sama (HSL: hue dan
+        // saturasi identik, lightness disetel) sehingga teks tetap terbaca
+        // sebagai success/warning/error/info/accent, bukan warna netral.
+        // Target kontras 5.0:1 agar ada kepala di atas ambang 4.5:1 untuk
+        // seluruh surface tempat badge dirender (putih, app bg, dark-surface,
+        // dark-elevated, dan state hover).
+        badgeText: {
+          success: '#25705B',
+          'success-dark': '#3BB390',
+          warning: '#875F18',
+          error: '#B43636',
+          'error-dark': '#DB8585',
+          info: '#236993',
+          'info-dark': '#57A7D7',
+          accent: '#127475',
+        },
         dark: {
           bg: '#0B1720',
           surface: '#10232E',

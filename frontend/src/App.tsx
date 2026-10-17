@@ -27,12 +27,14 @@ const ThemeBootstrap: React.FC = () => {
 };
 
 /**
- * Renders the global AppShell (header, footer, clinical disclaimer) around the
- * routes — EXCEPT for `/login`, which must be a bare two-panel page with no
- * global chrome (per the locked Login design).
+ * Renders the global AppShell (header, footer) around the routes — EXCEPT for
+ * `/login`, which must be a bare two-panel page with no global chrome (per the
+ * locked Login design).
  *
- * AppShell itself is intentionally unchanged; this is composition at the App
- * level only.
+ * Phase 1: AppShell was updated to the approved dashboard reference (official
+ * PIXEL-T lockup, centered nav, user menu, footer). The global footer no longer
+ * carries the clinical disclaimer; per StyleGuide §26 and FunctionalSpec §28 it
+ * lives in the result context, where `AnalysisResult` renders it.
  */
 const AppShellSwitch: React.FC = () => {
   const location = useLocation();

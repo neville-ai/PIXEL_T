@@ -1,131 +1,273 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { PlusCircle, History as HistoryIcon, Activity, ArrowRight } from 'lucide-react';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { LoadingState } from '@/components/ui/LoadingState';
+import { listHistory, type HistoryItem } from '@/services/analysis';
+import { formatAnalysisDate } from '@/lib/format';
+import {
+  Plus,
+  PlusCircle,
+  ArrowRight,
+  Calendar,
+  CheckCircle2,
+  Loader2,
+  AlertCircle,
+  ImageOff,
+  FileText,
+} from 'lucide-react';
+
+/** Jumlah kartu terbaru yang ditampilkan (mengikuti referensi: 4 kartu). */
+const LATEST_ANALYSIS_LIMIT = 4;
+
+interface StatusPresentation {
+  badgeVariant: 'success' | 'accent' | 'error';
+  badgeIcon: React.ReactNode;
+  badgeLabel: string;
+}
+
+/**
+ * Label status memakai Bahasa Indonesia agar konsisten dengan halaman
+ * Riwayat yang sudah ada (keputusan Phase 1). Warna/ikon mengikuti
+ * StyleGuide §31: status tidak dibedakan lewat warna saja.
+ */
+function statusPresentation(status: HistoryItem['status']): StatusPresentation {
+  if (status === 'failed') {
+    return {
+      badgeVariant: 'error',
+      badgeIcon: <AlertCircle className="w-3 h-3" aria-hidden="true" />,
+      badgeLabel: 'Gagal',
+    };
+  }
+  if (status === 'processing') {
+    return {
+      badgeVariant: 'accent',
+      badgeIcon: <Loader2 className="w-3 h-3" aria-hidden="true" />,
+      badgeLabel: 'Memproses',
+    };
+  }
+  return {
+    badgeVariant: 'success',
+    badgeIcon: <CheckCircle2 className="w-3 h-3" aria-hidden="true" />,
+    badgeLabel: 'Selesai',
+  };
+}
+
+/**
+ * Area gambar kartu. Citra medis contoh dari screenshot TIDAK disalin ke
+ * aset produksi: hanya `thumbnail_url` nyata dari API yang ditampilkan.
+ * Jika tidak ada, dipakai placeholder netral sesuai status.
+ */
+const CardThumbnail: React.FC<{ item: HistoryItem }> = ({ item }) => {
+  if (item.status === 'processing') {
+    return (
+      <div className="flex h-full w-full items-center justify-center" aria-hidden="true">
+        <Loader2 className="w-8 h-8 animate-spin text-accent-600 dark:text-accent-500" />
+      </div>
+    );
+  }
+
+  if (item.status === 'failed') {
+    return (
+      <div className="flex h-full w-full items-center justify-center" aria-hidden="true">
+        <ImageOff className="w-8 h-8 text-semantic-error" />
+      </div>
+    );
+  }
+
+  if (item.thumbnail_url) {
+    return (
+      <img
+        src={item.thumbnail_url}
+        alt={item.original_filename ?? 'Citra pemeriksaan'}
+        className="h-full w-full object-cover"
+        loading="lazy"
+      />
+    );
+  }
+
+  return (
+    <div className="flex h-full w-full items-center justify-center text-neutral-400 dark:text-neutral-500" aria-hidden="true">
+      <FileText className="w-8 h-8" />
+    </div>
+  );
+};
+
+/** Aksi kanan-bawah kartu, mengikuti status analisis. */
+const CardAction: React.FC<{ item: HistoryItem }> = ({ item }) => {
+  if (item.status === 'processing') {
+    return (
+      <span className="text-xs text-neutral-500 dark:text-neutral-400">Sedang berjalan</span>
+    );
+  }
+
+  if (item.status === 'failed') {
+    return (
+      <Link
+        to="/analysis/new"
+        className="inline-flex items-center gap-1 text-xs font-medium text-semantic-error hover:underline"
+      >
+        Coba Lagi
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      to={`/analysis/${item.id}`}
+      className="inline-flex items-center gap-1 text-xs font-medium text-accent-600 hover:underline dark:text-accent-500"
+    >
+      Lihat Hasil
+      <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+    </Link>
+  );
+};
+
+const AnalysisCard: React.FC<{ item: HistoryItem }> = ({ item }) => {
+  const status = statusPresentation(item.status);
+
+  return (
+    <article className="flex flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm transition-colors dark:border-dark-border dark:bg-dark-surface">
+      <div className="relative h-40 w-full bg-neutral-100 dark:bg-dark-bg">
+        <CardThumbnail item={item} />
+      </div>
+
+      {/* Padding horizontal 16px agar divider berjarak tepat 16px dari tepi
+          kartu (seperti referensi); padding atas lebih besar agar tinggi
+          panel mendekati referensi (~126px). */}
+      <div className="flex flex-1 flex-col px-4 pt-5 pb-4">
+        <p className="truncate text-sm font-medium text-neutral-900 dark:text-dark-text">
+          {item.original_filename ?? 'Sesi Pemeriksaan'}
+        </p>
+
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-neutral-500 dark:text-dark-textMuted">
+          <Calendar className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+          {formatAnalysisDate(item.created_at)}
+        </p>
+
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-neutral-100 pt-3 dark:border-dark-border">
+          <Badge
+            variant={status.badgeVariant}
+            size="sm"
+            uppercase={false}
+            icon={status.badgeIcon}
+          >
+            {status.badgeLabel}
+          </Badge>
+          <CardAction item={item} />
+        </div>
+      </div>
+    </article>
+  );
+};
 
 export const Dashboard: React.FC = () => {
+  const [items, setItems] = useState<HistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const loadLatest = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const result = await listHistory();
+      // Hanya data nyata dari API, dibatasi 4 terbaru — tidak ada rekayasa record.
+      setItems(result.items.slice(0, LATEST_ANALYSIS_LIMIT));
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Gagal memuat analisis terkini.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadLatest();
+  }, [loadLatest]);
+
   return (
-    <div className="space-y-8">
-      {/* Top Greeting & Action Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200 dark:border-dark-border pb-6">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Badge variant="accent">Dashboard Klinis</Badge>
-            <Badge variant="default">Routing Foundation</Badge>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 dark:text-dark-text">
-            Sistem Analisis Citra Polip Endoskopi
-          </h1>
-          <p className="text-sm text-neutral-600 dark:text-dark-textMuted max-w-2xl leading-relaxed">
-            Platform berbasis web untuk segmentasi polip (U-Net + ResNet50) dan penjelasan visual Grad-CAM.
+    <div className="space-y-6">
+      {/* Page context */}
+      <div className="space-y-3">
+        <h1 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-dark-text">
+          Dashboard
+        </h1>
+        {/* Lebar & ukuran teks mengikuti referensi (paragraf membungkus pada
+            "…segmentation"). */}
+        <p className="max-w-xl text-base leading-normal text-neutral-600 dark:text-dark-textMuted">
+          Welcome back. Use PIXEL-T to perform endoscopic image segmentation analysis and view
+          Grad-CAM visualizations.
+        </p>
+      </div>
+
+      {/* Primary CTA. Padding vertikal mengikuti referensi (panel 115px). */}
+      <section className="flex flex-col gap-4 rounded-lg border border-neutral-200 bg-white p-7 sm:flex-row sm:items-center sm:justify-between dark:border-dark-border dark:bg-dark-surface">
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-dark-text">
+            Start New Analysis
+          </h2>
+          <p className="text-sm text-neutral-600 dark:text-dark-textMuted">
+            Upload an endoscopic image to obtain segmentation results and Grad-CAM visualization.
           </p>
         </div>
+        {/* Primary CTA — KEPUTUSAN PENGGUNA: StyleGuide-first. §29 mewajibkan
+            "Gunakan Deep Medical Navy" untuk action utama "New Analysis", jadi
+            tombol ini memakai primary-900 (#0F3D56) sesuai §5.1.
+            - rest  primary-900 #0F3D56
+            - hover primary-700 #1C5B76 (lebih terang → afordans hover jelas)
+            - press primary-800 #164B65 (token §5.1 "Hover / active"; lebih
+              gelap dari hover sehingga keadaan tekan terasa "tenggelam", dan
+              tetap berbeda dari keadaan diam)
+            Ketiganya token palet primary yang valid, sehingga `accent-800`
+            (yang memang tidak ada pada skala accent) tidak lagi dipakai.
+            Teks putih dipertahankan; pasangan fg/bg ini lolos WCAG AAA
+            (11.53:1 rest, 7.48:1 hover, 9.42:1 press).
+            DIVERGENSI YANG DISETUJUI: referensi Dashboard memakai tombol teal
+            #18A6A6 (accent-600). Mengikuti §29, tombol ini kini Navy —
+            penyimpangan visual yang dilaporkan, bukan salah implementasi. */}
+        <Link
+          to="/analysis/new"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-primary-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 active:bg-primary-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-dark-bg"
+        >
+          <Plus className="w-4 h-4" aria-hidden="true" />
+          <span>New Analysis</span>
+        </Link>
+      </section>
 
-        <div className="flex items-center gap-3">
-          <Link to="/analysis/new">
-            <Button
-              variant="primary"
-              size="md"
-              leftIcon={<PlusCircle className="w-4 h-4" />}
-            >
-              Analisis Baru
-            </Button>
-          </Link>
-          <Link to="/history">
-            <Button
-              variant="outline"
-              size="md"
-              leftIcon={<HistoryIcon className="w-4 h-4" />}
-            >
-              Riwayat
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* Feature & Workflow Quick Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <Card className="p-5 space-y-3">
-          <div className="w-10 h-10 rounded-md bg-primary-100 dark:bg-dark-elevated text-primary-900 dark:text-accent-500 flex items-center justify-center">
-            <PlusCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-neutral-900 dark:text-dark-text">
-              Pemeriksaan Citra Baru
-            </h2>
-            <p className="text-xs text-neutral-600 dark:text-dark-textMuted mt-1">
-              Unggah citra kolonoskopi tunggal untuk inferensi segmentasi polip usus.
-            </p>
-          </div>
-          <div className="pt-2">
-            <Link to="/analysis/new" className="inline-flex items-center text-xs font-medium text-accent-600 dark:text-accent-500 hover:underline gap-1">
-              Buka New Analysis <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </Card>
-
-        <Card className="p-5 space-y-3">
-          <div className="w-10 h-10 rounded-md bg-accent-50 dark:bg-dark-elevated text-accent-600 dark:text-accent-500 flex items-center justify-center">
-            <HistoryIcon className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-neutral-900 dark:text-dark-text">
-              Riwayat Analisis
-            </h2>
-            <p className="text-xs text-neutral-600 dark:text-dark-textMuted mt-1">
-              Telusuri arsip pemeriksaan sebelumnya beserta visualisasi Grad-CAM.
-            </p>
-          </div>
-          <div className="pt-2">
-            <Link to="/history" className="inline-flex items-center text-xs font-medium text-accent-600 dark:text-accent-500 hover:underline gap-1">
-              Buka Riwayat <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </Card>
-
-        <Card className="p-5 space-y-3">
-          <div className="w-10 h-10 rounded-md bg-neutral-100 dark:bg-dark-elevated text-neutral-700 dark:text-neutral-300 flex items-center justify-center">
-            <Activity className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-neutral-900 dark:text-dark-text">
-              Integritas &amp; Prinsip Medis
-            </h2>
-            <p className="text-xs text-neutral-600 dark:text-dark-textMuted mt-1">
-              Explainability first: keluaran AI difokuskan sebagai second-opinion non-diagnostik.
-            </p>
-          </div>
-          <div className="pt-2">
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              U-Net + ResNet50 &amp; Grad-CAM
-            </span>
-          </div>
-        </Card>
-      </div>
-
-      {/* Recent Analyses Section (Routing Foundation State) */}
+      {/* Recent analyses */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-neutral-900 dark:text-dark-text">
-              Pemeriksaan Terkini
-            </h2>
-            <p className="text-xs text-neutral-600 dark:text-dark-textMuted">
-              Daftar sesi analisis citra kolonoskopi yang baru diproses
-            </p>
-          </div>
-          <Link to="/history" className="text-xs font-medium text-accent-600 dark:text-accent-500 hover:underline">
-            Lihat Semua
+          <h2 className="text-base font-semibold text-neutral-900 dark:text-dark-text">
+            Latest Analysis
+          </h2>
+          <Link
+            to="/history"
+            className="inline-flex items-center gap-1 text-xs font-medium text-accent-600 hover:underline dark:text-accent-500"
+          >
+            See All
+            <ArrowRight className="w-3 h-3" aria-hidden="true" />
           </Link>
         </div>
 
-        <Card className="p-8">
+        {isLoading ? (
+          <Card className="p-8">
+            <LoadingState
+              title="Memuat analisis terkini"
+              description="Mengambil daftar pemeriksaan terakhir milik Anda dari server."
+            />
+          </Card>
+        ) : loadError ? (
+          <ErrorState
+            code="DASHBOARD_LOAD_FAILED"
+            message={loadError}
+            onRetry={() => void loadLatest()}
+          />
+        ) : items.length === 0 ? (
           <EmptyState
-            title="Belum Ada Analisis Terkini"
-            description="Mulai pemeriksaan baru dengan memilih citra endoskopi polip usus pada halaman New Analysis."
+            title="Belum ada analisis terkini"
+            description="Mulai pemeriksaan baru dengan mengunggah citra endoskopi pada halaman New Analysis."
             action={
               <Link to="/analysis/new">
                 <Button variant="primary" size="sm" leftIcon={<PlusCircle className="w-4 h-4" />}>
@@ -134,7 +276,13 @@ export const Dashboard: React.FC = () => {
               </Link>
             }
           />
-        </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {items.map((item) => (
+              <AnalysisCard key={item.id} item={item} />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

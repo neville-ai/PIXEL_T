@@ -12,10 +12,12 @@ export const ThemeToggle: React.FC<{ className?: string }> = ({ className = '' }
       aria-label={`Ganti ke mode ${theme === 'light' ? 'gelap' : 'terang'}`}
       title={`Mode ${theme === 'light' ? 'Gelap' : 'Terang'}`}
     >
+      {/* Ukuran ikon 20px mengikuti referensi header (ikon terukur ~19px),
+          warna mengikuti warna tombol (netral), bukan warna aksen. */}
       {theme === 'light' ? (
-        <Moon className="w-4 h-4" />
+        <Moon className="w-5 h-5" />
       ) : (
-        <Sun className="w-4 h-4 text-accent-500" />
+        <Sun className="w-5 h-5" />
       )}
     </button>
   );

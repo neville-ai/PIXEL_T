@@ -17,6 +17,7 @@ node_modules/
 dist/
 build/
 .output/
+*.tsbuildinfo
 
 # IDE & OS
 .vscode/
