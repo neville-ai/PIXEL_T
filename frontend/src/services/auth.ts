@@ -109,6 +109,41 @@ export async function loginUser(
 }
 
 /**
+ * Requests a Supabase password-reset e-mail for the given address.
+ *
+ * Uses the official `supabase.auth.resetPasswordForEmail` API. The redirect
+ * target is the current application origin (no fabricated production URL).
+ * Success does NOT reveal whether the address is registered — the caller
+ * must display a neutral message.
+ *
+ * NOTE: this only sends the reset request. Completing the reset (setting a
+ * new password) requires a recovery route/flow, which this repository does
+ * not yet include — see the implementation report.
+ */
+export async function resetPasswordUser(email: string): Promise<AuthResponse<null>> {
+  if (!isSupabaseConfigured) {
+    return {
+      data: null,
+      error: 'Layanan autentikasi Supabase belum dikonfigurasi pada environment.',
+    };
+  }
+
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: window.location.origin,
+    });
+
+    if (error) {
+      return { data: null, error: formatAuthError(error) };
+    }
+
+    return { data: null, error: null };
+  } catch (err) {
+    return { data: null, error: formatAuthError(err) };
+  }
+}
+
+/**
  * Signs out the current authenticated user and clears Supabase session.
  */
 export async function logoutUser(): Promise<{ error: string | null }> {

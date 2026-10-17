@@ -1,0 +1,354 @@
+/*
+ * PIXEL-T Opening Animation — scoped styles.
+ * Everything here is prefixed (pixel-t-*) to avoid collisions.
+ * Motion uses transform/opacity only; no layout-triggering animation.
+ */
+
+/* Shared navy surface: overlay background and branding panel use the exact
+   same gradient so the crossfade between them is imperceptible. */
+.pixel-t-navy-surface {
+  background: linear-gradient(180deg, #12455f 0%, #0f3d56 55%, #0c3348 100%);
+}
+
+/* ------------------------------------------------------------------ */
+/* Official logo placement                                             */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Geometry wrapper for the official PIXEL-T logo (RGBA PNG).
+ *
+ * Two facts drive everything here, both measured from the actual asset
+ * `Final Concept Logo PIXEL-T.png` (645 x 387 px, colour type 6 / RGBA):
+ *
+ *   1. Its alpha channel is real: all four corners are alpha 0 and the
+ *      mean alpha is only 16.4/255, so the file carries no background of
+ *      its own. Nothing here may paint one back in.
+ *   2. The visible ink occupies only x 54..602, y 134..276 — i.e. 548 x 142
+ *      px. The other 63% of the image height is transparent padding.
+ *
+ * Consequence: sizing the <img> by the file's intrinsic box makes the
+ * readable logo look far too small, because the transparent margins eat the
+ * space. This wrapper therefore reserves a box with the INK aspect ratio
+ * (548:142 = 3.859:1) and pulls the oversized image back with a negative
+ * transform, so the element's own border box coincides with the visible ink.
+ *
+ * Consequences that matter downstream:
+ *   - `getBoundingClientRect()` on this element returns the ink rectangle,
+ *     which is exactly what the FLIP handoff needs (no offset guesswork).
+ *   - The logo is centred by its real visual bounds, not by transparent
+ *     padding, so it never appears off-centre in the left panel.
+ *   - No artwork is modified: the PNG is untouched and uncropped, only the
+ *     CSS box around it is chosen. The wrapper has no background, border or
+ *     shadow, so nothing is painted behind the artwork.
+ */
+.pixel-t-logo-box {
+  display: block;
+  position: relative;
+  /* Reserve exactly the ink aspect ratio (no white card, no border, no
+     shadow — the asset's own transparency is preserved). */
+  aspect-ratio: 548 / 142;
+  padding: 0;
+  background: transparent;
+}
+
+/*
+ * Crop the transparent padding of the 645x387 source down to the ink box.
+ *
+ * The image is rendered at 645/548 = 117.700% of the wrapper width, which
+ * makes its ink column exactly 100% of the wrapper. A `translate` is then
+ * applied with the padding fractions; percentages here resolve against the
+ * image's OWN box, which is what keeps this exact at any wrapper size.
+ *
+ *   horizontal: 54 px left padding / 645 = -8.372%
+ *   vertical:  134 px top padding / 387 = -34.625%
+ *
+ * `transform` (not margins) is deliberate: margins would resolve against the
+ * wrapper box, giving different offsets at every size.
+ */
+.pixel-t-logo-box > img,
+.pixel-t-intro__logo-art > img {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 117.7%;
+  max-width: none;
+  height: auto;
+  transform: translate(-8.372%, -34.625%);
+  transform-origin: top left;
+}
+
+/* Subtle teal accent line beneath the logo in the branding panel. */
+.pixel-t-accent-line {
+  width: 3.5rem;
+  height: 2px;
+  background: #18a6a6;
+  margin: 0 auto;
+}
+
+/* ------------------------------------------------------------------ */
+/* Overlay root                                                        */
+/* ------------------------------------------------------------------ */
+
+.pixel-t-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  /* The overlay never intercepts pointer events, so Login can never be
+     trapped behind a transparent layer, even if something goes wrong. */
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.pixel-t-intro__bg {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+  transition: opacity 700ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Thin technical grid — matches the futuristic reference backdrop.
+   Purely decorative, opacity-animated only (no layout cost). */
+.pixel-t-intro__grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background-image:
+    linear-gradient(rgba(138, 214, 214, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(138, 214, 214, 0.055) 1px, transparent 1px);
+  background-size: 46px 46px;
+  transition: opacity 900ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Soft cyan ambient bloom behind the forming cluster. */
+.pixel-t-intro__glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 760px;
+  height: 760px;
+  margin: -380px 0 0 -380px;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(
+    circle,
+    rgba(41, 184, 184, 0.16) 0%,
+    rgba(41, 184, 184, 0.06) 45%,
+    rgba(41, 184, 184, 0) 70%
+  );
+  transition: opacity 1100ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Grid fades in during the establishing/formation phase; the bloom follows
+   one stage later so the backdrop builds up instead of popping in. */
+.pixel-t-intro[data-stage='focalPixelFormation'] .pixel-t-intro__grid,
+.pixel-t-intro[data-stage='supportingPixels'] .pixel-t-intro__grid,
+.pixel-t-intro[data-stage='segmentationFrame'] .pixel-t-intro__grid,
+.pixel-t-intro[data-stage='completeLogo'] .pixel-t-intro__grid,
+.pixel-t-intro[data-stage='identityMoment'] .pixel-t-intro__grid {
+  opacity: 1;
+}
+
+.pixel-t-intro[data-stage='supportingPixels'] .pixel-t-intro__glow,
+.pixel-t-intro[data-stage='segmentationFrame'] .pixel-t-intro__glow,
+.pixel-t-intro[data-stage='completeLogo'] .pixel-t-intro__glow,
+.pixel-t-intro[data-stage='identityMoment'] .pixel-t-intro__glow {
+  opacity: 1;
+}
+
+/* The navy backdrop, grid and bloom all fade away together as the real
+   Login UI is revealed (stage 8) — one single, synchronised dissolve. */
+.pixel-t-intro[data-stage='loginUiReveal'] .pixel-t-intro__bg,
+.pixel-t-intro[data-stage='loginUiReveal'] .pixel-t-intro__grid,
+.pixel-t-intro[data-stage='loginUiReveal'] .pixel-t-intro__glow,
+.pixel-t-intro[data-stage='layoutSettlement'] .pixel-t-intro__bg,
+.pixel-t-intro[data-stage='layoutSettlement'] .pixel-t-intro__grid,
+.pixel-t-intro[data-stage='layoutSettlement'] .pixel-t-intro__glow,
+.pixel-t-intro[data-stage='finalHold'] .pixel-t-intro__bg,
+.pixel-t-intro[data-stage='finalHold'] .pixel-t-intro__grid,
+.pixel-t-intro[data-stage='finalHold'] .pixel-t-intro__glow {
+  opacity: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Pixel formation (stages 2-4)                                        */
+/* ------------------------------------------------------------------ */
+
+/* This layer is an `inset: 0` child of `.pixel-t-intro__logo`, whose box
+   is fixed at 540 x 140 — the official logo ink bounding box (548 x 142)
+   scaled by 0.9854. That exact ratio is what makes the pixel grid land on
+   the artwork instead of near it: at stage 5 the real logo is rendered into
+   the same box, so the formed pixels read as a true silhouette of the P
+   mark and the transition into the full logo is a same-geometry dissolve
+   rather than a swap between two different shapes. Because the pixels
+   inherit the logo's FLIP transform they stay registered at every scale
+   and viewport. */
+.pixel-t-intro__pixel {
+  position: absolute;
+  border-radius: 3px;
+  opacity: 0;
+  transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(0.35);
+  transition:
+    opacity 450ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 520ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition-delay: var(--stagger, 0ms);
+}
+
+.pixel-t-intro__pixel.is-in {
+  opacity: 1;
+  transform: translate(0, 0) scale(1);
+}
+
+/* ------------------------------------------------------------------ */
+/* Animated logo (single visual instance, stages 5-10)                 */
+/* ------------------------------------------------------------------ */
+
+.pixel-t-intro__logo {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 540px;
+  height: 140px;
+  transform-origin: top left;
+  will-change: transform;
+  /* The logo ELEMENT itself is always fully opaque: it is a positioning
+     anchor only. Opacity is staged on its children (pixels, logo artwork)
+     so each phase cross-fades independently. */
+  transition: transform var(--logo-move-ms, 0ms) cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.pixel-t-intro__pixels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* The official logo artwork. It is a child of the same element that carries
+   the pixels, so the cross-fade pixels -> logo is a same-geometry dissolve:
+   both layers share the box, the origin, and the FLIP transform. */
+.pixel-t-intro__logo-art {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 600ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  pointer-events: none;
+}
+
+.pixel-t-intro__logo-art.is-visible {
+  opacity: 1;
+}
+
+/* Handoff — the moving element dissolves instantly onto the real logo in the
+   branding panel. The "artwork" child of the moving element and the real
+   placeholder have the same width, so the 0ms fade is imperceptible as a
+   double-image; the artwork is the same file rendered by the same <img>. */
+.pixel-t-intro__logo.is-handed-off .pixel-t-intro__logo-art {
+  transition: opacity 0ms;
+  opacity: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Login reveal (stage 8)                                              */
+/* ------------------------------------------------------------------ */
+
+.pixel-t-login__reveal > * {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 450ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 450ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.pixel-t-login__reveal.is-revealed > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pixel-t-login__reveal > *:nth-child(1) {
+  transition-delay: 60ms;
+}
+.pixel-t-login__reveal > *:nth-child(2) {
+  transition-delay: 150ms;
+}
+.pixel-t-login__reveal > *:nth-child(3) {
+  transition-delay: 240ms;
+}
+.pixel-t-login__reveal > *:nth-child(4) {
+  transition-delay: 330ms;
+}
+.pixel-t-login__reveal > *:nth-child(5) {
+  transition-delay: 420ms;
+}
+
+/* Short fade used when the intro is skipped (reduced motion / already played). */
+.pixel-t-login--enter {
+  animation: pixel-t-login-enter 180ms ease;
+}
+
+@keyframes pixel-t-login-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Branding panel decorations (bottom-left, subtle, static)            */
+/* ------------------------------------------------------------------ */
+
+.pixel-t-brand-deco-ring {
+  position: absolute;
+  left: -72px;
+  bottom: -88px;
+  width: 230px;
+  height: 230px;
+  border-radius: 9999px;
+  border: 26px solid rgba(41, 184, 184, 0.1);
+  pointer-events: none;
+}
+
+.pixel-t-brand-deco-disc {
+  position: absolute;
+  left: 66px;
+  bottom: -120px;
+  width: 190px;
+  height: 190px;
+  border-radius: 9999px;
+  background: rgba(22, 75, 101, 0.55);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive                                                          */
+/* ------------------------------------------------------------------ */
+
+/* The logo element (and therefore the pixel grid inside it) is sized in the
+   FLIP effect with `fit = min(1, viewportW * 0.8 / 540)`, so narrow viewports
+   never overflow. Only the decorative bloom needs its own breakpoint. */
+@media (max-width: 720px) {
+  .pixel-t-intro__glow {
+    width: 520px;
+    height: 520px;
+    margin: -260px 0 0 -260px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Reduced motion                                                      */
+/* ------------------------------------------------------------------ */
+
+/* The hook already skips the long intro for reduced-motion users; this is a
+   defensive guarantee that no intro-related motion ever runs anyway. */
+@media (prefers-reduced-motion: reduce) {
+  .pixel-t-intro__bg,
+  .pixel-t-intro__grid,
+  .pixel-t-intro__glow,
+  .pixel-t-intro__pixel,
+  .pixel-t-intro__logo,
+  .pixel-t-login__reveal > * {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
