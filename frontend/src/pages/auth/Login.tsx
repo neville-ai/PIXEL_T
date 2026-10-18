@@ -219,7 +219,7 @@ export const Login: React.FC = () => {
             {mode === 'signIn' && errorMessage && (
               <div
                 role="alert"
-                className="flex items-start gap-2.5 rounded-md border border-semantic-error/30 bg-semantic-error/10 p-3 text-xs text-semantic-error"
+                className="flex items-start gap-2.5 rounded-md border border-semantic-error/30 bg-semantic-error/10 p-3 text-xs text-badgeText-error dark:text-badgeText-error-dark"
               >
                 <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
                 <p className="leading-relaxed">{errorMessage}</p>
@@ -228,7 +228,7 @@ export const Login: React.FC = () => {
             {mode === 'reset' && resetError && (
               <div
                 role="alert"
-                className="flex items-start gap-2.5 rounded-md border border-semantic-error/30 bg-semantic-error/10 p-3 text-xs text-semantic-error"
+                className="flex items-start gap-2.5 rounded-md border border-semantic-error/30 bg-semantic-error/10 p-3 text-xs text-badgeText-error dark:text-badgeText-error-dark"
               >
                 <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
                 <p className="leading-relaxed">{resetError}</p>

@@ -93,7 +93,7 @@ export const Register: React.FC = () => {
         {errorMessage && (
           <div
             role="alert"
-            className="p-3 rounded-md bg-semantic-error/10 border border-semantic-error/30 text-xs text-semantic-error flex items-start gap-2.5"
+            className="p-3 rounded-md bg-semantic-error/10 border border-semantic-error/30 text-xs text-badgeText-error dark:text-badgeText-error-dark flex items-start gap-2.5"
           >
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <p className="leading-relaxed">{errorMessage}</p>
@@ -103,7 +103,7 @@ export const Register: React.FC = () => {
         {successMessage && (
           <div
             role="status"
-            className="p-3 rounded-md bg-semantic-success/10 border border-semantic-success/30 text-xs text-semantic-success flex items-start gap-2.5"
+            className="p-3 rounded-md bg-semantic-success/10 border border-semantic-success/30 text-xs text-badgeText-success dark:text-badgeText-success-dark flex items-start gap-2.5"
           >
             <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <div className="space-y-1">

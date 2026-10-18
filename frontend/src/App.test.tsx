@@ -134,6 +134,28 @@ describe('AppShell: menu pengguna & konfirmasi sign-out (Phase 1)', () => {
     expect(screen.getByRole('menuitem', { name: /Sign Out/i })).toBeTruthy();
   });
 
+  it('Sign Out pada menu mobile memakai token badgeText (P2-01)', () => {
+    renderAt('/dashboard');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle navigation menu' }));
+
+    const signOutItem = screen.getByRole('button', { name: /Sign Out/i });
+
+    // Panel mobile: putih (tema terang) / #001620 (tema gelap). Teks pindah
+    // ke pasangan token badgeText agar lolos 4.5:1 di kedua permukaan;
+    // label, ikon, dan perilaku hover menu tidak berubah.
+    expect(signOutItem.className).toContain('text-badgeText-error');
+    expect(signOutItem.className).toContain('dark:text-badgeText-error-dark');
+    expect(signOutItem.className).toContain('hover:bg-semantic-error/10');
+    expect(signOutItem.className).not.toContain('text-semantic-error');
+    expect(signOutItem.textContent).toContain('Sign Out');
+
+    // Latar panel mobile tetap memakai token yang sama seperti sebelum batch.
+    const panel = signOutItem.parentElement?.parentElement;
+    expect(panel?.className).toContain('bg-white');
+    expect(panel?.className).toContain('dark:bg-[#001620]');
+  });
+
   it('kedua item menu memakai badge ikon 32x32 sesuai referensi', () => {
     renderAt('/dashboard');
 

@@ -200,12 +200,12 @@ export const NewAnalysis: React.FC = () => {
         </Card>
 
         {validationError && (
-          <p role="alert" className="flex items-start gap-2 text-sm text-semantic-error">
+          <p role="alert" className="flex items-start gap-2 text-sm text-badgeText-error dark:text-badgeText-error-dark">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {validationError}
           </p>
         )}
         {serverError && (
-          <p role="alert" className="flex items-start gap-2 rounded-md border border-semantic-error/30 bg-semantic-error/5 p-3 text-sm text-semantic-error">
+          <p role="alert" className="flex items-start gap-2 rounded-md border border-semantic-error/30 bg-semantic-error/5 p-3 text-sm text-badgeText-error dark:text-badgeText-error-dark">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {serverError}
           </p>
         )}

@@ -176,7 +176,7 @@ export const AnalysisResult: React.FC = () => {
       )}
 
       {error && (
-        <div role="alert" className="flex items-start gap-3 rounded-md border border-semantic-error/30 bg-semantic-error/5 p-4 text-sm text-semantic-error">
+        <div role="alert" className="flex items-start gap-3 rounded-md border border-semantic-error/30 bg-semantic-error/5 p-4 text-sm text-badgeText-error dark:text-badgeText-error-dark">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {error}
         </div>
       )}

@@ -326,7 +326,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
                   <button
                     type="button"
                     onClick={requestSignOut}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-medium text-semantic-error hover:bg-semantic-error/10 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-medium text-badgeText-error dark:text-badgeText-error-dark hover:bg-semantic-error/10 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Sign Out</span>

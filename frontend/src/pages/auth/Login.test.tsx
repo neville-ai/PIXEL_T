@@ -155,6 +155,14 @@ describe('Login — authentication flow (existing service contract)', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Email atau kata sandi yang Anda masukkan salah.');
     expect(screen.getByRole('heading', { level: 1, name: 'Welcome Back' })).toBeTruthy();
+
+    // P2-01: foreground alert pindah ke token badgeText (4.5:1 pada tint
+    // /10 di kedua tema); latar dan border tetap memakai token semantic.
+    expect(alert.className).toContain('text-badgeText-error');
+    expect(alert.className).toContain('dark:text-badgeText-error-dark');
+    expect(alert.className).toContain('bg-semantic-error/10');
+    expect(alert.className).toContain('border-semantic-error/30');
+    expect(alert.className).not.toContain('text-semantic-error');
   });
 
   it('loading state mencegah submit ganda', async () => {

@@ -24,7 +24,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         <AlertCircle className="w-6 h-6" />
       </div>
       <div className="space-y-1">
-        <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-semantic-error">
+        <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-badgeText-error dark:text-badgeText-error-dark">
           Kode Error: {code}
         </span>
         <p className="text-xs text-neutral-700 dark:text-neutral-300 max-w-sm">
