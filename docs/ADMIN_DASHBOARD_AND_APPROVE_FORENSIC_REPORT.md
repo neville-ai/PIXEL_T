@@ -2,7 +2,8 @@
 
 **Tanggal:** 2026-11-04
 **Lingkungan yang diuji:** Supabase nyata (project dari `backend/.env`) + server Flask berjalan di `http://127.0.0.1:5000`
-**Status ringkas:** HTTP 500 = **TERBUKTI & DIPERBAIKI**; approve pada DB nyata = **LULUS PENGUJIAN**; sebagian pengujian browser = **BELUM DIVERIFIKASI**.
+**Commit terkait:** `e1aeb33` (perbaikan utama) + `3e83d2a` (test FK error)
+**Status ringkas:** HTTP 500 = **TERBUKTI & DIPERBAIKI**; approve pada DB nyata = **LULUS PENGUJIAN**; pengujian klik browser = **BELUM DIVERIFIKASI** (tidak ada browser automation di sesi ini).
 
 ---
 
@@ -165,7 +166,7 @@ ID yang dipakai: **`doctor_profiles.id`** (bukan `user_id`, bukan `auth.users.id
 | `backend/app/services/admin_service.py` | 3× `.maybeSingle()` → `.maybe_single()` (get_doctor, approve, reject) | Method camelCase tidak ada di SDK Python → AttributeError → HTTP 500 |
 | `backend/app/services/admin_service.py` | Update memakai `.eq('account_status','pending')` + verifikasi `result.data` (0 baris → 409 `UPDATE_CONFLICT`; status tidak sesuai → 500 `UPDATE_FAILED`) | Jangan kembalikan 200 jika status tidak benar-benar berubah |
 | `backend/app/core/auth.py` | `.maybeSingle()` → `.maybe_single()`; `except: pass` → `logger.exception(...)` | `require_approved_doctor` selalu menolak dokter approved karena exception ditelan; kegagalan kini tercatat |
-| `tests/backend/test_admin_service.py` | Fake SDK hanya menyediakan `maybe_single` (bukan `maybeSingle`); flag `fail_no_rows`; 2 test baru (0 baris → 409) | Agar regresi nama method SDK tertangkap test, bukan di produksi |
+| `tests/backend/test_admin_service.py` | Fake SDK hanya menyediakan `maybe_single` (bukan `maybeSingle`); flag `fail_no_rows`; flag `update_error` + 3 test baru (0 baris → 409, DB error → 500 `UPDATE_FAILED`, FK error → 500 `UPDATE_FAILED`) | Agar regresi nama method SDK tertangkap test, bukan di produksi; FK violation harus ditangkap sebagai APIError, bukan crash HTTP 500 |
 | `frontend/src/pages/admin/AdminDashboard.tsx` | `statsError` & `actionError` terpisah; `listSeqRef` guard; effect statistik/daftar dipisah; `describeApiError` | Memperbaiki race/penghapusan error, mencegah satu kegagalan mengosongkan dashboard, pesan error informatif |
 | `frontend/src/pages/admin/AdminDashboard.test.tsx` | Update assertion; +3 test (statistik gagal ≠ daftar kosong; filter tidak refetch statistik; reload setelah approve) | Bukti perilaku dashboard yang diperbaiki |
 | `docs/ADMIN_DASHBOARD_AND_APPROVE_FORENSIC_REPORT.md` | Laporan ini | Dokumentasi forensik |
@@ -188,9 +189,9 @@ ID yang dipakai: **`doctor_profiles.id`** (bukan `user_id`, bukan `auth.users.id
 
 | Pengujian | Jenis | Hasil | Keterangan |
 |---|---|---|---|
-| `pytest tests/backend/test_admin_service.py` | Unit + mock | **18/18 LULUS** | Termasuk regresi `maybe_single`, 0 baris → 409, DB error → 500 `UPDATE_FAILED` |
+| `pytest tests/backend/test_admin_service.py` | Unit + mock | **19/19 LULUS** | Termasuk regresi `maybe_single`, 0 baris → 409, DB error → 500 `UPDATE_FAILED`, FK error → 500 `UPDATE_FAILED` |
 | `pytest tests/backend/test_admin_routes.py` | Integration (Flask test client, service fake) | **7/7 LULUS** | 401/403/200/500, `approved_by` dari token |
-| `pytest tests/backend/ tests/ai/test_gradcam.py` | Suite backend + AI | **111/111 LULUS** | `py_compile` exit 0 |
+| `pytest tests/backend/ tests/ai/test_gradcam.py` | Suite backend + AI | **112/112 LULUS** | `py_compile` exit 0 |
 | `vitest run` | Unit frontend | **282/282 LULUS** (18 file) | |
 | `tsc --noEmit` | Type check | **LULUS** (exit 0) | |
 | `vite build` | Build produksi | **LULUS** (✓ built in 17.7s) | |
