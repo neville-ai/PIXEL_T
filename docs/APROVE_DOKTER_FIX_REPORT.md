@@ -1,5 +1,14 @@
 # LAPORAN AKHIR — PERBAIKAN HTTP 500 FITUR APPROVE DOKTER (PIXEL-T)
 
+> **STATUS SUPERSI/EKSPIRASI:** Laporan ini disusun setelah perbaikan awal
+> (`.error` → `PostgrestAPIError`). Menjelang sesi forensik lanjutan, **ditemukan
+> penyebab sebenarnya** yang menyebabkan HTTP 500 tetap terjadi: SDK Python
+> (`postgrest`/`supabase` 2.31.0) memakai method **`maybe_single()`**, sedangkan
+> kode memanggil **`maybeSingle()`** (camelCase) yang tidak ada.
+>
+> Hasil forensik lengkap ada di:
+> **[LAPORAN FORENSIK — APPROVE DOKTER & ADMIN DASHBOARD PIXEL-T](ADMIN_DASHBOARD_AND_APPROVE_FORENSIC_REPORT.md)**
+
 **Commit:** `79fd2e9` — `fix(admin): perbaiki HTTP 500 saat approve/reject dokter` (4 file, 1.219 baris baru)
 
 ## A. Ringkasan masalah

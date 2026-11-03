@@ -92,7 +92,7 @@ class AdminService:
             client.table('doctor_profiles')
             .select('*')
             .eq('id', doctor_id)
-            .maybeSingle()
+            .maybe_single()
             .execute()
         )
         if not result.data:
@@ -132,12 +132,15 @@ class AdminService:
         """
         client = self._get_client()
 
-        # Fetch current profile
+        # Fetch current profile.
+        # NOTE: postgrest-py 2.x exposes `maybe_single()` (snake_case). The
+        # camelCase `maybeSingle()` does not exist in this SDK version and raises
+        # AttributeError -> HTTP 500 before any UPDATE is sent.
         fetch_result = (
             client.table('doctor_profiles')
             .select('id, account_status, user_id')
             .eq('id', doctor_id)
-            .maybeSingle()
+            .maybe_single()
             .execute()
         )
         if not fetch_result.data:
@@ -155,14 +158,9 @@ class AdminService:
                 status_code=400,
             )
 
-        # Update.
-        # NOTE: postgrest-py's execute() returns an APIResponse (fields: data,
-        # count) on success and RAISES PostgrestAPIError on failure. It has no
-        # `.error` attribute, so the old `update_result.error` check raised
-        # AttributeError and produced an HTTP 500 even when the update worked.
         now = datetime.now(timezone.utc).isoformat()
         try:
-            (
+            result = (
                 client.table('doctor_profiles')
                 .update({
                     'account_status': 'approved',
@@ -172,6 +170,7 @@ class AdminService:
                     'updated_at': now,
                 })
                 .eq('id', doctor_id)
+                .eq('account_status', 'pending')
                 .execute()
             )
         except PostgrestAPIError:
@@ -179,6 +178,27 @@ class AdminService:
             raise APIError(
                 code="UPDATE_FAILED",
                 message="Gagal menyetujui dokter. Perubahan database tidak dapat disimpan.",
+                status_code=500,
+            )
+
+        # Verifikasi bahwa update benar-benar tersimpan. postgrest-py returns
+        # the updated row(s) in `data`; nol baris berarti status berubah
+        # secara bersamaan atau operasi tidak mengubah baris apa-apa.
+        updated_rows = result.data or []
+        if not updated_rows:
+            raise APIError(
+                code="UPDATE_CONFLICT",
+                message=(
+                    "Tidak ada baris yang diperbarui. Status dokter mungkin "
+                    "sudah berubah. Muat ulang daftar dan coba lagi."
+                ),
+                status_code=409,
+            )
+        updated_status = updated_rows[0].get('account_status')
+        if updated_status != 'approved':
+            raise APIError(
+                code="UPDATE_FAILED",
+                message=f"Status dokter belum terubah menjadi approved (tercatat: {updated_status}).",
                 status_code=500,
             )
 
@@ -200,12 +220,12 @@ class AdminService:
         """
         client = self._get_client()
 
-        # Fetch current profile
+        # Fetch current profile (see approve_doctor note on maybe_single).
         fetch_result = (
             client.table('doctor_profiles')
             .select('id, account_status')
             .eq('id', doctor_id)
-            .maybeSingle()
+            .maybe_single()
             .execute()
         )
         if not fetch_result.data:
@@ -223,11 +243,9 @@ class AdminService:
                 status_code=400,
             )
 
-        # Update (see note in approve_doctor: execute() raises on failure and
-        # returns a response object without an `.error` attribute on success).
         now = datetime.now(timezone.utc).isoformat()
         try:
-            (
+            result = (
                 client.table('doctor_profiles')
                 .update({
                     'account_status': 'rejected',
@@ -237,6 +255,7 @@ class AdminService:
                     'updated_at': now,
                 })
                 .eq('id', doctor_id)
+                .eq('account_status', 'pending')
                 .execute()
             )
         except PostgrestAPIError:
@@ -244,6 +263,24 @@ class AdminService:
             raise APIError(
                 code="UPDATE_FAILED",
                 message="Gagal menolak dokter. Perubahan database tidak dapat disimpan.",
+                status_code=500,
+            )
+
+        updated_rows = result.data or []
+        if not updated_rows:
+            raise APIError(
+                code="UPDATE_CONFLICT",
+                message=(
+                    "Tidak ada baris yang diperbarui. Status dokter mungkin "
+                    "sudah berubah. Muat ulang daftar dan coba lagi."
+                ),
+                status_code=409,
+            )
+        updated_status = updated_rows[0].get('account_status')
+        if updated_status != 'rejected':
+            raise APIError(
+                code="UPDATE_FAILED",
+                message=f"Status dokter belum terubah menjadi rejected (tercatat: {updated_status}).",
                 status_code=500,
             )
 

@@ -217,7 +217,7 @@ describe('AdminDashboard', () => {
     });
 
     // Error state should be visible — both loadDoctors and loadStats catch and set errors
-    expect(screen.getByText(/Gagal memuat/i)).toBeTruthy();
+    expect(screen.getByText(/Gagal memuat data pendaftaran dokter/i)).toBeTruthy();
   });
 
   it('tidak menampilkan tombol Setujui/Tolak pada akun non-pending', async () => {
@@ -279,8 +279,11 @@ describe('AdminDashboard', () => {
     fireEvent.click(approveButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('HTTP 500')).toBeTruthy();
+      expect(screen.getByText(/Gagal menyetujui dokter/i)).toBeTruthy();
     });
+
+    // Aksi gagal tidak boleh mengosongkan tabel — data dokter tetap terlihat.
+    expect(screen.queryAllByText('Dr. Test').length).toBeGreaterThanOrEqual(1);
     fetchSpy.mockRestore();
   });
 
@@ -353,5 +356,135 @@ describe('AdminDashboard', () => {
     expect(body.reason).toBe('Dokumen tidak lengkap');
 
     fetchSpy.mockRestore();
+  });
+
+  it('tetap menampilkan daftar dokter saat statistik gagal dimuat', async () => {
+    const mockDoctor = {
+      id: 'doc-1',
+      user_id: 'uid-1',
+      full_name: 'Dr. Test',
+      email: 'test@hospital.com',
+      hospital: 'RS Test',
+      primary_specialty: 'Radiologi',
+      account_status: 'pending' as const,
+      created_at: '2026-01-15T10:00:00Z',
+    };
+
+    global.fetch = vi.fn().mockImplementation(async (url: string | URL | Request) => {
+      const urlString = typeof url === 'string' ? url : (url as Request).url;
+      if (urlString.includes('/doctors/stats')) {
+        return { ok: false, status: 500, json: async () => ({}) } as Response;
+      }
+      if (urlString.includes('/admin/doctors')) {
+        return { ok: true, json: async () => ({ success: true, data: [mockDoctor] }) } as Response;
+      }
+      return { ok: false, json: async () => ({}) } as Response;
+    }) as unknown as typeof global.fetch;
+
+    mockAuthContext();
+    render(<MemoryRouter><AdminDashboard /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.queryAllByText('Dr. Test').length).toBeGreaterThanOrEqual(1);
+    });
+
+    // Statistik gagal hanya memunculkan banner, bukan mengganti seluruh dashboard.
+    expect(screen.getByText(/Gagal memuat statistik/i)).toBeTruthy();
+  });
+
+  it('tidak memuat ulang statistik saat filter status berubah', async () => {
+    const mockDoctor = {
+      id: 'doc-1',
+      user_id: 'uid-1',
+      full_name: 'Dr. Test',
+      email: 'test@hospital.com',
+      hospital: 'RS Test',
+      primary_specialty: 'Radiologi',
+      account_status: 'pending' as const,
+      created_at: '2026-01-15T10:00:00Z',
+    };
+
+    setupFetchMocks([mockDoctor]);
+    const fetchSpy = vi.spyOn(global, 'fetch');
+    mockAuthContext();
+    render(<MemoryRouter><AdminDashboard /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.queryAllByText('Dr. Test').length).toBeGreaterThanOrEqual(1);
+    });
+
+    const statsCallCount = () =>
+      fetchSpy.mock.calls.filter(([url]) => {
+        const urlString = typeof url === 'string' ? url : (url as Request).url;
+        return urlString.includes('/doctors/stats');
+      }).length;
+
+    const before = statsCallCount();
+    expect(before).toBe(1);
+
+    fireEvent.click(screen.getByRole('button', { name: /Pending/ }));
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.stringContaining('?status=pending'),
+        expect.anything()
+      );
+    });
+
+    // Statistik tidak bergantung pada filter — tidak perlu request ulang.
+    expect(statsCallCount()).toBe(before);
+    fetchSpy.mockRestore();
+  });
+
+  it('memuat ulang daftar dan statistik setelah Approve berhasil', async () => {
+    const mockDoctor = {
+      id: 'doc-1',
+      user_id: 'uid-1',
+      full_name: 'Dr. Test',
+      email: 'test@hospital.com',
+      hospital: 'RS Test',
+      primary_specialty: 'Radiologi',
+      account_status: 'pending' as const,
+      created_at: '2026-01-15T10:00:00Z',
+    };
+
+    const fetchSpy = vi.fn().mockImplementation(async (url: string | URL | Request) => {
+      const urlString = typeof url === 'string' ? url : (url as Request).url;
+      if (urlString.includes('/approve')) {
+        return { ok: true, json: async () => ({ success: true, data: { ...mockDoctor, account_status: 'approved' } }) } as Response;
+      }
+      if (urlString.includes('/doctors/stats')) {
+        return {
+          ok: true,
+          json: async () => ({ success: true, data: { total: 1, pending: 0, approved: 1, rejected: 0 } }),
+        } as Response;
+      }
+      if (urlString.includes('/admin/doctors')) {
+        return { ok: true, json: async () => ({ success: true, data: [mockDoctor] }) } as Response;
+      }
+      return { ok: false, json: async () => ({}) } as Response;
+    });
+    global.fetch = fetchSpy as unknown as typeof global.fetch;
+
+    mockAuthContext();
+    render(<MemoryRouter><AdminDashboard /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.queryAllByText('Dr. Test').length).toBeGreaterThanOrEqual(1);
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: /Setujui/ })[0]);
+
+    await waitFor(() => {
+      const approveCalls = fetchSpy.mock.calls.filter(([url]) =>
+        (typeof url === 'string' ? url : (url as Request).url).includes('/approve')
+      );
+      const listCalls = fetchSpy.mock.calls.filter(([url]) => {
+        const urlString = typeof url === 'string' ? url : (url as Request).url;
+        return urlString.includes('/admin/doctors') && !urlString.includes('/stats');
+      });
+      expect(approveCalls.length).toBe(1);
+      expect(listCalls.length).toBeGreaterThanOrEqual(2); // initial load + reload
+    });
   });
 });

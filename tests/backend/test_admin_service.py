@@ -37,7 +37,11 @@ class FakeQuery:
     def eq(self, _column, _value):
         return self
 
-    def maybeSingle(self):
+    def maybe_single(self):
+        # The real postgrest-py 2.x SDK only exposes snake_case `maybe_single`.
+        # Intentionally NOT named `maybeSingle` so that a regression to the
+        # non-existent camelCase method fails these tests instead of crashing
+        # in production with an AttributeError (HTTP 500).
         return self
 
     def update(self, data):
@@ -55,6 +59,9 @@ class FakeQuery:
             #   i.e. NO `.error` attribute.
             if self._client.fail_update:
                 raise PostgrestAPIError({"message": "db write failed", "code": "XX000"})
+            if self._client.fail_no_rows:
+                # UPDATE matched zero rows (e.g. concurrent status change).
+                return SimpleNamespace(data=[])
             return SimpleNamespace(data=[dict(self._update_data)])
         response = self._client.responses.get(self._select)
         if response is None:
@@ -65,10 +72,11 @@ class FakeQuery:
 class FakeClient:
     """Supabase service-role client stub."""
 
-    def __init__(self, responses=None, fail_query=False, fail_update=False, auth_email_by_id=None):
+    def __init__(self, responses=None, fail_query=False, fail_update=False, fail_no_rows=False, auth_email_by_id=None):
         self.responses = responses or {}
         self.fail_query = fail_query
         self.fail_update = fail_update
+        self.fail_no_rows = fail_no_rows
         self.select_calls = []
         self.update_calls = []
         self.auth = SimpleNamespace(
@@ -252,6 +260,35 @@ def test_approve_doctor_updates_fields(client):
     assert doctor['email'] == 'alice@rs-a.com'
     assert client.update_calls[0]['account_status'] == 'approved'
     assert client.update_calls[0]['approved_by'] == 'admin-1'
+
+
+def test_approve_doctor_update_zero_rows_returns_conflict(client):
+    """Update must not return HTTP 200 when no row actually changed."""
+    client.responses['id, account_status, user_id'] = {
+        'data': {'id': 'doc-1', 'account_status': 'pending', 'user_id': 'user-1'}
+    }
+    client.fail_no_rows = True
+    service = make_service(client)
+
+    with pytest.raises(APIError) as excinfo:
+        service.approve_doctor('doc-1', approved_by_user_id='admin-1')
+
+    assert excinfo.value.code == 'UPDATE_CONFLICT'
+    assert excinfo.value.status_code == 409
+
+
+def test_reject_doctor_update_zero_rows_returns_conflict(client):
+    client.responses['id, account_status'] = {
+        'data': {'id': 'doc-1', 'account_status': 'pending'}
+    }
+    client.fail_no_rows = True
+    service = make_service(client)
+
+    with pytest.raises(APIError) as excinfo:
+        service.reject_doctor('doc-1', approved_by_user_id='admin-1')
+
+    assert excinfo.value.code == 'UPDATE_CONFLICT'
+    assert excinfo.value.status_code == 409
 
 
 # ---------------------------------------------------------------------------

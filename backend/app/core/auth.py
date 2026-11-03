@@ -2,6 +2,10 @@ from functools import wraps
 from flask import request, g
 from .errors import APIError
 from .supabase import get_supabase_client, is_supabase_configured
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def require_auth(f):
@@ -78,3 +82,223 @@ def require_auth(f):
         return f(*args, **kwargs)
 
     return decorated
+
+
+def require_admin(f):
+    """Decorator that enforces: authenticated + admin role.
+
+    Admin identity is determined from Supabase app_metadata.role, which is
+    server-write-only (set via the Admin API using the service-role key).
+    Unlike user_metadata, app_metadata cannot be modified by the end user
+    through any client-side API, preventing privilege escalation.
+
+    Returns HTTP 403 if the user is authenticated but not an admin.
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization', '').strip()
+        if not auth_header:
+            raise APIError(
+                code="UNAUTHORIZED",
+                message="Missing Authorization header.",
+                status_code=401,
+            )
+
+        parts = auth_header.split()
+        if len(parts) != 2 or parts[0].lower() != 'bearer':
+            raise APIError(
+                code="UNAUTHORIZED",
+                message="Malformed Authorization header.",
+                status_code=401,
+            )
+
+        token = parts[1].strip()
+        if not token:
+            raise APIError(
+                code="UNAUTHORIZED",
+                message="Authentication token is empty.",
+                status_code=401,
+            )
+
+        if not is_supabase_configured():
+            raise APIError(
+                code="UNAUTHORIZED",
+                message="Authentication service is temporarily unavailable.",
+                status_code=401,
+            )
+
+        try:
+            client = get_supabase_client(use_service_role=False)
+            response = client.auth.get_user(token)
+            user = getattr(response, 'user', None)
+
+            if not user or not getattr(user, 'id', None):
+                raise APIError(
+                    code="UNAUTHORIZED",
+                    message="Invalid or expired authentication token.",
+                    status_code=401,
+                )
+
+            # Read admin role from app_metadata (server-write-only), NOT
+            # user_metadata (user-writable via updateUser).
+            app_metadata = getattr(user, 'app_metadata', {}) or {}
+            admin_role = app_metadata.get('role', '')
+
+            if admin_role != 'admin':
+                raise APIError(
+                    code="FORBIDDEN",
+                    message="Access denied. Admin privileges required.",
+                    status_code=403,
+                )
+
+            current_user = {
+                "id": str(user.id),
+                "email": getattr(user, 'email', None),
+                "role": "admin",
+            }
+            g.current_user = current_user
+            request.user = current_user
+
+        except APIError:
+            raise
+        except Exception:
+            raise APIError(
+                code="UNAUTHORIZED",
+                message="Invalid or expired authentication token.",
+                status_code=401,
+            )
+
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+def require_approved_doctor(f):
+    """Decorator: authenticated + doctor role + approved account status."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization', '').strip()
+        if not auth_header:
+            raise APIError(
+                code="UNAUTHORIZED",
+                message="Missing Authorization header.",
+                status_code=401,
+            )
+
+        parts = auth_header.split()
+        if len(parts) != 2 or parts[0].lower() != 'bearer':
+            raise APIError(
+                code="UNAUTHORIZED",
+                message="Malformed Authorization header.",
+                status_code=401,
+            )
+
+        token = parts[1].strip()
+        if not token:
+            raise APIError(
+                code="UNAUTHORIZED",
+                message="Authentication token is empty.",
+                status_code=401,
+            )
+
+        if not is_supabase_configured():
+            raise APIError(
+                code="UNAUTHORIZED",
+                message="Authentication service is temporarily unavailable.",
+                status_code=401,
+            )
+
+        try:
+            client = get_supabase_client(use_service_role=False)
+            response = client.auth.get_user(token)
+            user = getattr(response, 'user', None)
+
+            if not user or not getattr(user, 'id', None):
+                raise APIError(
+                    code="UNAUTHORIZED",
+                    message="Invalid or expired authentication token.",
+                    status_code=401,
+                )
+
+            user_id = str(user.id)
+            profile_info = _get_user_role_and_status(user_id)
+            role = profile_info.get('role')
+            status = profile_info.get('account_status')
+
+            # Admin users do not have a doctor_profile row; deny clinical access
+            if role is None:
+                raise APIError(
+                    code="FORBIDDEN",
+                    message="Access denied. This feature requires a doctor account.",
+                    status_code=403,
+                )
+
+            if status != 'approved':
+                if status == 'pending':
+                    raise APIError(
+                        code="ACCOUNT_PENDING",
+                        message="Your account is awaiting administrator approval.",
+                        status_code=403,
+                    )
+                if status == 'rejected':
+                    raise APIError(
+                        code="ACCOUNT_REJECTED",
+                        message="Your registration has been rejected. Please contact your hospital administrator.",
+                        status_code=403,
+                    )
+                raise APIError(
+                    code="FORBIDDEN",
+                    message="Your account does not have the required approval status.",
+                    status_code=403,
+                )
+
+            current_user = {
+                "id": user_id,
+                "email": getattr(user, 'email', None),
+                "role": "doctor",
+                "account_status": "approved",
+            }
+            g.current_user = current_user
+            request.user = current_user
+
+        except APIError:
+            raise
+        except Exception:
+            raise APIError(
+                code="UNAUTHORIZED",
+                message="Invalid or expired authentication token.",
+                status_code=401,
+            )
+
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+def _get_user_role_and_status(user_id: str):
+    """Look up a user's role and account_status from doctor_profiles.
+
+    Returns a dict with keys:
+      - role: 'doctor' or None (admin has no doctor_profile row)
+      - account_status: 'pending', 'approved', 'rejected', or None
+
+    Used by login flow and protected route checks.
+    """
+    try:
+        client = get_supabase_client(use_service_role=True)
+        result = (
+            client.table('doctor_profiles')
+            .select('role, account_status')
+            .eq('user_id', user_id)
+            .maybe_single()
+            .execute()
+        )
+        if result.data:
+            return {
+                'role': result.data.get('role', 'doctor'),
+                'account_status': result.data.get('account_status', 'pending'),
+            }
+    except Exception:
+        # Never leak details, but keep a server-side trace for debugging.
+        logger.exception("Failed to resolve doctor role/status for user %s", user_id)
+    return {'role': None, 'account_status': None}
