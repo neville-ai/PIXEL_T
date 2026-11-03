@@ -1,4 +1,5 @@
 import logging
+import uuid
 from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 from postgrest.exceptions import APIError as PostgrestAPIError
@@ -7,6 +8,20 @@ from app.core.errors import APIError
 
 
 logger = logging.getLogger(__name__)
+
+
+def _is_valid_uuid(value: Any) -> bool:
+    """True only for a string that parses as a UUID.
+
+    `doctor_profiles.id` is a UUID primary key. Validating it up-front means a
+    malformed or empty path parameter can never reach the UPDATE query (and
+    never produce a misleading mass/no-op update).
+    """
+    try:
+        uuid.UUID(str(value))
+        return True
+    except (ValueError, TypeError, AttributeError):
+        return False
 
 
 class AdminService:
@@ -128,8 +143,18 @@ class AdminService:
             The updated profile dict.
 
         Raises:
-            APIError: If the doctor does not exist, is not pending, or the update fails.
+            APIError: If the ID is invalid, the doctor does not exist, is not
+                pending, or the update does not affect exactly one row.
         """
+        # Guard against malformed/empty IDs before touching the database. The
+        # target is the primary key `doctor_profiles.id`, never `user_id`.
+        if not _is_valid_uuid(doctor_id):
+            raise APIError(
+                code="INVALID_ID",
+                message="Invalid doctor profile ID.",
+                status_code=400,
+            )
+
         client = self._get_client()
 
         # Fetch current profile.
@@ -185,7 +210,10 @@ class AdminService:
         # the updated row(s) in `data`; nol baris berarti status berubah
         # secara bersamaan atau operasi tidak mengubah baris apa-apa.
         updated_rows = result.data or []
-        if not updated_rows:
+        # The update is filtered by primary key (`id`) + current status, so a
+        # successful operation must affect exactly one row. Anything else means
+        # we must NOT report success (no mass update may be masked).
+        if len(updated_rows) != 1:
             raise APIError(
                 code="UPDATE_CONFLICT",
                 message=(
@@ -216,8 +244,16 @@ class AdminService:
             The updated profile dict.
 
         Raises:
-            APIError: If the doctor does not exist, is not pending, or the update fails.
+            APIError: If the ID is invalid, the doctor does not exist, is not
+                pending, or the update does not affect exactly one row.
         """
+        if not _is_valid_uuid(doctor_id):
+            raise APIError(
+                code="INVALID_ID",
+                message="Invalid doctor profile ID.",
+                status_code=400,
+            )
+
         client = self._get_client()
 
         # Fetch current profile (see approve_doctor note on maybe_single).
@@ -267,7 +303,10 @@ class AdminService:
             )
 
         updated_rows = result.data or []
-        if not updated_rows:
+        # The update is filtered by primary key (`id`) + current status, so a
+        # successful operation must affect exactly one row. Anything else means
+        # we must NOT report success (no mass update may be masked).
+        if len(updated_rows) != 1:
             raise APIError(
                 code="UPDATE_CONFLICT",
                 message=(

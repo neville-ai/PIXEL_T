@@ -2,8 +2,8 @@
 
 **Tanggal:** 2026-11-04
 **Lingkungan yang diuji:** Supabase nyata (project dari `backend/.env`) + server Flask berjalan di `http://127.0.0.1:5000`
-**Commit terkait:** `e1aeb33` (perbaikan utama) + `3e83d2a` (test FK error)
-**Status ringkas:** HTTP 500 = **TERBUKTI & DIPERBAIKI**; approve pada DB nyata = **LULUS PENGUJIAN**; pengujian klik browser = **BELUM DIVERIFIKASI** (tidak ada browser automation di sesi ini).
+**Commit terkait:** `e1aeb33` (perbaikan utama) + `3e83d2a` (test FK error) + commit audit single-target (hardening UUID & verifikasi 1 baris)
+**Status ringkas:** HTTP 500 = **TERBUKTI & DIPERBAIKI**; approve pada DB nyata = **LULUS PENGUJIAN**; **single-target (hanya akun terpilih yang berubah) = TERBUKTI pada DB nyata**; pengujian klik browser = **BELUM DIVERIFIKASI** (tidak ada browser automation di sesi ini).
 
 ---
 
@@ -112,6 +112,18 @@ AFTER: {'account_status': 'approved',
 - `approved_at` dihasilkan backend (UTC).
 - Hanya akun target yang diubah; tidak ada akun dokter lain yang tersentuh.
 
+### 4.2b Bukti khusus: UPDATE hanya mengenai satu akun (single-target)
+
+Audit ini memisahkan dua dugaan yang sering tercampur: (a) bug tampilan dashboard, dan (b) update database yang benar-benar massal. Bukti yang dikumpulkan:
+
+| Uji | Metode | Hasil |
+|---|---|---|
+| Update langsung satu baris | `UPDATE ... SET account_status='approved' WHERE id=<satu UUID>` (idempotent pada baris yang sudah approved), snapshot seluruh tabel sebelum/sesudah | `UPDATE_ROWS=1`, `CHANGED_ROW_COUNT=0` → **tidak ada baris lain berubah** |
+| Guard status | `UPDATE ... WHERE id=<satu UUID> AND account_status='pending'` pada baris approved | `GUARD_ROWS=0` → guard mencegah update status yang salah |
+| Transisi nyata `pending → approved` | Insert **satu** profil pending sementara (memakai auth user yang belum punya profil), approve lewat `AdminService.approve_doctor`, snapshot semua baris, lalu hapus | `TEMP_AFTER={account_status: approved, approved_by: <admin>, approved_at: <terisi>}`, `UNRELATED_ROWS_CHANGED=0`, cleanup `TEMP_PROFILES_REMAINING=0` → **PASS_SINGLE_TARGET** |
+
+Catatan: `auth.admin.create_user` pada project ini gagal `HTTP 500 "Database error creating new user"` bahkan **tanpa** metadata (bug terpisah di project Supabase, bukan bug approve). Karena itu isolasi multi-user dilakukan dengan insert satu profil sementara pada auth user yang sudah ada dan belum punya profil, bukan dengan membuat user baru. Tidak ada akun dokter nyata yang diubah selama uji transisi.
+
 ### 4.3 Verifikasi HTTP end-to-end ke server yang berjalan (Supabase nyata)
 
 Server Flask di `127.0.0.1:5000` (mode development + reloader) otomatis restart saat file diperbaiki (proses baru tercipta 03:15:51). Kode baru terbukti aktif karena endpoint detail yang sebelumnya 500 kini 200.
@@ -167,6 +179,11 @@ ID yang dipakai: **`doctor_profiles.id`** (bukan `user_id`, bukan `auth.users.id
 | `backend/app/services/admin_service.py` | Update memakai `.eq('account_status','pending')` + verifikasi `result.data` (0 baris → 409 `UPDATE_CONFLICT`; status tidak sesuai → 500 `UPDATE_FAILED`) | Jangan kembalikan 200 jika status tidak benar-benar berubah |
 | `backend/app/core/auth.py` | `.maybeSingle()` → `.maybe_single()`; `except: pass` → `logger.exception(...)` | `require_approved_doctor` selalu menolak dokter approved karena exception ditelan; kegagalan kini tercatat |
 | `tests/backend/test_admin_service.py` | Fake SDK hanya menyediakan `maybe_single` (bukan `maybeSingle`); flag `fail_no_rows`; flag `update_error` + 3 test baru (0 baris → 409, DB error → 500 `UPDATE_FAILED`, FK error → 500 `UPDATE_FAILED`) | Agar regresi nama method SDK tertangkap test, bukan di produksi; FK violation harus ditangkap sebagai APIError, bukan crash HTTP 500 |
+| `backend/app/services/admin_service.py` | Validasi `doctor_id` harus UUID (`_is_valid_uuid`) → `400 INVALID_ID` sebelum menyentuh DB | Mencegah parameter kosong/asing menyentuh query; target selalu `doctor_profiles.id` (PK), bukan `user_id` |
+| `backend/app/services/admin_service.py` | Update difilter `.eq('id', doctor_id).eq('account_status','pending')` dan **wajib** `len(updated_rows) == 1` (0 atau >1 → `409 UPDATE_CONFLICT`) | Tidak boleh melaporkan sukses bila baris yang berubah bukan tepat satu; mencegah update massal tersamarkan sebagai sukses |
+| `frontend/src/pages/admin/AdminDashboard.tsx` | `rejectTarget` — modal konfirmasi Tolak menampilkan nama + email akun yang benar | Admin harus melihat akun yang persis akan ditolak, bukan deskripsi generik |
+| `frontend/src/pages/admin/AdminDashboard.test.tsx` | +3 test single-target: approve baris A hanya memanggil `/doctors/doc-A/approve`; approve baris B hanya `doc-B`; modal tolak menyebut Dr. A dan hanya memanggil `doc-A/reject` | Membuktikan identitas per-baris tidak tertukar |
+| `tests/backend/test_admin_service.py` | Fake SDK mencatat filter `eq`; +3 test: filter update tepat `id`+`account_status=pending`, ID non-UUID → `400 INVALID_ID` (approve & reject), ID valid tak ditemukan → `404 NOT_FOUND` | Membuktikan target filter dan validasi ID di lapisan service |
 | `frontend/src/pages/admin/AdminDashboard.tsx` | `statsError` & `actionError` terpisah; `listSeqRef` guard; effect statistik/daftar dipisah; `describeApiError` | Memperbaiki race/penghapusan error, mencegah satu kegagalan mengosongkan dashboard, pesan error informatif |
 | `frontend/src/pages/admin/AdminDashboard.test.tsx` | Update assertion; +3 test (statistik gagal ≠ daftar kosong; filter tidak refetch statistik; reload setelah approve) | Bukti perilaku dashboard yang diperbaiki |
 | `docs/ADMIN_DASHBOARD_AND_APPROVE_FORENSIC_REPORT.md` | Laporan ini | Dokumentasi forensik |
@@ -189,16 +206,18 @@ ID yang dipakai: **`doctor_profiles.id`** (bukan `user_id`, bukan `auth.users.id
 
 | Pengujian | Jenis | Hasil | Keterangan |
 |---|---|---|---|
-| `pytest tests/backend/test_admin_service.py` | Unit + mock | **19/19 LULUS** | Termasuk regresi `maybe_single`, 0 baris → 409, DB error → 500 `UPDATE_FAILED`, FK error → 500 `UPDATE_FAILED` |
+| `pytest tests/backend/test_admin_service.py` | Unit + mock | **22/22 LULUS** | Termasuk regresi `maybe_single`, 0/>1 baris → 409, DB error → 500 `UPDATE_FAILED`, FK error → 500 `UPDATE_FAILED`, filter `id`+`account_status=pending`, ID non-UUID → 400, ID valid tak ditemukan → 404 |
 | `pytest tests/backend/test_admin_routes.py` | Integration (Flask test client, service fake) | **7/7 LULUS** | 401/403/200/500, `approved_by` dari token |
 | `pytest tests/backend/ tests/ai/test_gradcam.py` | Suite backend + AI | **112/112 LULUS** | `py_compile` exit 0 |
-| `vitest run` | Unit frontend | **282/282 LULUS** (18 file) | |
+| `vitest run src/pages/admin/AdminDashboard.test.tsx` | Unit frontend (dashboard) | **17/17 LULUS** | Termasuk 3 test single-target (approve A / approve B / modal tolak A) |
+| `vitest run` | Unit frontend (seluruh suite) | **282/282 LULUS** (18 file) | |
 | `tsc --noEmit` | Type check | **LULUS** (exit 0) | |
 | `vite build` | Build produksi | **LULUS** (✓ built in 17.7s) | |
 | Verifikasi service terhadap Supabase nyata | **Integration nyata** | **LULUS** | pending → approved; `approved_by` & `approved_at` terisi; email & statistik benar |
 | Verifikasi HTTP ke server berjalan + Supabase nyata | **Integration nyata** | **LULUS** | 200 list/filter/stats/detail; 400 untuk status non-pending; 401 tanpa token |
-| Pengujian klik di browser (UI) | Manual | **BELUM DIVERIFIKASI** | Lihat §11 |
-| Approve 200 untuk akun pending via HTTP | Integration nyata | **BELUM DIVERIFIKASI** (hanya 1 akun pending tersisa, sengaja tidak diubah) | Jalur service yang sama sudah terbukti; lihat §12 |
+| **Uji single-target pada DB nyata** | **Integration nyata (isolated)** | **LULUS — PASS_SINGLE_TARGET** | Insert 1 profil pending sementara → approve → hanya baris itu berubah; `UNRELATED_ROWS_CHANGED=0`; cleanup 0 sisa |
+| Pengujian klik di browser (UI) | Manual | **BELUM DIVERIFIKASI** | Lihat §11; checklist ada di §12 |
+| Approve 200 untuk akun pending via HTTP | Integration nyata | **BELUM DIVERIFIKASI via HTTP** | Jalur service yang sama sudah terbukti (uji transisi + HTTP guard); akun pending nyata sengaja tidak diubah |
 
 ---
 
@@ -221,7 +240,8 @@ ID yang dipakai: **`doctor_profiles.id`** (bukan `user_id`, bukan `auth.users.id
 
 1. **Pengujian manual lewat browser** (klik Setujui di UI, refresh halaman, tab filter, modal detail, logout/login) — belum dijalankan oleh agent; langkah ada di §12.
 2. **Tampilan Network tab** — tidak dianalisis langsung dari browser; temuan dashboard berasal dari audit kode + test perilaku.
-3. **Approve 200 via HTTP untuk akun pending** — hanya tersisa 1 akun pending dan sengaja tidak diubah. Transition pending→approved sudah dibuktikan pada lapisan service yang sama persis dipanggil controller, dan seluruh HTTP GET/guard sudah 200/400.
+3. **Approve 200 via HTTP untuk akun pending** — tidak dilakukan terhadap akun dokter nyata agar tidak mengubah data produksi. Transition pending→approved **sudah dibuktikan** pada DB nyata dengan profil pending sementara (isolasi) dan lewat service yang sama persis dipanggil controller; seluruh HTTP GET/guard sudah 200/400.
+4. **Kebijakan transisi status** — saat ini hanya `pending → approved/rejected`; `rejected → approved`, `approved → rejected`, dsb. ditolak `400 INVALID_STATUS`. Tidak diubah karena belum ada kebutuhan bisnis yang jelas. **MEMERLUKAN KEPUTUSAN** bila penulis ingin mengizinkan re-approval akun yang ditolak.
 4. **Race condition filter di browser nyata** — sudah diberi guard dan dicakup test, tetapi belum direproduksi manual di browser.
 5. **Kinerja `list_doctors`** — email diambil per baris via `auth.admin.get_user_by_id` (N+1). Fungsional benar, tetapi bisa lambat bila jumlah dokter besar. **MEMERLUKAN KEPUTUSAN** apakah perlu optimasi (di luar scope perbaikan bug).
 6. **Kebijakan transisi status** — saat ini hanya `pending → approved/rejected`; `rejected → approved`, `approved → rejected`, dsb. ditolak `400 INVALID_STATUS`. Tidak diubah karena belum ada kebutuhan bisnis yang jelas. **MEMERLUKAN KEPUTUSAN** bila penulis ingin mengizinkan re-approval akun yang ditolak.

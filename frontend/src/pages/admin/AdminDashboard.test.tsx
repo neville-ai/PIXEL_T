@@ -487,4 +487,204 @@ describe('AdminDashboard', () => {
       expect(listCalls.length).toBeGreaterThanOrEqual(2); // initial load + reload
     });
   });
+
+  it('tombol Approve pada baris A hanya memanggil endpoint untuk A, bukan B', async () => {
+    const doctorA = {
+      id: 'doc-A',
+      user_id: 'uid-A',
+      full_name: 'Dr. A',
+      email: 'a@hospital.com',
+      hospital: 'RS A',
+      primary_specialty: 'Radiologi',
+      account_status: 'pending' as const,
+      created_at: '2026-01-15T10:00:00Z',
+    };
+    const doctorB = {
+      id: 'doc-B',
+      user_id: 'uid-B',
+      full_name: 'Dr. B',
+      email: 'b@hospital.com',
+      hospital: 'RS B',
+      primary_specialty: 'Jantung',
+      account_status: 'pending' as const,
+      created_at: '2026-01-16T10:00:00Z',
+    };
+
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (url: string | URL | Request) => {
+      const urlString = typeof url === 'string' ? url : (url as Request).url;
+      if (urlString.includes('/doctors/stats')) {
+        return {
+          ok: true,
+          json: async () => ({ success: true, data: { total: 2, pending: 2, approved: 0, rejected: 0 } }),
+        } as Response;
+      }
+      if (urlString.includes('/admin/doctors') && !urlString.includes('/stats')) {
+        return { ok: true, json: async () => ({ success: true, data: [doctorA, doctorB] }) } as Response;
+      }
+      if (urlString.includes('/approve')) {
+        return { ok: true, json: async () => ({ success: true, data: {} }) } as Response;
+      }
+      return { ok: false, json: async () => ({}) } as Response;
+    });
+    mockAuthContext();
+    render(<MemoryRouter><AdminDashboard /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Dr. A').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Dr. B').length).toBeGreaterThanOrEqual(1);
+    });
+
+    const approveButtons = screen.getAllByRole('button', { name: /Setujui/ });
+    expect(approveButtons.length).toBe(2);
+
+    // Klik Approve pada baris pertama (Dr. A) -> hanya endpoint doc-A, tidak ada doc-B.
+    fireEvent.click(approveButtons[0]);
+
+    await waitFor(() => {
+      const approveCalls = fetchSpy.mock.calls.filter(([url]) => {
+        const urlString = typeof url === 'string' ? url : (url as Request).url;
+        return urlString.includes('/approve');
+      });
+      expect(approveCalls.length).toBe(1);
+      const calledUrl = typeof approveCalls[0][0] === 'string' ? approveCalls[0][0] : String(approveCalls[0][0]);
+      expect(calledUrl).toContain('/doctors/doc-A/approve');
+      expect(calledUrl).not.toContain('/doctors/doc-B/approve');
+    });
+    fetchSpy.mockRestore();
+  });
+
+  it('tombol Approve pada baris B hanya memanggil endpoint untuk B, bukan A', async () => {
+    const doctorA = {
+      id: 'doc-A',
+      user_id: 'uid-A',
+      full_name: 'Dr. A',
+      email: 'a@hospital.com',
+      hospital: 'RS A',
+      primary_specialty: 'Radiologi',
+      account_status: 'pending' as const,
+      created_at: '2026-01-15T10:00:00Z',
+    };
+    const doctorB = {
+      id: 'doc-B',
+      user_id: 'uid-B',
+      full_name: 'Dr. B',
+      email: 'b@hospital.com',
+      hospital: 'RS B',
+      primary_specialty: 'Jantung',
+      account_status: 'pending' as const,
+      created_at: '2026-01-16T10:00:00Z',
+    };
+
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (url: string | URL | Request) => {
+      const urlString = typeof url === 'string' ? url : (url as Request).url;
+      if (urlString.includes('/doctors/stats')) {
+        return {
+          ok: true,
+          json: async () => ({ success: true, data: { total: 2, pending: 2, approved: 0, rejected: 0 } }),
+        } as Response;
+      }
+      if (urlString.includes('/admin/doctors') && !urlString.includes('/stats')) {
+        return { ok: true, json: async () => ({ success: true, data: [doctorA, doctorB] }) } as Response;
+      }
+      if (urlString.includes('/approve')) {
+        return { ok: true, json: async () => ({ success: true, data: {} }) } as Response;
+      }
+      return { ok: false, json: async () => ({}) } as Response;
+    });
+    mockAuthContext();
+    render(<MemoryRouter><AdminDashboard /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Dr. B').length).toBeGreaterThanOrEqual(1);
+    });
+
+    const approveButtons = screen.getAllByRole('button', { name: /Setujui/ });
+
+    // Klik Approve pada baris kedua (Dr. B) -> hanya endpoint doc-B.
+    fireEvent.click(approveButtons[1]);
+
+    await waitFor(() => {
+      const approveCalls = fetchSpy.mock.calls.filter(([url]) => {
+        const urlString = typeof url === 'string' ? url : (url as Request).url;
+        return urlString.includes('/approve');
+      });
+      expect(approveCalls.length).toBe(1);
+      const calledUrl = typeof approveCalls[0][0] === 'string' ? approveCalls[0][0] : String(approveCalls[0][0]);
+      expect(calledUrl).toContain('/doctors/doc-B/approve');
+      expect(calledUrl).not.toContain('/doctors/doc-A/approve');
+    });
+    fetchSpy.mockRestore();
+  });
+
+  it('modal penolakan menampilkan akun yang dipilih', async () => {
+    const doctorA = {
+      id: 'doc-A',
+      user_id: 'uid-A',
+      full_name: 'Dr. A',
+      email: 'a@hospital.com',
+      hospital: 'RS A',
+      primary_specialty: 'Radiologi',
+      account_status: 'pending' as const,
+      created_at: '2026-01-15T10:00:00Z',
+    };
+    const doctorB = {
+      id: 'doc-B',
+      user_id: 'uid-B',
+      full_name: 'Dr. B',
+      email: 'b@hospital.com',
+      hospital: 'RS B',
+      primary_specialty: 'Jantung',
+      account_status: 'pending' as const,
+      created_at: '2026-01-16T10:00:00Z',
+    };
+
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (url: string | URL | Request) => {
+      const urlString = typeof url === 'string' ? url : (url as Request).url;
+      if (urlString.includes('/doctors/stats')) {
+        return { ok: true, json: async () => ({ success: true, data: { total: 2, pending: 2, approved: 0, rejected: 0 } }) } as Response;
+      }
+      if (urlString.includes('/admin/doctors') && !urlString.includes('/stats')) {
+        return { ok: true, json: async () => ({ success: true, data: [doctorA, doctorB] }) } as Response;
+      }
+      if (urlString.includes('/reject')) {
+        return { ok: true, json: async () => ({ success: true, data: {} }) } as Response;
+      }
+      return { ok: false, json: async () => ({}) } as Response;
+    });
+    mockAuthContext();
+    render(<MemoryRouter><AdminDashboard /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Dr. A').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Dr. B').length).toBeGreaterThanOrEqual(1);
+    });
+
+    // Buka modal reject pada baris Dr. A (tombol Tolak pertama).
+    fireEvent.click(screen.getAllByRole('button', { name: /Tolak/ })[0]);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/Masukkan alasan penolakan/)).toBeTruthy();
+    });
+
+    // Modal harus menyebut akun yang benar (Dr. A), bukan akun lain.
+    await waitFor(() => {
+      expect(screen.getByText(/Tolak pendaftaran Dr\. A/)).toBeTruthy();
+    });
+
+    // Konfirmasi tolak harus memanggil endpoint doc-A saja.
+    const confirmButton = screen.getAllByRole('button', { name: /Tolak Pendaftaran/ })[0];
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      const rejectCalls = fetchSpy.mock.calls.filter(([url]) => {
+        const urlString = typeof url === 'string' ? url : (url as Request).url;
+        return urlString.includes('/reject');
+      });
+      expect(rejectCalls.length).toBe(1);
+      const calledUrl = typeof rejectCalls[0][0] === 'string' ? rejectCalls[0][0] : String(rejectCalls[0][0]);
+      expect(calledUrl).toContain('/doctors/doc-A/reject');
+      expect(calledUrl).not.toContain('/doctors/doc-B/reject');
+    });
+    fetchSpy.mockRestore();
+  });
 });

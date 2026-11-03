@@ -35,6 +35,9 @@ class FakeQuery:
         return self
 
     def eq(self, _column, _value):
+        # Record filters so tests can prove the UPDATE targets the selected
+        # row (`id`) and the expected starting status (`account_status`).
+        self._client.eq_calls.append((_column, _value))
         return self
 
     def maybe_single(self):
@@ -83,6 +86,7 @@ class FakeClient:
         self.update_error = None  # optional custom PostgREST error payload
         self.select_calls = []
         self.update_calls = []
+        self.eq_calls = []
         self.auth = SimpleNamespace(
             admin=SimpleNamespace(get_user_by_id=self._get_user_by_id)
         )
@@ -104,7 +108,7 @@ def client():
             LIST_DOCTORS_SELECT: {
                 'data': [
                     {
-                        'id': 'doc-1',
+                        'id': '11111111-1111-1111-1111-111111111111',
                         'user_id': 'user-1',
                         'full_name': 'dr. Alice',
                         'hospital': 'RS A',
@@ -113,7 +117,7 @@ def client():
                         'created_at': '2026-01-01T00:00:00Z',
                     },
                     {
-                        'id': 'doc-2',
+                        'id': '22222222-2222-2222-2222-222222222222',
                         'user_id': 'user-2',
                         'full_name': 'dr. Budi',
                         'hospital': 'RS B',
@@ -141,14 +145,14 @@ def client():
                 ]
             },
             'id, account_status, user_id': {
-                'data': {'id': 'doc-1', 'account_status': 'pending', 'user_id': 'user-1'}
+                'data': {'id': '11111111-1111-1111-1111-111111111111', 'account_status': 'pending', 'user_id': 'user-1'}
             },
             'id, account_status': {
-                'data': {'id': 'doc-1', 'account_status': 'pending'}
+                'data': {'id': '11111111-1111-1111-1111-111111111111', 'account_status': 'pending'}
             },
             '*': {
                 'data': {
-                    'id': 'doc-1',
+                    'id': '11111111-1111-1111-1111-111111111111',
                     'user_id': 'user-1',
                     'full_name': 'dr. Alice',
                     'hospital': 'RS A',
@@ -221,23 +225,25 @@ def test_get_statistics_counts_all_statuses(client):
 
 def test_approve_doctor_requires_pending_status(client):
     client.responses['id, account_status, user_id'] = {
-        'data': {'id': 'doc-2', 'account_status': 'approved', 'user_id': 'user-2'}
+        'data': {'id': '22222222-2222-2222-2222-222222222222', 'account_status': 'approved', 'user_id': 'user-2'}
     }
     service = make_service(client)
 
     with pytest.raises(APIError) as excinfo:
-        service.approve_doctor('doc-2', approved_by_user_id='admin-1')
+        service.approve_doctor('22222222-2222-2222-2222-222222222222', approved_by_user_id='admin-1')
 
     assert excinfo.value.code == 'INVALID_STATUS'
     assert excinfo.value.status_code == 400
 
 
 def test_approve_doctor_unknown_id_returns_404(client):
+    # A valid UUID that is not present in the DB must yield NOT_FOUND
+    # (not the 400 reserved for malformed IDs).
     client.responses['id, account_status, user_id'] = {'data': None}
     service = make_service(client)
 
     with pytest.raises(APIError) as excinfo:
-        service.approve_doctor('does-not-exist', approved_by_user_id='admin-1')
+        service.approve_doctor('99999999-9999-9999-9999-999999999999', approved_by_user_id='admin-1')
 
     assert excinfo.value.code == 'NOT_FOUND'
     assert excinfo.value.status_code == 404
@@ -245,11 +251,11 @@ def test_approve_doctor_unknown_id_returns_404(client):
 
 def test_approve_doctor_updates_fields(client):
     client.responses['id, account_status, user_id'] = {
-        'data': {'id': 'doc-1', 'account_status': 'pending', 'user_id': 'user-1'}
+        'data': {'id': '11111111-1111-1111-1111-111111111111', 'account_status': 'pending', 'user_id': 'user-1'}
     }
     client.responses['*'] = {
         'data': {
-            'id': 'doc-1',
+            'id': '11111111-1111-1111-1111-111111111111',
             'user_id': 'user-1',
             'full_name': 'dr. Alice',
             'hospital': 'RS A',
@@ -258,7 +264,7 @@ def test_approve_doctor_updates_fields(client):
     }
     service = make_service(client)
 
-    doctor = service.approve_doctor('doc-1', approved_by_user_id='admin-1')
+    doctor = service.approve_doctor('11111111-1111-1111-1111-111111111111', approved_by_user_id='admin-1')
 
     assert doctor['account_status'] == 'approved'
     assert doctor['email'] == 'alice@rs-a.com'
@@ -269,13 +275,13 @@ def test_approve_doctor_updates_fields(client):
 def test_approve_doctor_update_zero_rows_returns_conflict(client):
     """Update must not return HTTP 200 when no row actually changed."""
     client.responses['id, account_status, user_id'] = {
-        'data': {'id': 'doc-1', 'account_status': 'pending', 'user_id': 'user-1'}
+        'data': {'id': '11111111-1111-1111-1111-111111111111', 'account_status': 'pending', 'user_id': 'user-1'}
     }
     client.fail_no_rows = True
     service = make_service(client)
 
     with pytest.raises(APIError) as excinfo:
-        service.approve_doctor('doc-1', approved_by_user_id='admin-1')
+        service.approve_doctor('11111111-1111-1111-1111-111111111111', approved_by_user_id='admin-1')
 
     assert excinfo.value.code == 'UPDATE_CONFLICT'
     assert excinfo.value.status_code == 409
@@ -283,13 +289,13 @@ def test_approve_doctor_update_zero_rows_returns_conflict(client):
 
 def test_reject_doctor_update_zero_rows_returns_conflict(client):
     client.responses['id, account_status'] = {
-        'data': {'id': 'doc-1', 'account_status': 'pending'}
+        'data': {'id': '11111111-1111-1111-1111-111111111111', 'account_status': 'pending'}
     }
     client.fail_no_rows = True
     service = make_service(client)
 
     with pytest.raises(APIError) as excinfo:
-        service.reject_doctor('doc-1', approved_by_user_id='admin-1')
+        service.reject_doctor('11111111-1111-1111-1111-111111111111', approved_by_user_id='admin-1')
 
     assert excinfo.value.code == 'UPDATE_CONFLICT'
     assert excinfo.value.status_code == 409
@@ -299,7 +305,7 @@ def test_approve_doctor_foreign_key_error_returns_update_failed(client):
     """A Postgres FK violation (approved_by -> auth.users) must surface as
     APIError UPDATE_FAILED, never as an unhandled HTTP 500."""
     client.responses['id, account_status, user_id'] = {
-        'data': {'id': 'doc-1', 'account_status': 'pending', 'user_id': 'user-1'}
+        'data': {'id': '11111111-1111-1111-1111-111111111111', 'account_status': 'pending', 'user_id': 'user-1'}
     }
     client.fail_update = True
     client.update_error = {
@@ -312,7 +318,7 @@ def test_approve_doctor_foreign_key_error_returns_update_failed(client):
     service = make_service(client)
 
     with pytest.raises(APIError) as excinfo:
-        service.approve_doctor('doc-1', approved_by_user_id='not-a-real-admin-id')
+        service.approve_doctor('11111111-1111-1111-1111-111111111111', approved_by_user_id='not-a-real-admin-id')
 
     assert excinfo.value.code == 'UPDATE_FAILED'
     assert excinfo.value.status_code == 500
@@ -325,18 +331,18 @@ def test_approve_doctor_foreign_key_error_returns_update_failed(client):
 
 def test_reject_doctor_sets_rejected(client):
     client.responses['id, account_status'] = {
-        'data': {'id': 'doc-1', 'account_status': 'pending'}
+        'data': {'id': '11111111-1111-1111-1111-111111111111', 'account_status': 'pending'}
     }
     client.responses['*'] = {
         'data': {
-            'id': 'doc-1',
+            'id': '11111111-1111-1111-1111-111111111111',
             'user_id': 'user-1',
             'account_status': 'rejected',
         }
     }
     service = make_service(client)
 
-    doctor = service.reject_doctor('doc-1', approved_by_user_id='admin-1', reason='tidak layak')
+    doctor = service.reject_doctor('11111111-1111-1111-1111-111111111111', approved_by_user_id='admin-1', reason='tidak layak')
 
     assert doctor['account_status'] == 'rejected'
     assert client.update_calls[0]['account_status'] == 'rejected'
@@ -345,12 +351,12 @@ def test_reject_doctor_sets_rejected(client):
 
 def test_reject_doctor_requires_pending_status(client):
     client.responses['id, account_status'] = {
-        'data': {'id': 'doc-2', 'account_status': 'approved'}
+        'data': {'id': '22222222-2222-2222-2222-222222222222', 'account_status': 'approved'}
     }
     service = make_service(client)
 
     with pytest.raises(APIError) as excinfo:
-        service.reject_doctor('doc-2', approved_by_user_id='admin-1')
+        service.reject_doctor('22222222-2222-2222-2222-222222222222', approved_by_user_id='admin-1')
 
     assert excinfo.value.code == 'INVALID_STATUS'
     assert excinfo.value.status_code == 400
@@ -384,11 +390,11 @@ def test_approve_doctor_update_success_returns_without_error_attribute(client):
     """Regression: `execute()` on update returns an APIResponse that has NO
     `.error` attribute. Accessing `.error` used to raise AttributeError -> 500."""
     client.responses['id, account_status, user_id'] = {
-        'data': {'id': 'doc-1', 'account_status': 'pending', 'user_id': 'user-1'}
+        'data': {'id': '11111111-1111-1111-1111-111111111111', 'account_status': 'pending', 'user_id': 'user-1'}
     }
     client.responses['*'] = {
         'data': {
-            'id': 'doc-1',
+            'id': '11111111-1111-1111-1111-111111111111',
             'user_id': 'user-1',
             'full_name': 'dr. Kharis',
             'hospital': 'RS A',
@@ -397,7 +403,7 @@ def test_approve_doctor_update_success_returns_without_error_attribute(client):
     }
     service = make_service(client)
 
-    doctor = service.approve_doctor('doc-1', approved_by_user_id='admin-1')
+    doctor = service.approve_doctor('11111111-1111-1111-1111-111111111111', approved_by_user_id='admin-1')
 
     assert doctor['account_status'] == 'approved'
 
@@ -415,13 +421,13 @@ def test_approve_doctor_persists_approval_metadata(client):
     FakeQuery.execute = patched_execute
     try:
         client.responses['id, account_status, user_id'] = {
-            'data': {'id': 'doc-1', 'account_status': 'pending', 'user_id': 'user-1'}
+            'data': {'id': '11111111-1111-1111-1111-111111111111', 'account_status': 'pending', 'user_id': 'user-1'}
         }
         client.responses['*'] = {
-            'data': {'id': 'doc-1', 'user_id': 'user-1', 'account_status': 'approved'}
+            'data': {'id': '11111111-1111-1111-1111-111111111111', 'user_id': 'user-1', 'account_status': 'approved'}
         }
         service = make_service(client)
-        service.approve_doctor('doc-1', approved_by_user_id='admin-1')
+        service.approve_doctor('11111111-1111-1111-1111-111111111111', approved_by_user_id='admin-1')
 
         assert captured.get('account_status') == 'approved'
         assert captured.get('approved_by') == 'admin-1'
@@ -435,12 +441,12 @@ def test_approve_doctor_database_error_returns_update_failed(client):
     not an unhandled 500."""
     client.fail_update = True
     client.responses['id, account_status, user_id'] = {
-        'data': {'id': 'doc-1', 'account_status': 'pending', 'user_id': 'user-1'}
+        'data': {'id': '11111111-1111-1111-1111-111111111111', 'account_status': 'pending', 'user_id': 'user-1'}
     }
     service = make_service(client)
 
     with pytest.raises(APIError) as excinfo:
-        service.approve_doctor('doc-1', approved_by_user_id='admin-1')
+        service.approve_doctor('11111111-1111-1111-1111-111111111111', approved_by_user_id='admin-1')
 
     assert excinfo.value.code == 'UPDATE_FAILED'
     assert excinfo.value.status_code == 500
@@ -449,12 +455,55 @@ def test_approve_doctor_database_error_returns_update_failed(client):
 def test_reject_doctor_database_error_returns_update_failed(client):
     client.fail_update = True
     client.responses['id, account_status'] = {
-        'data': {'id': 'doc-1', 'account_status': 'pending'}
+        'data': {'id': '11111111-1111-1111-1111-111111111111', 'account_status': 'pending'}
     }
     service = make_service(client)
 
     with pytest.raises(APIError) as excinfo:
-        service.reject_doctor('doc-1', approved_by_user_id='admin-1')
+        service.reject_doctor('11111111-1111-1111-1111-111111111111', approved_by_user_id='admin-1')
 
     assert excinfo.value.code == 'UPDATE_FAILED'
     assert excinfo.value.status_code == 500
+
+
+def test_approve_update_targets_only_selected_doctor(client):
+    """Approve must filter the UPDATE by the selected doctor primary key and
+    only accept rows still in 'pending' status. It must never target a crowd."""
+    client.responses['id, account_status, user_id'] = {
+        'data': {'id': '11111111-1111-1111-1111-111111111111', 'account_status': 'pending', 'user_id': 'user-1'}
+    }
+    client.responses['*'] = {
+        'data': {'id': '11111111-1111-1111-1111-111111111111', 'user_id': 'user-1', 'account_status': 'approved'}
+    }
+    service = make_service(client)
+
+    service.approve_doctor('11111111-1111-1111-1111-111111111111', approved_by_user_id='admin-1')
+
+    # The update must be constrained to the selected row and to a pending row.
+    assert ('id', '11111111-1111-1111-1111-111111111111') in client.eq_calls
+    assert ('account_status', 'pending') in client.eq_calls
+    assert client.update_calls[0]['account_status'] == 'approved'
+
+
+def test_approve_invalid_doctor_id_returns_400(client):
+    """A malformed doctor id must be rejected before any DB write is made."""
+    service = make_service(client)
+
+    with pytest.raises(APIError) as excinfo:
+        service.approve_doctor('not-a-real-uuid', approved_by_user_id='admin-1')
+
+    assert excinfo.value.code == 'INVALID_ID'
+    assert excinfo.value.status_code == 400
+    assert client.update_calls == []
+
+
+def test_reject_invalid_doctor_id_returns_400(client):
+    """A malformed doctor id must be rejected before any DB write is made."""
+    service = make_service(client)
+
+    with pytest.raises(APIError) as excinfo:
+        service.reject_doctor('not-a-real-uuid', approved_by_user_id='admin-1')
+
+    assert excinfo.value.code == 'INVALID_ID'
+    assert excinfo.value.status_code == 400
+    assert client.update_calls == []

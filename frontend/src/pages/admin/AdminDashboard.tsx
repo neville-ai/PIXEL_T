@@ -190,6 +190,10 @@ export const AdminDashboard: React.FC = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
 
+  // Akun yang sedang diproses modal reject — ditampilkan agar admin yakin
+  // menolak akun yang benar.
+  const rejectTarget = doctors.find((doc) => doc.id === confirmRejectId) ?? null;
+
   const token = session?.access_token ?? '';
 
   // Mencegah response lewat dari request filtering yang lebih lama menimpa data baru.
@@ -497,7 +501,11 @@ export const AdminDashboard: React.FC = () => {
         isOpen={confirmRejectId !== null}
         onClose={() => { setConfirmRejectId(null); setRejectReason(''); }}
         title="Tolak Pendaftaran"
-        description="Apakah Anda yakin ingin menolak pendaftaran dokter ini? Tindakan ini tidak dapat dibatalkan."
+        description={
+          rejectTarget
+            ? `Tolak pendaftaran ${rejectTarget.full_name}${rejectTarget.email ? ` (${rejectTarget.email})` : ''}? Tindakan ini tidak dapat dibatalkan.`
+            : 'Apakah Anda yakin ingin menolak pendaftaran dokter ini? Tindakan ini tidak dapat dibatalkan.'
+        }
         maxWidthClass="max-w-md"
       >
         <div className="space-y-4">
