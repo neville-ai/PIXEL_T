@@ -58,7 +58,10 @@ class FakeQuery:
             # - success returns an APIResponse that has ONLY `data`/`count`,
             #   i.e. NO `.error` attribute.
             if self._client.fail_update:
-                raise PostgrestAPIError({"message": "db write failed", "code": "XX000"})
+                raise PostgrestAPIError(
+                    self._client.update_error
+                    or {"message": "db write failed", "code": "XX000"}
+                )
             if self._client.fail_no_rows:
                 # UPDATE matched zero rows (e.g. concurrent status change).
                 return SimpleNamespace(data=[])
@@ -77,6 +80,7 @@ class FakeClient:
         self.fail_query = fail_query
         self.fail_update = fail_update
         self.fail_no_rows = fail_no_rows
+        self.update_error = None  # optional custom PostgREST error payload
         self.select_calls = []
         self.update_calls = []
         self.auth = SimpleNamespace(
@@ -289,6 +293,29 @@ def test_reject_doctor_update_zero_rows_returns_conflict(client):
 
     assert excinfo.value.code == 'UPDATE_CONFLICT'
     assert excinfo.value.status_code == 409
+
+
+def test_approve_doctor_foreign_key_error_returns_update_failed(client):
+    """A Postgres FK violation (approved_by -> auth.users) must surface as
+    APIError UPDATE_FAILED, never as an unhandled HTTP 500."""
+    client.responses['id, account_status, user_id'] = {
+        'data': {'id': 'doc-1', 'account_status': 'pending', 'user_id': 'user-1'}
+    }
+    client.fail_update = True
+    client.update_error = {
+        'message': (
+            'insert or update on table "doctor_profiles" violates foreign key '
+            'constraint "doctor_profiles_approved_by_fkey"'
+        ),
+        'code': '23503',
+    }
+    service = make_service(client)
+
+    with pytest.raises(APIError) as excinfo:
+        service.approve_doctor('doc-1', approved_by_user_id='not-a-real-admin-id')
+
+    assert excinfo.value.code == 'UPDATE_FAILED'
+    assert excinfo.value.status_code == 500
 
 
 # ---------------------------------------------------------------------------
