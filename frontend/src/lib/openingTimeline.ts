@@ -43,7 +43,7 @@ export const OPENING_TOTAL_DURATION_MS = 10000;
  */
 export const OPENING_SESSION_STORAGE_KEY = 'pixel-t-intro-played-v1';
 
-/** localStorage key for the "Remember me" e-mail preference (e-mail only). */
+/** localStorage key for the "Remember my email" preference (e-mail only). */
 export const REMEMBERED_EMAIL_STORAGE_KEY = 'pixel-t-remembered-email-v1';
 
 /** Zero-based index of a stage within the timeline. */
@@ -148,7 +148,7 @@ export function prefersReducedMotion(): boolean {
   return false;
 }
 
-/** Reads the remembered e-mail for the "Remember me" checkbox. Never throws. */
+/** Reads the remembered e-mail for the "Remember my email" checkbox. Never throws. */
 export function getRememberedEmail(): string | null {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {

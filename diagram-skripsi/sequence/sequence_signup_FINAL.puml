@@ -1,0 +1,141 @@
+@startuml
+
+' PIXEL-T Sequence Diagram - Sign Up (Final Version v3 — audit 2026-11-01)
+' Revision: Perbaikan pesan teks sesuai implementasi aktual dan koreksi
+' interpretasi autentikasi pada jalur requiresEmailConfirmation: false.
+' Changes from v2:
+'   - Pesan jalur "Ada session" disesuaikan ke teks aktual AuthContext.tsx:127
+'   - Pesan jalur "Tidak ada session" disesuaikan ke teks aktual AuthContext.tsx:135
+'   - Keterangan jalur false diperbaiki: user sudah terautentikasi, bukan "login manual"
+'   - Ditambahkan catatan bahwa requiresEmailConfirmation diinfer dari keberadaan session
+' Style: mengikuti sequence_diagram_sign_up_contoh.png
+' Tidak ada backend, tidak ada database participant langsung dalam alur signup.
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam lifelineStrategy solid
+skinparam boxPadding 10
+skinparam roundCorner 0
+hide footbox
+
+skinparam actor {
+    BorderColor black
+    BackgroundColor white
+    FontColor black
+}
+
+skinparam participant {
+    BorderColor black
+    BackgroundColor white
+    FontColor black
+}
+
+skinparam sequence {
+    ArrowColor black
+    LifeLineColor black
+    LifeLineBorderColor black
+    ActorBorderColor black
+    ParticipantBorderColor black
+    BoxBorderColor black
+    GroupBorderColor black
+    GroupBackgroundColor white
+}
+
+actor "Pengguna" as User
+
+box "Frontend" #FFFFFF
+    participant "Register.tsx" as FE
+    participant "AuthContext" as AC
+end box
+
+box "Supabase" #FFFFFF
+    participant "Auth Service (auth.ts)" as SV
+    participant "Supabase Auth" as SA
+end box
+
+== Sign Up ==
+
+activate User
+activate FE
+
+User -> FE: buka halaman Register
+activate FE
+
+User -> FE: isi 6 field (nama lengkap, email, rumah sakit, keahlian, kata sandi, konfirmasi kata sandi)
+
+User -> FE: klik "Daftar"
+activate FE
+
+FE -> FE: Validasi input (kosong, format email, panjang kata sandi, konfirmasi cocok)
+deactivate FE
+
+alt [Validasi gagal]
+    FE --> User: Tampilkan pesan error spesifik (nama, email, kata sandi, konfirmasi)
+else [Validasi lolos]
+    activate FE
+    FE -> AC: signUp(email, password, nama, rumah sakit, keahlian)
+    activate AC
+
+    AC -> SV: registerUser(email, password, metadata)
+    activate SV
+
+    alt [Supabase belum dikonfigurasi]
+        SV --> AC: Error: "Layanan autentikasi belum dikonfigurasi"
+        AC --> FE: Error konfigurasi
+        FE --> User: Tampilkan pesan error
+    else [Terkoneksi]
+        SV -> SA: signUp({email, password, metadata})
+        activate SA
+
+        alt [Error dari Supabase]
+            SA --> SV: Error (email terdaftar, kata sandi lemah, rate limit, jaringan)
+            deactivate SA
+
+            SV -> SV: formatAuthError() -> pesan user-friendly
+            SV --> AC: Error pesan
+            AC --> FE: Error pesan
+            FE --> User: Tampilkan pesan error
+        else [Sukses]
+            SA --> SV: { user, session }
+            deactivate SA
+
+            SV --> AC: { user, session, existingAccountHint }
+            deactivate SV
+
+            AC -> AC: setUser(), setSession()
+            note right of AC
+              requiresEmailConfirmation diinfer dari
+              keberadaan session, bukan field langsung
+              dari Supabase Auth.
+            end note
+
+            alt [Ada session]
+                AC --> FE: { message: "Akun PIXEL-T Anda berhasil dibuat dan sesi Anda sudah aktif." }
+                deactivate AC
+                note right of FE
+                  Pengguna SUDAH TERAUTENTIKASI.
+                  Session tersimpan di AuthContext.
+                  Tidak perlu login manual.
+                  Tombol "Masuk ke PIXEL-T" tetap
+                  muncul di UI sebagai navigasi opsional.
+                end note
+                FE --> User: Tampilkan pesan sukses (sudah login)
+            else [Tidak ada session]
+                AC --> FE: { message: "Pendaftaran akun PIXEL-T Anda telah diproses.", requiresEmailConfirmation: true }
+                deactivate AC
+                FE --> User: Tampilkan pesan sukses + konfirmasi email (link ke /login)
+            end
+        end
+
+        deactivate FE
+    end
+end
+
+deactivate User
+
+@enduml

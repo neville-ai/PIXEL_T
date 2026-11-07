@@ -1,0 +1,139 @@
+@startuml sequence-upload-image
+' Sequence Diagram Upload Image - PIXEL-T
+' Alur diverifikasi dari NewAnalysis.tsx, services/analysis.ts,
+' backend/app/routes/analysis.py, dan AnalysisService.
+
+title Sequence Diagram Upload Image - PIXEL-T
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipant underline false
+skinparam roundcorner 5
+
+skinparam participant {
+  BackgroundColor #DCE9F7
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam database {
+  BackgroundColor #DCE9F7
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam sequence {
+  ArrowColor #2E5E9E
+  LifeLineBorderColor #2E5E9E
+  LifeLineBackgroundColor #EEF5FC
+  GroupBorderColor #2E5E9E
+  GroupBackgroundColor #EEF5FC
+  GroupHeaderFontColor #172B4D
+  DividerBackgroundColor #DCE9F7
+  DividerBorderColor #2E5E9E
+  DividerFontColor #172B4D
+}
+
+actor "Pengguna" as Pengguna
+participant "Upload Image\n(React + API Client)" as Upload
+participant "Supabase Auth" as SupabaseAuth
+participant "Flask API\n(/api/analysis)" as Flask
+participant "AnalysisService" as AnalysisService
+participant "Supabase Storage" as Storage
+database "Supabase Database" as Database
+participant "AnalysisJobQueue" as JobQueue
+
+Pengguna -> Upload: Membuka halaman dan memilih gambar
+Upload -> Upload: Validasi ekstensi, MIME type,\nukuran, nama, dan gambar dapat dibaca
+
+break File tidak valid
+  Upload --> Pengguna: Menampilkan pesan validasi
+end
+
+Upload --> Pengguna: Menampilkan preview gambar
+Pengguna -> Upload: Menekan tombol Start Analysis
+Upload -> SupabaseAuth: getSession()
+
+break Sesi atau access token tidak tersedia
+  SupabaseAuth --> Upload: Sesi tidak tersedia
+  Upload --> Pengguna: Meminta pengguna masuk kembali
+end
+
+SupabaseAuth --> Upload: Session dengan access token
+Upload -> Flask: POST /api/analysis\nmultipart image + Bearer token
+Flask -> SupabaseAuth: get_user(access token)
+
+break Token tetap tidak valid (HTTP 401)
+  SupabaseAuth --> Flask: Token tidak valid
+  Flask --> Upload: HTTP 401 Unauthorized
+  Upload --> Pengguna: Menampilkan pesan sesi berakhir
+end
+
+SupabaseAuth --> Flask: User terautentikasi
+Flask -> AnalysisService: create_analysis(file, user_id)
+AnalysisService -> AnalysisService: Validasi file, format, ukuran,\nintegritas, dan dimensi gambar
+
+break Validasi backend gagal
+  AnalysisService --> Flask: Error validasi (HTTP 400)
+  Flask --> Upload: Respons gagal
+  Upload --> Pengguna: Menampilkan pesan kesalahan
+end
+
+AnalysisService -> Storage: Upload gambar asli\nke bucket privat
+
+break Upload Storage gagal
+  Storage --> AnalysisService: Error penyimpanan
+  AnalysisService --> Flask: Error Storage (HTTP 500)
+  Flask --> Upload: Respons gagal
+  Upload --> Pengguna: Menampilkan pesan kesalahan
+end
+
+Storage --> AnalysisService: Upload berhasil
+AnalysisService -> Database: Membuat record analisis\nstatus = processing
+
+break Pembuatan record gagal
+  Database --> AnalysisService: Error database
+  AnalysisService -> Storage: Menghapus gambar asli\n(kompensasi)
+  AnalysisService --> Flask: Error database (HTTP 500)
+  Flask --> Upload: Respons gagal
+  Upload --> Pengguna: Menampilkan pesan kesalahan
+end
+
+Database --> AnalysisService: Record analisis dibuat
+AnalysisService -> JobQueue: try_enqueue(analysis job)
+
+break Antrean penuh
+  JobQueue --> AnalysisService: Pekerjaan ditolak
+  AnalysisService -> Database: Menghapus record analisis
+  AnalysisService -> Storage: Menghapus gambar asli
+  AnalysisService --> Flask: QUEUE_FULL (HTTP 429)
+  Flask --> Upload: Respons antrean penuh
+  Upload --> Pengguna: Menampilkan pesan antrean penuh
+end
+
+JobQueue --> AnalysisService: Pekerjaan diterima
+AnalysisService --> Flask: { analysis_id,\nstatus: processing }
+Flask --> Upload: HTTP 202 Accepted
+Upload --> Pengguna: Menampilkan status unggahan diterima
+
+note right of Upload
+  Jika request menerima HTTP 401,
+  API client memperbarui sesi lalu
+  mencoba ulang request satu kali.
+  Cabang 401 menunjukkan retry yang
+  tetap ditolak.
+end note
+
+note over Flask,JobQueue
+  HTTP 202 berarti gambar tersimpan dan pekerjaan diterima antrean,
+  bukan berarti analisis AI telah selesai.
+  Proses AI dan pemantauan status dijelaskan pada diagram terpisah.
+end note
+
+@enduml

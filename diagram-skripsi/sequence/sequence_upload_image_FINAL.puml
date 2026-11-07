@@ -1,0 +1,81 @@
+@startuml
+
+' PIXEL-T Sequence Diagram - Upload Image (Minimal Version)
+' Style: mengikuti sequence_diagram_upload_image_contoh.png
+' Content: akurat berdasarkan implementasi PIXEL-T aktual, disederhanakan maksimal
+' Folder: references/bab 4/
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam lifelineStrategy solid
+skinparam boxPadding 10
+skinparam roundCorner 0
+hide footbox
+
+skinparam actor {
+    BorderColor black
+    BackgroundColor white
+    FontColor black
+}
+
+skinparam participant {
+    BorderColor black
+    BackgroundColor white
+    FontColor black
+}
+
+skinparam sequence {
+    ArrowColor black
+    LifeLineColor black
+    LifeLineBorderColor black
+    ActorBorderColor black
+    ParticipantBorderColor black
+    BoxBorderColor black
+    GroupBorderColor black
+    GroupBackgroundColor white
+}
+
+actor "Pengguna" as User
+
+box "Frontend" #FFFFFF
+participant "Frontend PIXEL-T" as FE
+end box
+
+box "Backend" #FFFFFF
+participant "Backend API" as BE
+end box
+
+box "Supabase" #FFFFFF
+participant "Supabase" as SB
+end box
+
+== Alur Utama ==
+
+User -> FE: Pilih gambar
+FE -> FE: Validasi (ekstensi, MIME, ukuran, decode) + preview
+alt File tidak valid
+    FE --> User: Tampilkan pesan kesalahan (permintaan tidak dikirim)
+else File valid
+    User -> FE: Mulai analisis
+    FE -> FE: Periksa sesi dan ambil token
+    FE -> BE: POST gambar + token autentikasi
+    alt Pemrosesan berhasil
+        BE -> BE: Verifikasi autentikasi + validasi gambar
+        BE -> SB: Simpan gambar ke Storage + Database
+        BE -> BE: Masukkan pekerjaan ke antrean (Job Queue)
+        BE --> FE: HTTP 202 Accepted {analysis_id, status}
+        FE --> User: "Analisis berhasil diterima"
+        FE -> FE: Mulai polling hasil
+    else Pemrosesan gagal
+        BE --> FE: Error response (401 / 400 / 500 / 429)
+        FE --> User: Tampilkan pesan kesalahan
+        note over BE,SB: Cleanup: hapus file Storage + record DB
+    end
+end
+
+@enduml

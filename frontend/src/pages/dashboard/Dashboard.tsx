@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -39,20 +39,20 @@ function statusPresentation(status: HistoryItem['status']): StatusPresentation {
     return {
       badgeVariant: 'error',
       badgeIcon: <AlertCircle className="w-3 h-3" aria-hidden="true" />,
-      badgeLabel: 'Gagal',
+      badgeLabel: 'Failed',
     };
   }
   if (status === 'processing') {
     return {
       badgeVariant: 'accent',
       badgeIcon: <Loader2 className="w-3 h-3" aria-hidden="true" />,
-      badgeLabel: 'Memproses',
+      badgeLabel: 'Processing',
     };
   }
   return {
     badgeVariant: 'success',
     badgeIcon: <CheckCircle2 className="w-3 h-3" aria-hidden="true" />,
-    badgeLabel: 'Selesai',
+    badgeLabel: 'Completed',
   };
 }
 
@@ -82,7 +82,7 @@ const CardThumbnail: React.FC<{ item: HistoryItem }> = ({ item }) => {
     return (
       <img
         src={item.thumbnail_url}
-        alt={item.original_filename ?? 'Citra pemeriksaan'}
+        alt={item.original_filename ?? 'Examination image'}
         className="h-full w-full object-cover"
         loading="lazy"
       />
@@ -100,7 +100,7 @@ const CardThumbnail: React.FC<{ item: HistoryItem }> = ({ item }) => {
 const CardAction: React.FC<{ item: HistoryItem }> = ({ item }) => {
   if (item.status === 'processing') {
     return (
-      <span className="text-xs text-neutral-500 dark:text-neutral-400">Sedang berjalan</span>
+      <span className="text-xs text-neutral-500 dark:text-neutral-400">In progress</span>
     );
   }
 
@@ -108,9 +108,9 @@ const CardAction: React.FC<{ item: HistoryItem }> = ({ item }) => {
     return (
       <Link
         to="/analysis/new"
-        className="inline-flex items-center gap-1 text-xs font-medium text-semantic-error hover:underline"
+        className="inline-flex items-center gap-1 text-xs font-medium text-badgeText-error dark:text-badgeText-error-dark hover:underline"
       >
-        Coba Lagi
+        Try Again
       </Link>
     );
   }
@@ -120,7 +120,7 @@ const CardAction: React.FC<{ item: HistoryItem }> = ({ item }) => {
       to={`/analysis/${item.id}`}
       className="inline-flex items-center gap-1 text-xs font-medium text-accent-600 hover:underline dark:text-accent-500"
     >
-      Lihat Hasil
+      View Result
       <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
     </Link>
   );
@@ -140,7 +140,7 @@ const AnalysisCard: React.FC<{ item: HistoryItem }> = ({ item }) => {
           panel mendekati referensi (~126px). */}
       <div className="flex flex-1 flex-col px-4 pt-5 pb-4">
         <p className="truncate text-sm font-medium text-neutral-900 dark:text-dark-text">
-          {item.original_filename ?? 'Sesi Pemeriksaan'}
+          {item.original_filename ?? 'Examination Session'}
         </p>
 
         <p className="mt-3 flex items-center gap-1.5 text-xs text-neutral-500 dark:text-dark-textMuted">
@@ -165,6 +165,7 @@ const AnalysisCard: React.FC<{ item: HistoryItem }> = ({ item }) => {
 };
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -177,7 +178,7 @@ export const Dashboard: React.FC = () => {
       // Hanya data nyata dari API, dibatasi 4 terbaru — tidak ada rekayasa record.
       setItems(result.items.slice(0, LATEST_ANALYSIS_LIMIT));
     } catch (error) {
-      setLoadError(error instanceof Error ? error.message : 'Gagal memuat analisis terkini.');
+      setLoadError(error instanceof Error ? error.message : 'Failed to load latest analyses.');
     } finally {
       setIsLoading(false);
     }
@@ -254,8 +255,8 @@ export const Dashboard: React.FC = () => {
         {isLoading ? (
           <Card className="p-8">
             <LoadingState
-              title="Memuat analisis terkini"
-              description="Mengambil daftar pemeriksaan terakhir milik Anda dari server."
+              title="Loading latest analyses"
+              description="Fetching your latest analysis sessions from the server."
             />
           </Card>
         ) : loadError ? (
@@ -266,14 +267,19 @@ export const Dashboard: React.FC = () => {
           />
         ) : items.length === 0 ? (
           <EmptyState
-            title="Belum ada analisis terkini"
-            description="Mulai pemeriksaan baru dengan mengunggah citra endoskopi pada halaman New Analysis."
+            title="No recent analyses yet"
+            description="Start a new analysis by uploading an endoscopic image on the New Analysis page."
             action={
-              <Link to="/analysis/new">
-                <Button variant="primary" size="sm" leftIcon={<PlusCircle className="w-4 h-4" />}>
-                  Mulai Analisis Baru
-                </Button>
-              </Link>
+              /* P-06: tombol biasa + navigasi programatik (pola A11Y-03) —
+                  tanpa <Link> yang membungkus <Button>. Label diubah ke Inggris. */
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={<PlusCircle className="w-4 h-4" />}
+                onClick={() => navigate('/analysis/new')}
+              >
+                Start New Analysis
+              </Button>
             }
           />
         ) : (

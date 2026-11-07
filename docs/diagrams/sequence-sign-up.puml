@@ -1,0 +1,112 @@
+@startuml sequence-sign-up
+' Sequence Diagram Registrasi Akun (Sign Up) - PIXEL-T
+' Alur diverifikasi dari Register.tsx, AuthContext.tsx, dan services/auth.ts.
+
+title Sequence Diagram Registrasi Akun (Sign Up) - PIXEL-T
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipant underline false
+skinparam roundcorner 5
+
+skinparam participant {
+  BackgroundColor #DCE9F7
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam sequence {
+  ArrowColor #2E5E9E
+  LifeLineBorderColor #2E5E9E
+  LifeLineBackgroundColor #EEF5FC
+  GroupBorderColor #2E5E9E
+  GroupBackgroundColor #EEF5FC
+  GroupHeaderFontColor #172B4D
+  DividerBackgroundColor #DCE9F7
+  DividerBorderColor #2E5E9E
+  DividerFontColor #172B4D
+}
+
+actor "Calon Pengguna" as Pengguna
+participant "Sign Up\n(Register.tsx)" as Register
+participant "AuthContext\n(signUp)" as AuthContext
+participant "Auth Service\n(registerUser)" as AuthService
+participant "Supabase Auth" as Supabase
+
+Pengguna -> Register: Membuka halaman Sign Up
+activate Register
+Register --> Pengguna: Menampilkan formulir registrasi
+
+Pengguna -> Register: Mengisi data dan menekan tombol Sign Up
+Register -> Register: handleSubmit()\nValidasi nama, email, rumah sakit,\nspesialisasi, password, dan konfirmasi
+
+alt Validasi gagal
+  Register --> Pengguna: Menampilkan pesan kesalahan validasi
+else Validasi berhasil
+  Register -> AuthContext: signUp(email, password,\nfullName, hospitalName, doctorSpecialty)
+  activate AuthContext
+
+  AuthContext -> AuthService: registerUser(email, password,\nfullName, hospitalName, doctorSpecialty)
+  activate AuthService
+
+  alt Supabase belum dikonfigurasi
+    AuthService --> AuthContext: error konfigurasi autentikasi
+  else Supabase telah dikonfigurasi
+    AuthService -> Supabase: supabase.auth.signUp({\nemail, password,\noptions.data: { full_name, hospital,\nhospital_name, primary_specialty,\nspecialty, doctor_profile }\n})
+    activate Supabase
+
+    alt Supabase mengembalikan error
+      Supabase --> AuthService: error autentikasi
+      AuthService -> AuthService: formatAuthError(error)
+    else Pemanggilan signUp melempar exception
+      AuthService -> AuthService: formatAuthError(exception)
+    else Supabase merespons tanpa error
+      Supabase --> AuthService: { user, session }
+    end
+    deactivate Supabase
+    AuthService --> AuthContext: Hasil registrasi\n(data atau error)
+  end
+  deactivate AuthService
+
+  alt Registrasi gagal
+    AuthContext --> Register: { error }
+    Register --> Pengguna: Menampilkan pesan kesalahan
+  else Registrasi berhasil dan sesi tersedia
+    AuthContext -> AuthContext: setUser(user)\nsetSession(session)
+    AuthContext --> Register: { message: registrasi berhasil,\nsesi aktif }
+    Register --> Pengguna: Menampilkan status registrasi berhasil
+  else Registrasi berhasil tanpa sesi
+    AuthContext --> Register: { requiresEmailConfirmation: true,\nmessage: pendaftaran telah diproses }
+    Register --> Pengguna: Menampilkan status pendaftaran\nserta informasi konfirmasi email
+    note right of Register
+      Pesan UI tetap netral.
+      Respons tanpa sesi tidak digunakan
+      untuk mengungkap apakah email
+      sudah terdaftar.
+    end note
+  end
+  deactivate AuthContext
+end
+
+deactivate Register
+
+note over Pengguna,Register
+  Setelah berhasil, aplikasi tidak otomatis berpindah ke Sign In.
+  Pengguna dapat memilih tautan "Masuk ke PIXEL-T" pada halaman sukses.
+end note
+
+note right of Register
+  Validasi frontend:
+  nama, email, rumah sakit, dan spesialisasi wajib diisi;
+  format email valid; password minimal 6 karakter;
+  konfirmasi password harus cocok.
+end note
+
+@enduml

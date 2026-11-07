@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useId } from 'react';
 import { X } from 'lucide-react';
 
 export interface ModalProps {
@@ -32,15 +32,113 @@ export const Modal: React.FC<ModalProps> = ({
   hideHeaderDivider = false,
   maxWidthClass = 'max-w-lg',
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Unique IDs per instance using React 18 useId()
+  const titleId = useId();
+  const descriptionId = useId();
+
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  // Focus management: trap focus, initial focus, restore focus
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
+    if (!isOpen) return;
+
+    // Store previously focused element
+    previouslyFocusedRef.current = document.activeElement as HTMLElement;
+
+    // Initial focus: prefer close button, then first focusable in dialog
+    const focusDialog = () => {
+      if (dialogRef.current) {
+        // Do not steal focus if focus is already inside dialog (e.g. user already clicked/focused an input)
+        if (document.activeElement && dialogRef.current.contains(document.activeElement)) {
+          return;
+        }
+
+        // Try close button first
+        if (closeButtonRef.current) {
+          closeButtonRef.current.focus();
+        } else {
+          // Fallback: find first focusable element
+          const focusable = dialogRef.current.querySelector<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusable) {
+            focusable.focus();
+          } else {
+            // Last resort: focus the dialog itself
+            dialogRef.current.focus();
+          }
+        }
       }
     };
+
+    // Defer focus to next tick to ensure DOM is ready
+    const timeoutId = window.setTimeout(focusDialog, 0);
+
+    // Focus trap handler
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onCloseRef.current();
+        return;
+      }
+
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const focusableArray = Array.from(focusableElements).filter((el) => {
+          const style = window.getComputedStyle(el);
+          const isDisabled = el.hasAttribute('disabled') || (el as HTMLButtonElement | HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).disabled === true;
+          return style.display !== 'none' && style.visibility !== 'hidden' && !isDisabled;
+        });
+
+        if (focusableArray.length === 0) return;
+
+        const firstElement = focusableArray[0];
+        const lastElement = focusableArray[focusableArray.length - 1];
+
+        if (e.shiftKey) {
+          // Shift+Tab: if on first element, wrap to last
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          // Tab: if on last element, wrap to first
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.removeEventListener('keydown', handleKeyDown);
+      // Restore focus to previously focused element (hardened)
+      const prev = previouslyFocusedRef.current;
+      if (prev && typeof prev.focus === 'function') {
+        // Check if element is still in document and focusable
+        if (prev.isConnected && document.body.contains(prev)) {
+          const style = window.getComputedStyle(prev);
+          if (style.display !== 'none' && style.visibility !== 'hidden' && !prev.hasAttribute('disabled')) {
+            try {
+              prev.focus();
+            } catch {
+              // Focus failed silently; do not interrupt cleanup
+            }
+          }
+        }
+      }
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -76,6 +174,10 @@ export const Modal: React.FC<ModalProps> = ({
   const backdropClass =
     surface === 'light' ? 'bg-[#001620]/75' : 'bg-neutral-950/60 backdrop-blur-sm';
 
+  // Conditional ARIA references using unique IDs
+  const labelledBy = title ? titleId : undefined;
+  const describedBy = description ? descriptionId : undefined;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -87,9 +189,12 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Dialog */}
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? 'modal-title' : undefined}
+        aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
+        tabIndex={-1}
         className={`relative w-full ${maxWidthClass} rounded-xl border ${paddingClass} shadow-xl transition-all z-10 ${spacingClass} ${surfaceClass}`}
       >
         <div
@@ -99,19 +204,21 @@ export const Modal: React.FC<ModalProps> = ({
         >
           <div>
             {title && (
-              <h2 id="modal-title" className={titleClass}>
+              <h2 id={titleId} className={titleClass}>
                 {title}
               </h2>
             )}
             {description && (
-              <p className={descriptionClass}>{description}</p>
+              <p id={descriptionId} className={descriptionClass}>{description}</p>
             )}
           </div>
           {!hideClose && (
             <button
+              ref={closeButtonRef}
+              type="button"
               onClick={onClose}
               className="rounded-md p-1.5 text-neutral-400 hover:text-neutral-700 dark:hover:text-dark-text hover:bg-neutral-100 dark:hover:bg-dark-elevated transition-colors"
-              aria-label="Tutup modal"
+              aria-label="Close modal"
             >
               <X className="w-4 h-4" />
             </button>

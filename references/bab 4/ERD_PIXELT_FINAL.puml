@@ -1,0 +1,85 @@
+@startuml ERD_PIXELT_FINAL
+skinparam backgroundColor #FFFFFF
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    BorderThickness 1
+    FontName Arial
+    FontSize 12
+    FontColor #000000
+    AttributeFontName Arial
+    AttributeFontSize 11
+    AttributeFontColor #000000
+}
+
+skinparam arrow {
+    Color #000000
+    Thickness 1
+}
+
+hide circle
+hide empty methods
+left to right direction
+
+class "doctor_profiles" as doctor_profiles {
+{field} id : uuid (PK)
+{field} user_id : uuid (FK, UNIQUE)
+{field} full_name : text
+{field} phone : text
+{field} birth_date : date
+{field} city : text
+{field} primary_specialty : text
+{field} hospital : text
+{field} department : text
+{field} str_number : text
+{field} is_verified : boolean
+{field} bio : text
+{field} education : jsonb
+{field} experience : jsonb
+{field} created_at : timestamptz
+{field} updated_at : timestamptz
+}
+
+class "users (auth.users)" as users {
+{field} id : uuid (PK)
+{field} email : text
+{field} created_at : timestamptz
+{field} user_metadata : jsonb
+}
+
+class "analyses" as analyses {
+{field} id : uuid (PK)
+{field} user_id : uuid (FK)
+{field} status : varchar(20)
+{field} original_image_path : text
+{field} original_filename : text
+{field} original_mime_type : varchar(50)
+{field} original_width : integer
+{field} original_height : integer
+{field} binary_mask_path : text
+{field} segmentation_overlay_path : text
+{field} segmentation_status : varchar(20)
+{field} area_pixels : integer
+{field} area_ratio : numeric(7,4)
+{field} gradcam_heatmap_path : text
+{field} gradcam_overlay_path : text
+{field} model_architecture : varchar(100)
+{field} model_version : varchar(50)
+{field} summary_text : text
+{field} current_step : varchar(64)
+{field} progress_percent : smallint
+{field} created_at : timestamptz
+{field} completed_at : timestamptz
+}
+
+doctor_profiles |o--|| users
+users ||--|{ analyses
+
+@enduml

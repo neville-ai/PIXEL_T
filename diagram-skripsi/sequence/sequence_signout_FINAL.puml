@@ -1,0 +1,91 @@
+@startuml
+
+' PIXEL-T Sequence Diagram - Sign Out (Final Version v3)
+' Style: mengikuti sequence_diagram_sign_out_contoh.png
+' Content: akurat berdasarkan implementasi PIXEL-T aktual
+' Folder: references/bab 4/
+' Tidak ada backend logout endpoint; supabase.auth.signOut() dipanggil via Auth Service.
+' Error dari logout diabaikan oleh AuthContext; navigasi eksplisit navigate('/login').
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam lifelineStrategy solid
+skinparam boxPadding 10
+skinparam roundCorner 0
+hide footbox
+
+skinparam actor {
+    BorderColor black
+    BackgroundColor white
+    FontColor black
+}
+
+skinparam participant {
+    BorderColor black
+    BackgroundColor white
+    FontColor black
+}
+
+skinparam sequence {
+    ArrowColor black
+    LifeLineColor black
+    LifeLineBorderColor black
+    ActorBorderColor black
+    ParticipantBorderColor black
+    BoxBorderColor black
+}
+
+actor "Pengguna" as User
+participant "AppShell" as AppShell
+participant "AuthContext" as AuthContext
+participant "Auth Service\nlogoutUser()" as AuthService
+participant "Supabase Auth" as Supabase
+
+== Inisialisasi Modal Konfirmasi ==
+User -> AppShell : Klik "Sign Out"\n(dropdown avatar)
+activate AppShell
+AppShell -> User : Tampilkan modal konfirmasi
+deactivate AppShell
+
+note right of User
+  Modal: "Are you sure you want to sign out?"
+  "You will need to sign in again..."
+  Tombol: [No]  [Yes]
+end note
+
+== Konfirmasi & Proses Logout ==
+User -> AppShell : Klik "Yes"
+activate AppShell
+AppShell -> AppShell : confirmSignOut()\nsetIsSigningOut(true)
+AppShell -> AuthContext : signOut()
+activate AuthContext
+AuthContext -> AuthService : logoutUser()
+activate AuthService
+AuthService -> Supabase : supabase.auth.signOut()
+activate Supabase
+Supabase --> AuthService : { error: string | null }
+deactivate Supabase
+AuthService -> AuthService : formatAuthError()\njika error
+AuthService --> AuthContext : { error: null } atau { error }
+deactivate AuthService
+AuthContext -> AuthContext : setUser(null)\nsetSession(null)\n(error diabaikan)
+deactivate AuthContext
+AppShell -> AppShell : setIsSignOutOpen(false)\nnavigate('/login', { replace: true })
+deactivate AppShell
+AppShell -> User : Arahkan ke halaman /login
+
+== Sinkronisasi State (Listener) ==
+note right of AuthContext
+  onAuthStateChange listener:
+  Terima session=null dari Supabase
+  setSession(null)
+  setUser(null)
+  (Sinkronisasi kedua)
+end note
+
+@enduml

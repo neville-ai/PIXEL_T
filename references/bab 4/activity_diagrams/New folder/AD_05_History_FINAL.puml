@@ -1,0 +1,98 @@
+@startuml AD_05_History_FINAL
+' =====================================================================
+'  AD-05 Activity Diagram Riwayat Analisis (History) — PIXEL-T
+'  VERSI REVISI FINAL — Disederhanakan sesuai instruksi
+'
+'  Perubahan dari versi sebelumnya (AD_05_History.puml):
+'    1. SATU activity final node (stop) — semua jalur bertemu di satu titik akhir.
+'    2. Cabang "Start New Analysis" dari empty state dihapus — digabung via merge.
+'    3. Detail teknis endpoint (GET /api/history, DELETE /api/history/<id>) dihapus
+'       dari label node; tetap akurat tapi tidak menampilkan detail implementasi.
+'    4. Cabang "Konfirmasi hapus → Batal" bertemu di merge node sebelum stop.
+'    5. Cabang "Lihat Detail" bertemu di merge node sebelum stop.
+'    6. Jumlah simbol berkurang signifikan (dari 4 stop → 1 stop).
+'
+'  Diverifikasi dari:
+'    - frontend/src/pages/history/History.tsx
+'    - frontend/src/services/analysis.ts (listHistory, deleteAnalysis)
+'  Standar Desain Visual: #3DADFF, bold white, Corner 8, 2 swimlanes
+' =====================================================================
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultTextAlignment center
+skinparam shadowing false
+
+skinparam activity {
+  BackgroundColor #3DADFF
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #FFFFFF
+  FontSize 11
+  FontStyle bold
+  Corner 8
+  DiamondBackgroundColor #3DADFF
+  DiamondBorderColor #2D2D2D
+  DiamondFontColor #FFFFFF
+  DiamondFontSize 10
+  DiamondFontStyle bold
+  StartColor #3DADFF
+  EndColor #3DADFF
+}
+
+skinparam ArrowColor #2D2D2D
+skinparam ArrowFontColor #000000
+skinparam ArrowFontSize 10
+
+skinparam partition {
+  BackgroundColor transparent
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #000000
+  FontSize 13
+  FontStyle bold
+}
+
+|User|
+start
+:Membuka halaman\nRiwayat Analisis;
+
+|System|
+:Mengambil data riwayat\nanalisis pengguna;
+
+if (Riwayat tersedia?) then (Tidak)
+  :Menampilkan pesan\nriwayat kosong;
+else (Ya)
+endif
+
+:Menampilkan tabel riwayat\n& panel filter pencarian;
+
+|User|
+:Memilih filter atau memasukkan\nkata kunci pencarian;
+
+|System|
+:Memperbarui tampilan\ntabel riwayat;
+
+|User|
+if (Tindakan pada riwayat?) then (Lihat Detail)
+  |System|
+  :Navigasi ke halaman\ndetail hasil analisis;
+else (Hapus)
+  |System|
+  :Menampilkan modal\nkonfirmasi penghapusan;
+  |User|
+  if (Konfirmasi hapus?) then (Batal)
+    |System|
+    :Menutup modal tanpa\nmenghapus data;
+  else (Ya)
+    |System|
+    :Menghapus data & berkas\ndari basis data & storage;
+    :Memperbarui tampilan\n& menutup modal;
+  endif
+endif
+
+|User|
+stop
+
+@enduml
+

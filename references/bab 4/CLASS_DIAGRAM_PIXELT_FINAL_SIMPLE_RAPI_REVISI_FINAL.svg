@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="4260" height="4050" viewBox="0 0 1420 1350">
+<rect x="0" y="0" width="1420" height="1350" fill="#FFFFFF"/>
+<g font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" stroke="#000000" stroke-width="1">
+<rect x="30" y="40" width="280" height="170" fill="#FFFFFF"/>
+<rect x="30" y="40" width="280" height="40" fill="#ECECEC"/>
+<rect x="30" y="40" width="280" height="170" fill="none"/>
+<line x1="30" y1="80" x2="310" y2="80"/>
+<line x1="30" y1="163" x2="310" y2="163"/>
+<text x="170" y="56" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;module&gt;&gt;</text>
+<text x="170" y="73" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">AuthContext</text>
+<text x="38" y="94" font-size="10" text-anchor="start" fill="#000000" stroke="none">- user: User</text>
+<text x="38" y="109" font-size="10" text-anchor="start" fill="#000000" stroke="none">- session: Session</text>
+<text x="38" y="124" font-size="10" text-anchor="start" fill="#000000" stroke="none">- loading: Boolean</text>
+<text x="38" y="139" font-size="10" text-anchor="start" fill="#000000" stroke="none">- role: String</text>
+<text x="38" y="154" font-size="10" text-anchor="start" fill="#000000" stroke="none">- accountStatus: String</text>
+<text x="38" y="177" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ signIn(email, password, role): Promise</text>
+<text x="38" y="192" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ signUp(email, password, ...): Promise</text>
+<text x="38" y="207" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ signOut(): Promise</text>
+<rect x="330" y="40" width="280" height="150" fill="#FFFFFF"/>
+<rect x="330" y="40" width="280" height="40" fill="#ECECEC"/>
+<rect x="330" y="40" width="280" height="150" fill="none"/>
+<line x1="330" y1="80" x2="610" y2="80"/>
+<line x1="330" y1="90" x2="610" y2="90"/>
+<text x="470" y="56" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;module&gt;&gt;</text>
+<text x="470" y="73" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">AnalysisClient</text>
+<text x="338" y="104" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ createAnalysis(file: File): Promise</text>
+<text x="338" y="119" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ getAnalysis(id: String): Promise</text>
+<text x="338" y="134" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ listHistory(): Promise</text>
+<text x="338" y="149" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ deleteAnalysis(id: String): Promise</text>
+<rect x="630" y="40" width="290" height="150" fill="#FFFFFF"/>
+<rect x="630" y="40" width="290" height="40" fill="#ECECEC"/>
+<rect x="630" y="40" width="290" height="150" fill="none"/>
+<line x1="630" y1="80" x2="920" y2="80"/>
+<line x1="630" y1="90" x2="920" y2="90"/>
+<text x="775" y="56" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;module&gt;&gt;</text>
+<text x="775" y="73" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">DoctorProfileService</text>
+<text x="638" y="104" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ fetchDoctorProfile(user): Promise</text>
+<text x="638" y="119" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ saveDoctorProfile(user, data): Promise</text>
+<text x="638" y="134" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ uploadAvatar(user, file): Promise</text>
+<rect x="30" y="230" width="290" height="170" fill="#FFFFFF"/>
+<rect x="30" y="230" width="290" height="40" fill="#ECECEC"/>
+<rect x="30" y="230" width="290" height="170" fill="none"/>
+<line x1="30" y1="270" x2="320" y2="270"/>
+<line x1="30" y1="293" x2="320" y2="293"/>
+<text x="175" y="246" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;controller&gt;&gt;</text>
+<text x="175" y="263" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">AnalysisController</text>
+<text x="38" y="284" font-size="10" text-anchor="start" fill="#000000" stroke="none">- service: AnalysisService</text>
+<text x="38" y="307" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ create_analysis(): Response</text>
+<text x="38" y="322" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ get_analysis(id: String): Response</text>
+<text x="38" y="337" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ list_history(): Response</text>
+<text x="38" y="352" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ delete_analysis(id: String): Response</text>
+<rect x="340" y="230" width="290" height="170" fill="#FFFFFF"/>
+<rect x="340" y="230" width="290" height="40" fill="#ECECEC"/>
+<rect x="340" y="230" width="290" height="170" fill="none"/>
+<line x1="340" y1="270" x2="630" y2="270"/>
+<line x1="340" y1="293" x2="630" y2="293"/>
+<text x="485" y="246" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;controller&gt;&gt;</text>
+<text x="485" y="263" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">AdminController</text>
+<text x="348" y="284" font-size="10" text-anchor="start" fill="#000000" stroke="none">- service: AdminService</text>
+<text x="348" y="307" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ list_doctors(status?): Response</text>
+<text x="348" y="322" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ approve_doctor(id: String): Response</text>
+<text x="348" y="337" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ reject_doctor(id: String): Response</text>
+<text x="348" y="352" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ get_statistics(): Response</text>
+<rect x="660" y="230" width="310" height="200" fill="#FFFFFF"/>
+<rect x="660" y="230" width="310" height="40" fill="#ECECEC"/>
+<rect x="660" y="230" width="310" height="200" fill="none"/>
+<line x1="660" y1="270" x2="970" y2="270"/>
+<line x1="660" y1="338" x2="970" y2="338"/>
+<text x="815" y="246" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;service&gt;&gt;</text>
+<text x="815" y="263" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">AnalysisService</text>
+<text x="668" y="284" font-size="10" text-anchor="start" fill="#000000" stroke="none">- repository: AnalysisRepository</text>
+<text x="668" y="299" font-size="10" text-anchor="start" fill="#000000" stroke="none">- storage: StorageService</text>
+<text x="668" y="314" font-size="10" text-anchor="start" fill="#000000" stroke="none">- job_queue: AnalysisJobQueue</text>
+<text x="668" y="329" font-size="10" text-anchor="start" fill="#000000" stroke="none">- pipeline_runner: Callable</text>
+<text x="668" y="352" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ validate_and_decode_image(file): Tuple</text>
+<text x="668" y="367" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ create_analysis(file, user_id): Dict</text>
+<text x="668" y="382" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ get_analysis(id, user_id): Dict</text>
+<text x="668" y="397" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ list_user_analyses(user_id): List</text>
+<text x="668" y="412" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ delete_analysis(id, user_id): Boolean</text>
+<rect x="30" y="450" width="290" height="170" fill="#FFFFFF"/>
+<rect x="30" y="450" width="290" height="40" fill="#ECECEC"/>
+<rect x="30" y="450" width="290" height="170" fill="none"/>
+<line x1="30" y1="490" x2="320" y2="490"/>
+<line x1="30" y1="513" x2="320" y2="513"/>
+<text x="175" y="466" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;service&gt;&gt;</text>
+<text x="175" y="483" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">AdminService</text>
+<text x="38" y="504" font-size="10" text-anchor="start" fill="#000000" stroke="none">- client: SupabaseClient</text>
+<text x="38" y="527" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ list_doctors(status?): List</text>
+<text x="38" y="542" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ approve_doctor(id, approved_by): Dict</text>
+<text x="38" y="557" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ reject_doctor(id, approved_by, reason): Dict</text>
+<text x="38" y="572" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ get_statistics(): Dict</text>
+<rect x="340" y="450" width="350" height="190" fill="#FFFFFF"/>
+<rect x="340" y="450" width="350" height="40" fill="#ECECEC"/>
+<rect x="340" y="450" width="350" height="190" fill="none"/>
+<line x1="340" y1="490" x2="690" y2="490"/>
+<line x1="340" y1="513" x2="690" y2="513"/>
+<text x="515" y="466" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;repository&gt;&gt;</text>
+<text x="515" y="483" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">AnalysisRepository</text>
+<text x="348" y="504" font-size="10" text-anchor="start" fill="#000000" stroke="none">- client: SupabaseClient</text>
+<text x="348" y="527" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ create(user_id, data): Dict</text>
+<text x="348" y="542" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ get_by_id(id, user_id): Optional</text>
+<text x="348" y="557" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ list_by_user(user_id): List</text>
+<text x="348" y="572" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ update(id, user_id, data): Optional</text>
+<text x="348" y="587" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ delete(id, user_id): Boolean</text>
+<rect x="720" y="450" width="310" height="190" fill="#FFFFFF"/>
+<rect x="720" y="450" width="310" height="40" fill="#ECECEC"/>
+<rect x="720" y="450" width="310" height="190" fill="none"/>
+<line x1="720" y1="490" x2="1030" y2="490"/>
+<line x1="720" y1="528" x2="1030" y2="528"/>
+<text x="875" y="466" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;service&gt;&gt;</text>
+<text x="875" y="483" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">StorageService</text>
+<text x="728" y="504" font-size="10" text-anchor="start" fill="#000000" stroke="none">- client: SupabaseClient</text>
+<text x="728" y="519" font-size="10" text-anchor="start" fill="#000000" stroke="none">- bucket_name: String</text>
+<text x="728" y="542" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ upload_file(path, bytes, type): String</text>
+<text x="728" y="557" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ download_file(path): Bytes</text>
+<text x="728" y="572" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ create_signed_url(path, expires): String</text>
+<text x="728" y="587" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ delete_file(path): Boolean</text>
+<text x="728" y="602" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ generate_asset_path(user, analysis, cat, file): String</text>
+<rect x="1060" y="450" width="260" height="170" fill="#FFFFFF"/>
+<rect x="1060" y="450" width="260" height="40" fill="#ECECEC"/>
+<rect x="1060" y="450" width="260" height="170" fill="none"/>
+<line x1="1060" y1="490" x2="1320" y2="490"/>
+<line x1="1060" y1="543" x2="1320" y2="543"/>
+<text x="1190" y="466" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;module&gt;&gt;</text>
+<text x="1190" y="483" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">AnalysisJobQueue</text>
+<text x="1068" y="504" font-size="10" text-anchor="start" fill="#000000" stroke="none">- max_waiting: Integer</text>
+<text x="1068" y="519" font-size="10" text-anchor="start" fill="#000000" stroke="none">- jobs: Queue&lt;Job&gt;</text>
+<text x="1068" y="534" font-size="10" text-anchor="start" fill="#000000" stroke="none">- worker: Thread</text>
+<text x="1068" y="557" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ try_enqueue(job): Boolean</text>
+<text x="1068" y="572" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ drain_one(): Boolean</text>
+<text x="1068" y="587" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ pending_count(): Integer</text>
+<rect x="30" y="660" width="310" height="190" fill="#FFFFFF"/>
+<rect x="30" y="660" width="310" height="40" fill="#ECECEC"/>
+<rect x="30" y="660" width="310" height="190" fill="none"/>
+<line x1="30" y1="700" x2="340" y2="700"/>
+<line x1="30" y1="710" x2="340" y2="710"/>
+<text x="185" y="676" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;module&gt;&gt;</text>
+<text x="185" y="693" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">AIInference</text>
+<text x="38" y="724" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ run_pipeline(bytes, config): PipelineResult</text>
+<text x="38" y="739" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ predict(image, config): SegmentationResult</text>
+<text x="38" y="754" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ generate_gradcam(tensor, ...): GradCAMResult</text>
+<rect x="360" y="660" width="290" height="160" fill="#FFFFFF"/>
+<rect x="360" y="660" width="290" height="40" fill="#ECECEC"/>
+<rect x="360" y="660" width="290" height="160" fill="none"/>
+<line x1="360" y1="700" x2="650" y2="700"/>
+<line x1="360" y1="723" x2="650" y2="723"/>
+<text x="505" y="676" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;service&gt;&gt;</text>
+<text x="505" y="693" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">ModelService</text>
+<text x="368" y="714" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ config: ModelConfig</text>
+<text x="368" y="737" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ load(): Module</text>
+<text x="368" y="752" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ predict_logits(tensor): Tensor</text>
+<text x="368" y="767" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ metadata(): Dict</text>
+<text x="368" y="782" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ get_gradcam_target_layer(): Module</text>
+<rect x="680" y="660" width="310" height="160" fill="#FFFFFF"/>
+<rect x="680" y="660" width="310" height="40" fill="#ECECEC"/>
+<rect x="680" y="660" width="310" height="160" fill="none"/>
+<line x1="680" y1="700" x2="990" y2="700"/>
+<text x="835" y="676" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;dataclass&gt;&gt;</text>
+<text x="835" y="693" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">ModelConfig</text>
+<text x="688" y="714" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ architecture: String</text>
+<text x="688" y="729" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ encoder: String</text>
+<text x="688" y="744" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ input_size: Integer</text>
+<text x="688" y="759" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ threshold: Float</text>
+<text x="688" y="774" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ checkpoint_sha256: String</text>
+<rect x="1010" y="660" width="290" height="180" fill="#F5F5F5"/>
+<rect x="1010" y="660" width="290" height="40" fill="#ECECEC"/>
+<rect x="1010" y="660" width="290" height="180" fill="none"/>
+<line x1="1010" y1="700" x2="1300" y2="700"/>
+<line x1="1010" y1="710" x2="1300" y2="710"/>
+<text x="1155" y="676" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;external&gt;&gt;</text>
+<text x="1155" y="693" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">SupabasePlatform</text>
+<text x="1018" y="724" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ Auth: signUp, signIn, signOut</text>
+<text x="1018" y="739" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ DB: doctor_profiles, analyses</text>
+<text x="1018" y="754" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ Storage: analysis-assets, profile-avatars</text>
+<rect x="30" y="880" width="270" height="140" fill="#FFFFFF"/>
+<rect x="30" y="880" width="270" height="40" fill="#ECECEC"/>
+<rect x="30" y="880" width="270" height="140" fill="none"/>
+<line x1="30" y1="920" x2="300" y2="920"/>
+<line x1="30" y1="973" x2="300" y2="973"/>
+<text x="165" y="896" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;entity&gt;&gt;</text>
+<text x="165" y="913" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">User</text>
+<text x="38" y="934" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ id: UUID</text>
+<text x="38" y="949" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ email: String</text>
+<text x="38" y="964" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ app_metadata.role: String</text>
+<text x="38" y="987" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ get_profile(): DoctorProfile</text>
+<text x="38" y="1002" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ get_analyses(): List&lt;Analysis&gt;</text>
+<rect x="330" y="880" width="290" height="160" fill="#FFFFFF"/>
+<rect x="330" y="880" width="290" height="40" fill="#ECECEC"/>
+<rect x="330" y="880" width="290" height="160" fill="none"/>
+<line x1="330" y1="920" x2="620" y2="920"/>
+<line x1="330" y1="1033" x2="620" y2="1033"/>
+<text x="475" y="896" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;entity&gt;&gt;</text>
+<text x="475" y="913" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">DoctorProfile</text>
+<text x="338" y="934" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ id: UUID</text>
+<text x="338" y="949" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ user_id: UUID</text>
+<text x="338" y="964" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ full_name: String</text>
+<text x="338" y="979" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ hospital: String</text>
+<text x="338" y="994" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ primary_specialty: String</text>
+<text x="338" y="1009" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ account_status: String</text>
+<text x="338" y="1024" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ role: String</text>
+<text x="338" y="1047" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ get_user(): User</text>
+<rect x="650" y="880" width="290" height="160" fill="#FFFFFF"/>
+<rect x="650" y="880" width="290" height="40" fill="#ECECEC"/>
+<rect x="650" y="880" width="290" height="160" fill="none"/>
+<line x1="650" y1="920" x2="940" y2="920"/>
+<line x1="650" y1="1018" x2="940" y2="1018"/>
+<text x="795" y="896" font-size="9.5" text-anchor="middle" font-style="italic" fill="#000000" stroke="none">&lt;&lt;entity&gt;&gt;</text>
+<text x="795" y="913" font-size="12" text-anchor="middle" font-weight="bold" fill="#000000" stroke="none">Analysis</text>
+<text x="658" y="934" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ id: UUID</text>
+<text x="658" y="949" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ user_id: UUID</text>
+<text x="658" y="964" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ status: String</text>
+<text x="658" y="979" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ created_at: Timestamp</text>
+<text x="658" y="994" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ segmentation_status: String</text>
+<text x="658" y="1009" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ gradcam_status: String</text>
+<text x="658" y="1032" font-size="10" text-anchor="start" fill="#000000" stroke="none">+ get_user(): User</text>
+<polyline points="170,210 170,210 1155,210 1155,750 1155,750" fill="none" stroke-dasharray="5,3"/>
+<polyline points="1155,750 1155,750 1155,750" fill="none"/>
+<rect x="628.01904296875" y="198.5" width="68.9619140625" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="662.5" y="208" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">Supabase Auth</text>
+<polyline points="470,190 470,190 470,230 320,273.22033898305085" fill="none" stroke-dasharray="5,3"/>
+<polyline points="325.66039342391747,267.5827467411028 320,273.22033898305085 327.7923039380616,274.9817302901913" fill="none"/>
+<rect x="363.22509765625" y="240.11016949152543" width="63.5498046875" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="395" y="249.61016949152543" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">calls REST API</text>
+<polyline points="470,190 470,210 1155,210 1155,750 1155,750" fill="none" stroke-dasharray="5,3"/>
+<polyline points="1155,750 1155,750 1155,750" fill="none"/>
+<rect x="782.95166015625" y="198.5" width="59.0966796875" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="812.5" y="208" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">access token</text>
+<polyline points="775,190 775,210 1155,210 1155,750 1155,750" fill="none" stroke-dasharray="5,3"/>
+<polyline points="1155,750 1155,750 1155,750" fill="none"/>
+<rect x="1123.98095703125" y="468.5" width="62.0380859375" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="1155" y="478" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">DB + Storage</text>
+<polyline points="175,400 175,410 815,410 815,330 815,330" fill="none" stroke-dasharray="5,3"/>
+<polyline points="815,330 815,330 815,330" fill="none"/>
+<rect x="482.796875" y="398.5" width="24.40625" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="495" y="408" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">uses</text>
+<polyline points="485,400 485,410 485,535 320,535" fill="none" stroke-dasharray="5,3"/>
+<polyline points="327,531.15 320,535 327,538.85" fill="none"/>
+<rect x="390.296875" y="523.5" width="24.40625" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="402.5" y="533" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">uses</text>
+<polyline points="815,430 815,430 515,430 515,545 515,545" fill="none" stroke-dasharray="5,3"/>
+<polyline points="515,545 515,545 515,545" fill="none"/>
+<rect x="652.796875" y="418.5" width="24.40625" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="665" y="428" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">uses</text>
+<polyline points="970,430 970,430 875,430 875,545 875,545" fill="none" stroke-dasharray="5,3"/>
+<polyline points="875,545 875,545 875,545" fill="none"/>
+<rect x="862.796875" y="476" width="24.40625" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="875" y="485.5" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">uses</text>
+<polyline points="970,430 970,430 1190,430 1190,535 1190,535" fill="none" stroke-dasharray="5,3"/>
+<polyline points="1190,535 1190,535 1190,535" fill="none"/>
+<rect x="1067.796875" y="418.5" width="24.40625" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="1080" y="428" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">uses</text>
+<polyline points="970,330 970,330 1155,330 1155,750 1155,750" fill="none" stroke-dasharray="5,3"/>
+<polyline points="1155,750 1155,750 1155,750" fill="none"/>
+<rect x="1123.98095703125" y="528.5" width="62.0380859375" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="1155" y="538" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">DB + Storage</text>
+<polyline points="970,330 970,330 990,330 990,755 340,755" fill="none" stroke-dasharray="5,3"/>
+<polyline points="347,751.15 340,755 347,758.85" fill="none"/>
+<rect x="636.30908203125" y="743.5" width="57.3818359375" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="665" y="753" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">run_pipeline</text>
+<polyline points="515,640 515,640 1155,640 1155,750 1155,750" fill="none" stroke-dasharray="5,3"/>
+<polyline points="1155,750 1155,750 1155,750" fill="none"/>
+<rect x="825.9462890625" y="628.5" width="18.107421875" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="835" y="638" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">DB</text>
+<polyline points="875,640 875,640 1155,640 1155,750 1155,750" fill="none" stroke-dasharray="5,3"/>
+<polyline points="1155,750 1155,750 1155,750" fill="none"/>
+<rect x="995.88671875" y="628.5" width="38.2265625" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="1015" y="638" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">Storage</text>
+<polyline points="175,620 175,620 1155,620 1155,750 1155,750" fill="none" stroke-dasharray="5,3"/>
+<polyline points="1155,750 1155,750 1155,750" fill="none"/>
+<rect x="628.15283203125" y="608.5" width="73.6943359375" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="665" y="618" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">DB (service role)</text>
+<polyline points="340,850 340,850 505,850 505,740 505,740" fill="none" stroke-dasharray="5,3"/>
+<polyline points="505,740 505,740 505,740" fill="none"/>
+<rect x="410.296875" y="838.5" width="24.40625" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="422.5" y="848" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">uses</text>
+<polyline points="505,820 505,820 835,820 835,740 835,740" fill="none"/>
+<polygon points="505,820 505,820 505,820 505,820" fill="#FFFFFF"/>
+<rect x="658.24658203125" y="808.5" width="23.5068359375" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="670" y="818" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">1 : 1</text>
+<polyline points="300,1020 300,1020 475,1020 475,960 475,960" fill="none"/>
+<rect x="371.12646484375" y="1008.5" width="32.7470703125" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="387.5" y="1018" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">1 : 0..1</text>
+<polyline points="300,1020 300,1020 795,1020 795,960 795,960" fill="none"/>
+<rect x="536.326171875" y="1008.5" width="22.34765625" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="547.5" y="1018" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">1 : *</text>
+<polyline points="1155,840 1155,840 475,840 475,960 475,960" fill="none" stroke-dasharray="5,3"/>
+<polyline points="475,960 475,960 475,960" fill="none"/>
+<rect x="797.8583984375" y="828.5" width="34.283203125" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="815" y="838" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">trigger</text>
+<polyline points="1155,840 1155,840 795,840 795,960 795,960" fill="none" stroke-dasharray="5,3"/>
+<polyline points="795,960 795,960 795,960" fill="none"/>
+<rect x="965.9462890625" y="828.5" width="18.107421875" height="13.5" fill="#FFFFFF" stroke="none"/>
+<text x="975" y="838" font-size="9.5" text-anchor="middle" fill="#000000" stroke="none">DB</text>
+</g></svg>

@@ -1,0 +1,98 @@
+@startuml sequence-doctor-profile
+' Sequence Diagram Profil Dokter (Doctor Profile) - PIXEL-T
+
+title Sequence Diagram Profil Dokter (Doctor Profile) - PIXEL-T
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipant underline false
+skinparam roundcorner 5
+
+skinparam participant {
+  BackgroundColor #DCE9F7
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam database {
+  BackgroundColor #DCE9F7
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam sequence {
+  ArrowColor #2E5E9E
+  LifeLineBorderColor #2E5E9E
+  LifeLineBackgroundColor #EEF5FC
+  GroupBorderColor #2E5E9E
+  GroupBackgroundColor #EEF5FC
+  GroupHeaderFontColor #172B4D
+}
+
+actor "Dokter / Tenaga Medis" as User
+participant "Halaman Doctor Profile\n(React)" as Profile
+participant "Supabase Auth" as Auth
+participant "Flask API\n+ AnalysisService" as API
+database "Supabase Database" as Database
+participant "Supabase Storage" as Storage
+
+User -> Profile: Membuka /profile
+
+par Memuat profil
+  Profile -> Database: Baca doctor_profiles\nberdasarkan user_id (RLS)
+  alt Data profil tersedia
+    Database --> Profile: Data profil
+  else Data tidak tersedia / query gagal
+    Database --> Profile: Tidak ada data / error
+    Profile -> Profile: Gunakan metadata user\nsebagai fallback
+  end
+else Memuat aktivitas
+  Profile -> API: GET /api/history\n(access token)
+  API -> Auth: Verifikasi token
+  Auth --> API: User terautentikasi
+  API -> Database: Ambil maksimal 20 riwayat terbaru
+  Database --> API: Daftar riwayat
+  opt Untuk riwayat bergambar
+    API -> Storage: Buat signed URL thumbnail
+    Storage --> API: URL thumbnail
+  end
+  API --> Profile: Daftar riwayat
+  Profile -> Profile: Hitung statistik dan pilih\n3 riwayat terbaru
+end
+Profile --> User: Tampilkan profil dan aktivitas
+
+opt Mengedit profil
+  User -> Profile: Pilih Edit Profile
+  Profile --> User: Tampilkan form 5 tab\nPersonal, Professional, Education,\nExperience, Bio
+  User -> Profile: Ubah data dan pilih Simpan
+  Profile -> Profile: Validasi data
+
+  alt Data tidak valid
+    Profile --> User: Tampilkan pesan validasi
+  else Data valid
+    Profile -> Database: Upsert doctor_profiles\n(onConflict: user_id)
+    Database --> Profile: Hasil upsert
+    Profile -> Auth: updateUser(full_name,\ndoctor_profile)
+    Auth --> Profile: Hasil pembaruan metadata
+
+    alt Minimal satu penyimpanan berhasil
+      Profile -> Profile: Perbarui tampilan profil
+      Profile --> User: Tampilkan pesan berhasil
+    else Kedua penyimpanan gagal
+      Profile --> User: Tampilkan pesan gagal menyimpan
+    end
+  end
+end
+
+note over Profile,Database
+  Profil dibaca dan disimpan langsung dari frontend
+  melalui Supabase client, bukan melalui Flask API.
+end note
+
+@enduml

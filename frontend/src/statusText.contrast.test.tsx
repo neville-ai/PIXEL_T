@@ -204,3 +204,80 @@ describe('P2-01: perilaku DOM yang dapat diakses tetap', () => {
     expect(input.className).toContain('focus:ring-semantic-error/30');
   });
 });
+
+// ---------------------------------------------------------------------------
+// P-15: Input field error association (aria-invalid + aria-describedby)
+// ---------------------------------------------------------------------------
+describe('P-15: Input field error association', () => {
+  it('Input with error has aria-invalid="true"', () => {
+    render(<Input label="Email address" error="Wajib diisi." />);
+
+    const input = screen.getByLabelText('Email address');
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('Input with error has aria-describedby pointing to error element', () => {
+    render(<Input label="Email address" error="Wajib diisi." />);
+
+    const input = screen.getByLabelText('Email address');
+    const describedBy = input.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+
+    const errorId = describedBy!.split(' ').find((id) => id.startsWith(':r')) ?? describedBy;
+    const errorEl = document.getElementById(errorId!);
+    expect(errorEl).not.toBeNull();
+    expect(errorEl?.textContent).toBe('Wajib diisi.');
+  });
+
+  it('Input without error has no aria-invalid or aria-describedby for error', () => {
+    render(<Input label="Email address" />);
+
+    const input = screen.getByLabelText('Email address');
+    expect(input.getAttribute('aria-invalid')).toBeNull();
+    expect(input.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('Input with helperText but no error has aria-describedby for helper', () => {
+    render(<Input label="Email address" helperText="Enter your email" />);
+
+    const input = screen.getByLabelText('Email address');
+    const describedBy = input.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+
+    const helperEl = document.getElementById(describedBy!);
+    expect(helperEl).not.toBeNull();
+    expect(helperEl?.textContent).toBe('Enter your email');
+  });
+
+  it('Two Input instances with errors receive distinct error IDs', () => {
+    render(
+      <div>
+        <Input label="Email" error="Email error" />
+        <Input label="Password" error="Password error" />
+      </div>
+    );
+
+    const emailInput = screen.getByLabelText('Email');
+    const passwordInput = screen.getByLabelText('Password');
+
+    const emailDescribedBy = emailInput.getAttribute('aria-describedby');
+    const passwordDescribedBy = passwordInput.getAttribute('aria-describedby');
+
+    expect(emailDescribedBy).toBeTruthy();
+    expect(passwordDescribedBy).toBeTruthy();
+    expect(emailDescribedBy).not.toBe(passwordDescribedBy);
+  });
+
+  it('Existing label association and styling assertions still pass', () => {
+    render(<Input label="Email address" error="Wajib diisi." />);
+
+    const message = screen.getByText('Wajib diisi.');
+    expect(message.className).toContain('text-badgeText-error');
+    expect(message.className).toContain('dark:text-badgeText-error-dark');
+    expect(message.className).not.toContain('text-semantic-error');
+
+    const input = screen.getByLabelText('Email address');
+    expect(input.className).toContain('border-semantic-error');
+    expect(input.className).toContain('focus:ring-semantic-error/30');
+  });
+});

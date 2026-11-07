@@ -31,7 +31,7 @@ export const Button: React.FC<ButtonProps> = ({
   const variantStyles = {
     primary: 'bg-primary-900 text-white hover:bg-primary-800 active:bg-primary-700 focus:ring-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-600',
     secondary: 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200 active:bg-neutral-300 focus:ring-neutral-400 dark:bg-dark-elevated dark:text-dark-text dark:hover:bg-dark-border',
-    accent: 'bg-accent-600 text-white hover:bg-accent-700 active:bg-accent-800 focus:ring-accent-500 dark:bg-accent-500 dark:hover:bg-accent-600 dark:text-neutral-950',
+    accent: 'bg-accent-600 text-white hover:bg-accent-700 active:bg-accent-700 focus:ring-accent-500 dark:bg-accent-500 dark:hover:bg-accent-600 dark:text-neutral-950',
     outline: 'border border-neutral-300 text-neutral-900 bg-transparent hover:bg-neutral-100 focus:ring-primary-700 dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-elevated',
     ghost: 'text-neutral-700 hover:bg-neutral-100 focus:ring-primary-700 dark:text-neutral-300 dark:hover:bg-dark-elevated',
     danger: 'bg-semantic-error text-white hover:opacity-90 focus:ring-semantic-error',

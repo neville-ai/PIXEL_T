@@ -24,6 +24,12 @@ class ModelService:
         self._model: torch.nn.Module | None = None
         self._device: torch.device | None = None
         self._lock = Lock()
+        self._load_count = 0
+        self._last_load_duration: float | None = None
+
+    @property
+    def load_count(self) -> int:
+        return self._load_count
 
     @property
     def device(self) -> torch.device:
@@ -58,6 +64,8 @@ class ModelService:
         with self._lock:
             if self._model is not None:
                 return self._model
+            import time
+            load_start = time.perf_counter()
             try:
                 checkpoint_path = self.config.checkpoint_path
                 if not checkpoint_path.is_file():
@@ -79,6 +87,10 @@ class ModelService:
                 raise
             except (OSError, RuntimeError, ValueError, KeyError) as error:
                 raise ModelLoadError("MODEL_LOAD_ERROR") from error
+            finally:
+                self._load_count += 1
+                self._last_load_duration = time.perf_counter() - load_start
+                print(f"[TIMING] model_load_count={self._load_count} duration_ms={self._last_load_duration * 1000:.1f} device={self.device}")
 
     def metadata(self) -> dict[str, Any]:
         self.load()

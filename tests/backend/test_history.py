@@ -100,6 +100,12 @@ def history_client(client, monkeypatch):
         user=SimpleNamespace(id=token.removesuffix("-token"), email=None, role="authenticated")
     )
     monkeypatch.setattr(auth_module, "get_supabase_client", lambda **kwargs: auth_client)
+    # Simulate approved doctor role for require_approved_doctor decorator
+    monkeypatch.setattr(
+        auth_module,
+        "_get_user_role_and_status",
+        lambda user_id: {"role": "doctor", "account_status": "approved"},
+    )
     return client
 
 

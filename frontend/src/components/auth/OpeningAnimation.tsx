@@ -184,7 +184,6 @@ export const OpeningAnimation: React.FC<OpeningAnimationProps> = ({ stage, targe
   return (
     <div className="pixel-t-intro" data-stage={stage} aria-hidden="true" role="presentation">
       <div className="pixel-t-intro__bg pixel-t-navy-surface" />
-      <div className="pixel-t-intro__grid" aria-hidden="true" />
       <div className="pixel-t-intro__glow" aria-hidden="true" />
 
       <div ref={logoRef} className={logoClassName}>

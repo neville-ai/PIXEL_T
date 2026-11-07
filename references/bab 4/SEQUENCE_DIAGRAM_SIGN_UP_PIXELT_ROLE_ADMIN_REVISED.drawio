@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="OpenCode" version="24.0.0" type="device">
+  <diagram name="Sequence Diagram Sign Up PIXEL-T Admin Doctor Revised" id="seq-signup-admin">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1260" pageHeight="920" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="Pengguna" value="Pengguna" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="0" y="30" width="140" height="42" as="geometry"/>
+        </mxCell>
+        <mxCell id="Pengguna_line" value="" style="shape=line;verticalLabelPosition=middle;html=1;verticalAlign=top;endArrow=none;startArrow=none;strokeColor=#000000;fontColor=#000000;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="70" y="72" width="1" height="808" as="geometry"/>
+        </mxCell>
+        <mxCell id="Register_Page_(Register.tsx)" value="Register Page
+(Register.tsx)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="220" y="30" width="140" height="42" as="geometry"/>
+        </mxCell>
+        <mxCell id="Register_Page_(Register.tsx)_line" value="" style="shape=line;verticalLabelPosition=middle;html=1;verticalAlign=top;endArrow=none;startArrow=none;strokeColor=#000000;fontColor=#000000;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="290" y="72" width="1" height="808" as="geometry"/>
+        </mxCell>
+        <mxCell id="AuthContext_(signUp)" value="AuthContext
+(signUp)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="440" y="30" width="140" height="42" as="geometry"/>
+        </mxCell>
+        <mxCell id="AuthContext_(signUp)_line" value="" style="shape=line;verticalLabelPosition=middle;html=1;verticalAlign=top;endArrow=none;startArrow=none;strokeColor=#000000;fontColor=#000000;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="510" y="72" width="1" height="808" as="geometry"/>
+        </mxCell>
+        <mxCell id="AuthService_(registerUser)" value="AuthService
+(registerUser)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="660" y="30" width="140" height="42" as="geometry"/>
+        </mxCell>
+        <mxCell id="AuthService_(registerUser)_line" value="" style="shape=line;verticalLabelPosition=middle;html=1;verticalAlign=top;endArrow=none;startArrow=none;strokeColor=#000000;fontColor=#000000;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="730" y="72" width="1" height="808" as="geometry"/>
+        </mxCell>
+        <mxCell id="Supabase_Auth" value="Supabase Auth" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="880" y="30" width="140" height="42" as="geometry"/>
+        </mxCell>
+        <mxCell id="Supabase_Auth_line" value="" style="shape=line;verticalLabelPosition=middle;html=1;verticalAlign=top;endArrow=none;startArrow=none;strokeColor=#000000;fontColor=#000000;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="950" y="72" width="1" height="808" as="geometry"/>
+        </mxCell>
+        <mxCell id="DB_Trigger_(doctor_profiles)" value="DB Trigger
+(doctor_profiles)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="30" width="140" height="42" as="geometry"/>
+        </mxCell>
+        <mxCell id="DB_Trigger_(doctor_profiles)_line" value="" style="shape=line;verticalLabelPosition=middle;html=1;verticalAlign=top;endArrow=none;startArrow=none;strokeColor=#000000;fontColor=#000000;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="72" width="1" height="808" as="geometry"/>
+        </mxCell>
+        <mxCell id="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="Pengguna" target="Register_Page_(Register.tsx)">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="70" y="120"/><mxPoint x="220" y="120"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="Register_Page_(Register.tsx)" target="Pengguna">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="162"/><mxPoint x="70" y="162"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="Pengguna" target="Register_Page_(Register.tsx)">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="70" y="204"/><mxPoint x="220" y="204"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s4_h" value="4: validasi input" style="text;html=1;strokeColor=none;fillColor=none;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="224" y="232" width="200" height="22" as="geometry"/>
+        </mxCell>
+        <mxCell id="s4_s" value="" style="shape=umlSelf;whiteSpace=wrap;html=1;strokeColor=#000000;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="220" y="246" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="s5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="Register_Page_(Register.tsx)" target="AuthContext_(signUp)">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="296"/><mxPoint x="440" y="296"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="AuthContext_(signUp)" target="AuthService_(registerUser)">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="440" y="338"/><mxPoint x="660" y="338"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="AuthService_(registerUser)" target="Supabase_Auth">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="660" y="380"/><mxPoint x="880" y="380"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s8_h" value="8: buat auth.users" style="text;html=1;strokeColor=none;fillColor=none;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="884" y="408" width="200" height="22" as="geometry"/>
+        </mxCell>
+        <mxCell id="s8_s" value="" style="shape=umlSelf;whiteSpace=wrap;html=1;strokeColor=#000000;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="880" y="422" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="s9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="Supabase_Auth" target="DB_Trigger_(doctor_profiles)">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="880" y="472"/><mxPoint x="1100" y="472"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s10_h" value="10: INSERT doctor_profiles (role=doctor, status=pending)" style="text;html=1;strokeColor=none;fillColor=none;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="1104" y="500" width="260" height="22" as="geometry"/>
+        </mxCell>
+        <mxCell id="s10_s" value="" style="shape=umlSelf;whiteSpace=wrap;html=1;strokeColor=#000000;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="514" width="180" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="s11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="Supabase_Auth" target="AuthService_(registerUser)">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="880" y="576"/><mxPoint x="660" y="576"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="AuthService_(registerUser)" target="AuthContext_(signUp)">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="660" y="618"/><mxPoint x="440" y="618"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s13_h" value="13: set session (jika ada); role=doctor, status=pending" style="text;html=1;strokeColor=none;fillColor=none;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="444" y="646" width="260" height="22" as="geometry"/>
+        </mxCell>
+        <mxCell id="s13_s" value="" style="shape=umlSelf;whiteSpace=wrap;html=1;strokeColor=#000000;fontColor=#000000;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="440" y="660" width="180" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="s14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="AuthContext_(signUp)" target="Register_Page_(Register.tsx)">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="440" y="722"/><mxPoint x="220" y="722"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="Register_Page_(Register.tsx)" target="Pengguna">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="764"/><mxPoint x="70" y="764"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="note" value="Jika session null -&gt; requiresEmailConfirmation=true (konfirmasi email). Tidak ada pemanggilan Flask API. Akun Admin tidak dibuat di sini." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;dashed=1;fontColor=#000000;fontSize=9;align=left;verticalAlign=top;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="40" y="700" width="330" height="130" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

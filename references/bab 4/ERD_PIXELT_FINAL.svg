@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="900" viewBox="0 0 1280 900">
+  <rect x="0" y="0" width="1280" height="900" fill="#FFFFFF"/>
+  <line x1="230" y1="177" x2="230" y2="300" stroke="#000000" stroke-width="1.5"/>
+  <line x1="390" y1="118.5" x2="800" y2="118.5" stroke="#000000" stroke-width="1.5"/>
+  <text x="238" y="200" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#000000">1</text>
+  <text x="238" y="294" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#000000">0..1</text>
+  <text x="400" y="116" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#000000">1</text>
+  <text x="766" y="116" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#000000">*</text>
+  <g>
+    <rect x="70" y="60" width="320" height="117" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/>
+    <rect x="70" y="60" width="320" height="26" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+    <text x="230" y="77" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#000000">User (auth.users)</text>
+    <text x="80" y="98.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">id : uuid (PK)</text>
+    <text x="80" y="115.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">email : varchar</text>
+    <text x="80" y="132.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">raw_user_meta_data : jsonb</text>
+    <text x="80" y="149.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">raw_app_meta_data : jsonb</text>
+    <text x="80" y="166.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">created_at : timestamptz</text>
+  </g>
+  <g>
+    <rect x="70" y="300" width="320" height="525" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/>
+    <rect x="70" y="300" width="320" height="26" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+    <text x="230" y="317" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#000000">doctor_profiles</text>
+    <text x="80" y="338.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">id : uuid (PK)</text>
+    <text x="80" y="355.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">user_id : uuid (FK, UNIQUE)</text>
+    <text x="80" y="372.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">full_name : text</text>
+    <text x="80" y="389.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">phone : text</text>
+    <text x="80" y="406.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">birth_date : date</text>
+    <text x="80" y="423.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">city : text</text>
+    <text x="80" y="440.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">profession_category : text</text>
+    <text x="80" y="457.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">academic_title : text</text>
+    <text x="80" y="474.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">primary_specialty : text</text>
+    <text x="80" y="491.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">subspecialty : text</text>
+    <text x="80" y="508.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">clinical_focus : text</text>
+    <text x="80" y="525.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">hospital : text</text>
+    <text x="80" y="542.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">department : text</text>
+    <text x="80" y="559.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">clinical_role : text</text>
+    <text x="80" y="576.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">years_experience : text</text>
+    <text x="80" y="593.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">practice_address : text</text>
+    <text x="80" y="610.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">str_number : text</text>
+    <text x="80" y="627.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">is_verified : boolean</text>
+    <text x="80" y="644.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">bio : text</text>
+    <text x="80" y="661.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">education : jsonb</text>
+    <text x="80" y="678.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">experience : jsonb</text>
+    <text x="80" y="695.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">avatar_url : text</text>
+    <text x="80" y="712.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">role : text</text>
+    <text x="80" y="729.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">account_status : text</text>
+    <text x="80" y="746.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">approved_by : uuid (FK)</text>
+    <text x="80" y="763.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">approved_at : timestamptz</text>
+    <text x="80" y="780.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">rejection_reason : text</text>
+    <text x="80" y="797.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">created_at : timestamptz</text>
+    <text x="80" y="814.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">updated_at : timestamptz</text>
+  </g>
+  <g>
+    <rect x="800" y="60" width="430" height="695" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/>
+    <rect x="800" y="60" width="430" height="26" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+    <text x="1015" y="77" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#000000">analyses</text>
+    <text x="810" y="98.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">id : uuid (PK)</text>
+    <text x="810" y="115.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">user_id : uuid (FK)</text>
+    <text x="810" y="132.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">status : varchar(20)</text>
+    <text x="810" y="149.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">original_image_path : text</text>
+    <text x="810" y="166.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">original_filename : text</text>
+    <text x="810" y="183.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">original_mime_type : varchar(50)</text>
+    <text x="810" y="200.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">original_width : integer</text>
+    <text x="810" y="217.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">original_height : integer</text>
+    <text x="810" y="234.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">binary_mask_path : text</text>
+    <text x="810" y="251.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">segmentation_overlay_path : text</text>
+    <text x="810" y="268.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">segmentation_status : varchar(20)</text>
+    <text x="810" y="285.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">area_pixels : integer</text>
+    <text x="810" y="302.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">area_ratio : numeric(7,4)</text>
+    <text x="810" y="319.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">bounding_width_pixels : integer</text>
+    <text x="810" y="336.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">bounding_height_pixels : integer</text>
+    <text x="810" y="353.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">gradcam_heatmap_path : text</text>
+    <text x="810" y="370.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">gradcam_overlay_path : text</text>
+    <text x="810" y="387.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">gradcam_target_layer : varchar(100)</text>
+    <text x="810" y="404.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">gradcam_method : varchar(50)</text>
+    <text x="810" y="421.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">gradcam_config_version : varchar(50)</text>
+    <text x="810" y="438.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">gradcam_status : varchar(20)</text>
+    <text x="810" y="455.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">model_architecture : varchar(100)</text>
+    <text x="810" y="472.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">model_version : varchar(50)</text>
+    <text x="810" y="489.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">model_config_version : varchar(50)</text>
+    <text x="810" y="506.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">model_input_size : integer</text>
+    <text x="810" y="523.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">model_threshold : numeric(4,3)</text>
+    <text x="810" y="540.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">model_checkpoint_sha256 : varchar(64)</text>
+    <text x="810" y="557.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">tta_enabled : boolean</text>
+    <text x="810" y="574.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">tta_scales : jsonb</text>
+    <text x="810" y="591.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">tta_orientations : jsonb</text>
+    <text x="810" y="608.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">postprocessing_enabled : boolean</text>
+    <text x="810" y="625.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">summary_text : text</text>
+    <text x="810" y="642.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">error_code : varchar(50)</text>
+    <text x="810" y="659.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">error_message : text</text>
+    <text x="810" y="676.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">current_step : varchar(64)</text>
+    <text x="810" y="693.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">progress_percent : smallint</text>
+    <text x="810" y="710.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">created_at : timestamptz</text>
+    <text x="810" y="727.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">completed_at : timestamptz</text>
+    <text x="810" y="744.5" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#000000">updated_at : timestamptz</text>
+  </g>
+</svg>

@@ -8,15 +8,30 @@ type TimelineModule = typeof import('./openingTimeline');
  */
 let t: TimelineModule;
 
+// Keep references to the original Storage methods so we can restore them
+// explicitly. vi.unstubAllGlobals() does not reliably restore prototype
+// spies in this project's Vitest configuration, so we do it by hand.
+const _origStorageGetItem = Storage.prototype.getItem;
+const _origStorageSetItem = Storage.prototype.setItem;
+const _origStorageRemoveItem = Storage.prototype.removeItem;
+
 beforeEach(async () => {
   vi.resetModules();
   window.sessionStorage.clear();
   window.localStorage.clear();
+  // Restore prototype methods to guard against leakage from previous tests.
+  Storage.prototype.getItem = _origStorageGetItem;
+  Storage.prototype.setItem = _origStorageSetItem;
+  Storage.prototype.removeItem = _origStorageRemoveItem;
   t = await import('./openingTimeline');
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  // Extra safety net: re-restore prototype methods.
+  Storage.prototype.getItem = _origStorageGetItem;
+  Storage.prototype.setItem = _origStorageSetItem;
+  Storage.prototype.removeItem = _origStorageRemoveItem;
 });
 
 describe('timeline constants — 10 stages, nominal 10 seconds', () => {

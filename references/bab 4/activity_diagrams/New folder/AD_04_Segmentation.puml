@@ -1,0 +1,69 @@
+@startuml AD_04_Segmentation
+' =====================================================================
+'  Activity Diagram Segmentation - PIXEL-T (Bab IV Skripsi)
+'  Diverifikasi dari: analysis_service.py (_execute_pipeline),
+'  ai/inference/pipeline.py, ai/inference/gradcam.py, NewAnalysis.tsx
+'  Gaya Desain Visual: Mengikuti referensi activity_diagram_segmentation_contoh.png
+'  (#3DADFF blue, teks putih tebal, sudut rounded corner 8)
+' =====================================================================
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultTextAlignment center
+skinparam shadowing false
+
+skinparam activity {
+  BackgroundColor #3DADFF
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #FFFFFF
+  FontSize 11
+  FontStyle bold
+  Corner 8
+  DiamondBackgroundColor #3DADFF
+  DiamondBorderColor #2D2D2D
+  DiamondFontColor #FFFFFF
+  DiamondFontSize 10
+  DiamondFontStyle bold
+  StartColor #3DADFF
+  EndColor #3DADFF
+}
+
+skinparam ArrowColor #2D2D2D
+skinparam ArrowFontColor #000000
+skinparam ArrowFontSize 10
+
+skinparam partition {
+  BackgroundColor transparent
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #000000
+  FontSize 13
+  FontStyle bold
+}
+
+|User|
+start
+repeat :User menekan\n"Start Segmentation";
+
+|System|
+:Memvalidasi gambar\nkolonoskopi;
+
+if (Gambar kolonoskopi\nsudah valid?) then (Tidak)
+  :Mengirim pesan\n"Not Colonoscopy Image";
+  |User|
+  :Menerima pesan\n"Not Colonoscopy Image";
+else (Ya)
+  |System|
+  :Melakukan proses\nbinary segmentation;
+  :Model memberikan\npenjelasan Grad-CAM;
+  :Menyimpan hasil segmentasi\n& penjelasan model;
+  :Mengirim hasil segmentasi\n& penjelasan model;
+
+  |User|
+  :Menerima hasil segmentasi\n& penjelasan model;
+  stop
+endif
+
+repeat while ()
+@enduml

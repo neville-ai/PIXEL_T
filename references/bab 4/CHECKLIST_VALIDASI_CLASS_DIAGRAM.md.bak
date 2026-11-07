@@ -1,0 +1,114 @@
+# CHECKLIST VALIDASI CLASS DIAGRAM — PIXEL-T
+
+**Tanggal:** 2026-11-02  
+**Objek:** `CLASS_DIAGRAM_FINAL_PIXELT.puml` / `.png` / `.svg`  
+**Metode:** Verifikasi terhadap bukti yang dapat dicek (kode/path/baris). Status: ✅ = terverifikasi, ⚠️ = sebagian/catat, ⏳ = belum diverifikasi.
+
+---
+
+## A. Checklist Eksekusi & Render
+
+| No | Kriteria | Status | Bukti |
+|---|---|---|---|
+| A-1 | File `.puml` tersedia dan tidak kosong | ✅ | `references\bab 4\CLASS_DIAGRAM_FINAL_PIXELT.puml` |
+| A-2 | Render SVG sukses (HTTP 200, content-type image/svg+xml) | ✅ | Status 200; `HAS_SYNTAX_ERROR: false`; 80,958 bytes |
+| A-3 | Render PNG sukses (HTTP 200, content-type image/png) | ✅ | Status 200; 130,448 bytes |
+| A-4 | Output bukan halaman welcome/error PlantUML | ✅ | `HAS_WELCOME: false` |
+| A-5 | Diagram telah diverifikasi secara visual | ✅ | Kedua file dibaca sebagai gambar |
+| A-6 | Berhasil dirender bukan klaim tanpa pemeriksaan visual | ✅ | Verifikasi langkah A-5 |
+
+---
+
+## B. Checklist Kesesuaian Isi (Ground Truth)
+
+| No | Kriteria | Status | Bukti |
+|---|---|---|---|
+| B-1 | Semua kelas punya lokasi kode yang dapat dicek | ✅ | `MAPPING_CLASS_DIAGRAM_TO_CODE.md` bagian 1 (19 kelas) |
+| B-2 | Semua metode punya baris/tanda tangan yang cocok | ✅ | Tabel bagian 1 |
+| B-3 | `AnalysisProgressReporter` dimodelkan (F-02) | ✅ | `analysis_service.py:64`; relasi `..> AnalysisRepository` |
+| B-4 | `AnalysisController` dimodelkan (F-03) | ✅ | `analysis_controller.py:7-96` |
+| B-5 | `APIError` dimodelkan (F-03) | ✅ | `errors.py:8-23` |
+| B-6 | `AnalysisJobQueue` dimodelkan | ✅ | `analysis_service.py:150` |
+| B-7 | AI module `<<module>>` bersifat stateless | ✅ | `pipeline.py`, `segmentation.py`, `postprocessing.py`, `gradcam.py` |
+| B-8 | Entitas DB sesuai migrasi (subset) | ✅ | `001-004_*.sql`; subset ilustratif |
+| B-9 | Frontend diwakili tanpa setiap komponen React jadi kelas | ✅ | Paket `Frontend` dengan 3 kelas layanan (bukan per komponen) |
+| B-10 | Tidak ada nama/path/kode yang direkayasa | ✅ | Seluruh klaim punya bukti kode |
+
+---
+
+## C. Checklist Konsistensi Relasi
+
+| No | Relasi | Status | Bukti |
+|---|---|---|---|
+| C-1 | `AnalysisController ..> AnalysisService : calls` | ✅ | `analysis_controller.py:10-11` |
+| C-2 | `AnalysisController ..> APIError : raises` | ✅ | `analysis_controller.py:23` |
+| C-3 | `AnalysisService *-- AnalysisRepository/StorageService/AnalysisJobQueue` | ✅ | `analysis_service.py:291-299` |
+| C-4 | `AnalysisService ..> AnalysisProgressReporter` | ✅ | `analysis_service.py:64` |
+| C-5 | `AnalysisProgressReporter ..> AnalysisRepository` | ✅ | `analysis_service.py:126` |
+| C-6 | `AnalysisService ..> AIInferenceFunctions` | ✅ | `analysis_service.py:293` |
+| C-7 | `AIInferenceFunctions ..> ModelService` | ✅ | `segmentation.py:98`; `gradcam.py:99` |
+| C-8 | `PipelineResult *-- GradCAMResult` | ✅ | `pipeline.py:63-70` |
+| C-9 | `ModelService --> ModelConfig` | ✅ | `model_service.py:22` |
+| C-10 | `auth_users "1" -- "0..*" analyses` | ✅ | `001:17` |
+| C-11 | `auth_users "1" -- "0..1" doctor_profiles` | ✅ | `004:12,46` |
+| C-12 | `AnalysisClient ..> AnalysisController` | ✅ | `analysis.ts` + `analysis_controller.py:13` |
+| C-13 | `AuthContext ..> auth_users` | ✅ | `auth.ts:193-222` |
+| C-14 | `DoctorProfileService ..> doctor_profiles` | ✅ | `profile.ts:131-299` |
+
+---
+
+## D. Checklist Kesesuaian Gaya (Referensi `class_diagram_contoh.png`)
+
+| No | Elemen gaya | Status | Bukti |
+|---|---|---|---|
+| D-1 | Monokrom hitam/putih | ✅ | `skinparam monochrome true` |
+| D-2 | Nama kelas bold + separator | ✅ | `FontStyle bold` |
+| D-3 | Visibilitas `+` public, `-` private | ✅ | `+`/`-` |
+| D-4 | Format `nama: tipe` | ✅ | Semua atribut/metode |
+| D-5 | Tipe pengembalian pada metode | ✅ | `: String`, `: Boolean`, dll. |
+| D-6 | Relasi sederhana + multiplisitas | ✅ | `..>`, `*--`, `--` dengan `1`/`0..*`/`0..1` |
+| D-7 | Tanpa warna / ikon | ✅ | Tidak ada ikon lingkaran warna |
+| D-8 | Tanpa catatan kuning | ✅ | Tidak ada `note` |
+| D-9 | Spasi luas (high whitespace) | ✅ | `hide empty members`, `left to right direction` |
+| D-10 | Package hanya untuk Frontend | ✅ | Satu `package "Frontend"` |
+
+---
+
+## E. Checklist Temuan Major & Minor
+
+| No | Temuan | Kategori asli | Status perbaikan | Bukti |
+|---|---|---|---|---|
+| E-1 | Frontend tidak dimodelkan (F-01) | **MAJOR** | ✅ Diperbaiki — paket `Frontend` (bukan per komponen) | `frontend\src\services\**`, `AuthContext.tsx` |
+| E-2 | `AnalysisProgressReporter` tidak dimodelkan (F-02) | **MAJOR** | ✅ Diperbaiki — kelas + relasi ditambahkan | `analysis_service.py:64` |
+| E-3 | Layer HTTP tidak lengkap (F-03) | Minor | ✅ Diperbaiki — `APIError` + relasi | `errors.py:8` |
+| E-4 | Subset atribut entitas (F-04) | Minor | ✅ Dicatat sebagai subset ilustratif + rujuk ERD | `001-004_*.sql` |
+| E-5 | Notasi `<<module>>`/`Callable` (F-05) | Minor | ✅ Dipertahankan + dicatat | `pipeline.py` |
+| E-6 | `ModelConfig` subset (F-06) | Minor | ✅ Dicatat | `model_config.py:18` |
+
+**Catatan kepatuhan:** Temuan Major (E-1, E-2) dicatat sebagai **Major** (tidak disamarkan sebagai minor) dan dinyatakan **sudah diperbaiki**. Temuan Minor (E-3..E-6) diperbaiki/dicatat pada narasi dan mapping.
+
+---
+
+## F. Checklist Kepatuhan Aturan
+
+| No | Aturan | Status | Bukti |
+|---|---|---|---|
+| F-1 | Sumber kode/diagram lama tidak diubah | ✅ | Hanya file baru yang dibuat |
+| F-2 | Tidak ada kredensial bocor | ✅ | Tidak ada `SUPABASE_URL`/`KEY` |
+| F-3 | "not found" ≠ "tidak ada" | ✅ | Dinyatakan pada keterbatasan laporan |
+| F-4 | Tidak memodelkan setiap React component jadi kelas | ✅ | Paket `Frontend` (3 kelas) |
+| F-5 | Tidak klaim "final tanpa revisi" | ✅ | Keputusan: **LAYAK DENGAN REVISI MINOR** |
+| F-6 | Tidak klaim render sukses tanpa pemeriksaan visual | ✅ | Render diibaca ulang sebagai gambar |
+| F-7 | Setiap klaim punya bukti yang dapat dicek | ✅ | Path/fungsi/baris di seluruh laporan |
+
+---
+
+## G. Keputusan
+
+**STATUS: LAYAK DENGAN REVISI MINOR**
+
+- ✅ Render `.puml` → `.svg` → `.png` **berhasil dan terverifikasi visual**.
+- ✅ Gaya visual **sesuai** `class_diagram_contoh.png` (monokrom, `+`, `nama: tipe`, spasi luas, tanpa note/warna).
+- ✅ Temuan **Major** F-01 dan F-02 **sudah diperbaiki** dalam diagram final.
+- ✅ Semua kelas dan relasi memiliki **bukti kode**.
+- ⏳ Masih menunggu: verifikasi silang narasi Bab IV terhadap penomoran gambar final skripsi (F-07) — dilakukan saat penyusunan akhir naskah.

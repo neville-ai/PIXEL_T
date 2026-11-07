@@ -1,0 +1,98 @@
+@startuml AD_06_Doctor_Profile
+' =====================================================================
+'  AD-06 Activity Diagram Profil Dokter (Doctor Profile) - PIXEL-T
+'  Diverifikasi dari:
+'    - frontend/src/pages/profile/DoctorProfile.tsx (fetchDoctorProfile, listHistory, modal edit, saveDoctorProfile)
+'    - frontend/src/services/profile.ts (fetchDoctorProfile, validateProfileData, saveDoctorProfile)
+'    - frontend/src/services/analysis.ts (listHistory -> GET /api/history)
+'    - backend/app/routes/analysis.py (list_history)
+'    - Supabase database (tabel doctor_profiles & auth metadata sync)
+'  Standar Desain Visual: #3DADFF, bold white, Corner 8, 2 swimlanes
+'  Catatan UML: Seluruh stop node berada pada swimlane |User| karena use case
+'               berakhir dari perspektif pengguna.
+' =====================================================================
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultTextAlignment center
+skinparam shadowing false
+
+skinparam activity {
+  BackgroundColor #3DADFF
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #FFFFFF
+  FontSize 11
+  FontStyle bold
+  Corner 8
+  DiamondBackgroundColor #3DADFF
+  DiamondBorderColor #2D2D2D
+  DiamondFontColor #FFFFFF
+  DiamondFontSize 10
+  DiamondFontStyle bold
+  StartColor #3DADFF
+  EndColor #3DADFF
+}
+
+skinparam ArrowColor #2D2D2D
+skinparam ArrowFontColor #000000
+skinparam ArrowFontSize 10
+
+skinparam partition {
+  BackgroundColor transparent
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #000000
+  FontSize 13
+  FontStyle bold
+}
+
+|User|
+start
+:Membuka halaman\nProfil Dokter;
+
+|System|
+:Mengambil data profil dari Supabase\n& riwayat analisis dari backend API;
+:Menampilkan halaman profil dokter\n& ringkasan aktivitas klinis;
+
+|User|
+if (Tindakan pada profil?) then (Lihat Saja)
+  :Melihat rincian informasi dokter\n& statistik riwayat analisis;
+  stop
+endif
+
+:Menekan tombol\n"Edit Profile";
+
+|System|
+:Menampilkan modal dialog\nformulir Edit Profile;
+
+|User|
+:Mengisi pembaruan data profil\n(identitas, profesional, bio);
+
+if (Aksi formulir?) then (Batal)
+  |System|
+  :Menutup modal tanpa\nmenyimpan perubahan;
+  |User|
+  stop
+endif
+
+:Menekan tombol\n"Simpan Profil";
+
+|System|
+:Memvalidasi data input profil dokter;
+
+if (Data formulir valid?) then (Tidak)
+  :Menampilkan pesan error validasi\npada modal formulir;
+  |User|
+  :Melihat notifikasi error\npada formulir;
+  stop
+else (Ya)
+  |System|
+  :Menyimpan ke tabel doctor_profiles\n& sinkronisasi user metadata;
+  :Memperbarui tampilan antarmuka profil\n& menampilkan notifikasi sukses;
+  :Menutup modal formulir;
+  |User|
+  :Melihat profil yang\ntelah diperbarui;
+  stop
+endif
+@enduml

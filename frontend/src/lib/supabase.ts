@@ -14,5 +14,15 @@ export const isSupabaseConfigured = Boolean(
 /**
  * Shared singleton Supabase client for client-side operations.
  * Uses anon key only. NEVER use or expose service role key on the frontend.
+ *
+ * Auto-refresh token is enabled to handle token expiration during long-running
+ * analysis operations. The client will automatically refresh the access token
+ * using the refresh token stored in localStorage.
  */
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+});

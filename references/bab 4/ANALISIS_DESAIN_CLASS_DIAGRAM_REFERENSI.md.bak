@@ -1,0 +1,96 @@
+# ANALISIS DESAIN — CLASS DIAGRAM REFERENSI PIXEL-T
+
+**Objek:** `class_diagram_contoh.png`  
+**Referensi desain:** Diagram visual untuk skripsi PIXEL-T  
+**Perbandingan:** `CLASS_DIAGRAM_FINAL_PIXELT.puml` (final)  
+**Metode:** Pembacaan langsung kedua diagram sebagai gambar.
+
+---
+
+## 1. Ringkasan Karakteristik Diagram Referensi
+
+Diagram `class_diagram_contoh.png` memiliki dua karakteristik visual yang dapat dikonfirmasi langsung:
+
+1. **Komposisi dua box** (`User`, `History`) yang disusun horizontal / berdampingan, dengan jarak antar box luas.
+2. **Estetika monokrom** hitam-putih tanpa warna, tanpa ikon, tanpa catatan warna.
+
+Dalam diagram referensi tersebut juga terlihat:
+
+- Nama kelas tebal, **di tengah**, dipisah garis tipis horizontal.
+- Visibilitas ditandai `+` (public).
+- Atribut/metode ditulis dalam format `nama: tipe`.
+- Metode memiliki **tipe pengembalian** yang tercantum (mis. `: String`).
+- Relasi disajikan sebagai **garis asosiasi sederhana** dengan multiplisitas angka pada garis (`1`, `*` / `0..*`, `0..1`).
+- Tidak ada catatan kuning, tidak ada package berwarna, tidak ada ikon lingkaran berwarna.
+- Kepadatan rendah, whitespace tinggi.
+
+---
+
+## 2. Analisis Perbedaan dan Persamaan
+
+| Aspek | `class_diagram_contoh.png` (referensi) | `CLASS_DIAGRAM_FINAL_PIXELT.puml` (baru) | Konsistensi |
+|---|---|---|---|
+| Jumlah box | 2 | 19 kelas + 1 paket | **Bukan** persamaan — berbeda |
+| Rata-rata lebar/tinggi box | Sedang, tinggi whitespace | Bervariasi (service besar), tapi `hide empty members` menjamin tidak ada box kosong | **Ya** |
+| Monokrom | Hitam/putih | Monokrom (skinparam) | **Ya** |
+| Nama kelas bold | Ya | Ya (`FontStyle bold`) | **Ya** |
+| Nama di tengah + separator tipis | Ya | Ya | **Ya** |
+| `+` visibility | Ya | Ya | **Ya** |
+| `nama: tipe` | Ya | Ya | **Ya** |
+| Tipe return | Ya | Ya (`: String`, `: Boolean`, dll.) | **Ya** |
+| Relasi sederhana, multiplisitas | Ya | Ya (`..>`, `*--`, `--` dengan label) | **Ya** |
+| Catatan | Tidak ada | Tidak ada | **Ya** |
+| Package | Tidak ada | Satu `package "Frontend" <<package>>` | **Sangat disesuaikan** |
+| Ikon warna / lingkaran | Tidak ada | Tidak ada (stereotype teks) | **Ya** |
+| Warna | Tidak ada | Monokrom, background `#FFFFFF`, border `#000000` | **Ya** |
+
+---
+
+## 3. Desain Tidak Sesuai yang Diperbaiki
+
+Pada diagram lama `class_diagram.png` terdapat beberapa kekurangan visual desain, yang diatasi di diagram final baru:
+
+| No | Masalah desain lama | Solusi di diagram final baru |
+|---|---|---|
+| D-01 | Stereotipe dicantumkan via **ikon lingkaran berwarna** (hijau) | Stereotipe dicantumkan sebagai teks (mis. `<<controller>>`, `<<service>>`) |
+| D-02 | Ada **catatan kuning** (`note bottom of AnalysisService`) | Catatan dihapus; penjelasan ditulis di narasi Bab IV |
+| D-03 | Warna/ikon/komputerisasi visual | `skinparam monochrome true`, `FontStyle bold`, tanpa ikon |
+| D-04 | Layout padat / semua elemen berantai | `hide empty members`, `left to right direction`, `skinparam shadowing false` |
+| D-05 | Metode grup tanpa pemisah yang jelas | `--` pemisah pada kelompok atribut/metode |
+
+---
+
+## 4. Desain Sesuai Gaya Referensi
+
+| No | Elemen | Strategi desain final |
+|---|---|---|
+| S-01 | Monokrom | `skinparam monochrome true`, `BorderColor #000000`, `BackgroundColor #FFFFFF`, arrow `#000000` |
+| S-02 | Nama kelas | `FontStyle bold` di header kelas |
+| S-03 | Visibilitas | `+` public, `-` private |
+| S-04 | Format atribut/metode | `nama: Tipe` |
+| S-05 | Tipe return | Disertakan pada semua metode |
+| S-06 | Relasi | `..>`, `*--`, `--` dengan label dan multiplisitas `1` / `0..*` / `0..1` |
+| S-07 | Spasi | `hide empty members` + `left to right direction` |
+| S-08 | Catatan | Tanpa `note` di diagram final; narasi Bab IV |
+
+---
+
+## 5. Kesimpulan Desain
+
+Desain diagram final baru **sejalan** dengan `class_diagram_contoh.png` pada unsur-unsur visual yang dapat disandingkan (monokrom, `+`, `nama: tipe`, tipe return, relasi sederhana dengan multiplisitas, spasi luas). Sedangkan **jumlah dan isi** diagram final baru (19 kelas + paket frontend + entitas) **bertentangan** dengan jumlah box 2 pada referensi — namun hal ini **sah** karena referensi (`User`, `History`) adalah konsep bisnis/ilustrasi sementara, bukan representasi lengkap arsitektur PIXEL-T. Keselarasan desain ditetapkan pada **nota visual**, bukan pada **kuantitas elemen**.
+
+> **Catatan menegaskan:** Gaya visual mematuhi referensi; isi/relasi/abstraksi UML murni berasal dari implementasi PIXEL-T, bukan dari isi diagram referensi (`User`, `History`).
+
+---
+
+## 6. Render Hasil
+
+Render dilakukan melalui server remote PlantUML (`https://www.plantuml.com/plantuml/{svg,png}/`) dengan encoding deflate + base64 alfabet khusus PlantUML (custom alphabet `0-9A-Za-z-_`). Hasil:
+
+| File | Format | Status | Panjang |
+|---|---|---|---|
+| `CLASS_DIAGRAM_FINAL_PIXELT.puml` | sumber | ✅ | 8.4 KB |
+| `CLASS_DIAGRAM_FINAL_PIXELT.svg` | SVG | ✅ (STATUS 200, tanpa syntax error) | 80,958 bytes |
+| `CLASS_DIAGRAM_FINAL_PIXELT.png` | PNG | ✅ (STATUS 200, 130,448 bytes) | — |
+
+Render dianggap berhasil karena respons HTTP 200, content-type sesuai, dan keluaran bukan halaman welcome/syntax error PlantUML, serta terbaca sebagai gambar diagram (data-diagram-type `CLASS`).

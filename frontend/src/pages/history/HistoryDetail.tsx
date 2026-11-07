@@ -11,11 +11,11 @@ import { deleteAnalysis, getAnalysis, type AnalysisDetail } from '@/services/ana
 
 function segmentationLabel(detail: AnalysisDetail | null): string {
   if (!detail) return '-';
-  if (detail.analysis.status === 'failed') return 'Gagal';
-  if (detail.analysis.status === 'processing') return 'Diproses';
-  if (detail.model_analysis?.segmentation_status === 'detected') return 'Terdeteksi';
-  if (detail.model_analysis?.segmentation_status === 'not_detected') return 'Tidak Terdeteksi';
-  return 'Selesai';
+  if (detail.analysis.status === 'failed') return 'Failed';
+  if (detail.analysis.status === 'processing') return 'Processing';
+  if (detail.model_analysis?.segmentation_status === 'detected') return 'Detected';
+  if (detail.model_analysis?.segmentation_status === 'not_detected') return 'Not Detected';
+  return 'Completed';
 }
 
 export const HistoryDetail: React.FC = () => {
@@ -30,7 +30,7 @@ export const HistoryDetail: React.FC = () => {
 
   const loadDetail = useCallback(async () => {
     if (!id) {
-      setLoadError('Identifier riwayat tidak ditentukan.');
+      setLoadError('History identifier is not defined.');
       setIsLoading(false);
       return;
     }
@@ -40,7 +40,7 @@ export const HistoryDetail: React.FC = () => {
       setDetail(await getAnalysis(id));
     } catch (err) {
       setDetail(null);
-      setLoadError(err instanceof Error ? err.message : 'Gagal memuat detail riwayat.');
+      setLoadError(err instanceof Error ? err.message : 'Failed to load history details.');
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +58,7 @@ export const HistoryDetail: React.FC = () => {
       await deleteAnalysis(id);
       navigate('/history');
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Gagal menghapus riwayat pemeriksaan.');
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete history record.');
     } finally {
       setIsDeleting(false);
     }
@@ -75,33 +75,33 @@ export const HistoryDetail: React.FC = () => {
             </Link>
             <span className="text-neutral-300 dark:text-neutral-700">/</span>
             <Link to="/history" className="text-xs text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200">
-              Riwayat
+              History
             </Link>
             <span className="text-neutral-300 dark:text-neutral-700">/</span>
             <Badge variant="accent">Detail Arsip</Badge>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 dark:text-dark-text">
-              Detail Arsip Pemeriksaan
+              Examination Archive Detail
             </h1>
             <Badge variant="default" className="font-mono text-xs">
-              ID: {id || 'Tidak ditentukan'}
+              ID: {id || 'Not specified'}
             </Badge>
           </div>
           <p className="text-sm text-neutral-600 dark:text-dark-textMuted leading-relaxed">
-            Informasi riwayat metadata dan tautan akses ke visualisasi segmentasi dan Grad-CAM.
+            Examination history metadata and access links to segmentation and Grad-CAM visualizations.
           </p>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
           <Link to="/history">
             <Button variant="outline" size="sm" leftIcon={<ArrowLeft className="w-4 h-4" />}>
-              Kembali ke Riwayat
+              Back to History
             </Button>
           </Link>
           <Link to={`/analysis/${id}`}>
             <Button variant="primary" size="sm" rightIcon={<ArrowRight className="w-4 h-4" />}>
-              Buka Hasil Analisis
+              Open Analysis Result
             </Button>
           </Link>
           <Button
@@ -114,46 +114,46 @@ export const HistoryDetail: React.FC = () => {
             }}
             disabled={isLoading || detail === null}
           >
-            Hapus
+            Delete
           </Button>
         </div>
       </div>
 
       {isLoading ? (
         <LoadingState
-          title="Memuat detail riwayat"
-          description="Mengambil metadata sesi analisis dari server."
+          title="Loading history details"
+          description="Fetching analysis session metadata from the server."
         />
       ) : loadError || !detail ? (
         <ErrorState
           code="HISTORY_DETAIL_FAILED"
-          message={loadError ?? 'Detail riwayat tidak tersedia.'}
+          message={loadError ?? 'History details are not available.'}
           onRetry={() => void loadDetail()}
         />
       ) : (
         <Card className="p-6 space-y-6">
           <CardHeader className="p-0">
-            <CardTitle className="text-lg">Metadata Pemeriksaan</CardTitle>
-            <CardDescription>Rincian log catatan analisis klinis</CardDescription>
+            <CardTitle className="text-lg">Examination Metadata</CardTitle>
+            <CardDescription>Clinical analysis session log details</CardDescription>
           </CardHeader>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div className="p-4 rounded-md bg-neutral-50 dark:bg-dark-elevated border border-neutral-200 dark:border-dark-border space-y-1">
-              <span className="text-neutral-500 dark:text-dark-textMuted font-medium">Identifier Riwayat</span>
+              <span className="text-neutral-500 dark:text-dark-textMuted font-medium">History Identifier</span>
               <p className="font-mono text-sm font-semibold text-neutral-900 dark:text-dark-text">{detail.analysis.id}</p>
             </div>
             <div className="p-4 rounded-md bg-neutral-50 dark:bg-dark-elevated border border-neutral-200 dark:border-dark-border space-y-1">
-              <span className="text-neutral-500 dark:text-dark-textMuted font-medium">Status Segmentasi</span>
+              <span className="text-neutral-500 dark:text-dark-textMuted font-medium">Segmentation Status</span>
               <div>
                 <Badge variant="default">{segmentationLabel(detail)}</Badge>
               </div>
             </div>
             <div className="p-4 rounded-md bg-neutral-50 dark:bg-dark-elevated border border-neutral-200 dark:border-dark-border space-y-1">
-              <span className="text-neutral-500 dark:text-dark-textMuted font-medium">Nama Berkas</span>
+              <span className="text-neutral-500 dark:text-dark-textMuted font-medium">File Name</span>
               <p className="text-neutral-800 dark:text-dark-text font-semibold">{detail.analysis.original_filename ?? '-'}</p>
             </div>
             <div className="p-4 rounded-md bg-neutral-50 dark:bg-dark-elevated border border-neutral-200 dark:border-dark-border space-y-1">
-              <span className="text-neutral-500 dark:text-dark-textMuted font-medium">Kerangka Kerja Model</span>
+              <span className="text-neutral-500 dark:text-dark-textMuted font-medium">Model Framework</span>
               <p className="text-neutral-800 dark:text-dark-text font-semibold">
                 {detail.model?.architecture ?? 'U-Net'} ({detail.model?.version ?? 'Scenario 1 Ver.22'})
               </p>
@@ -162,11 +162,11 @@ export const HistoryDetail: React.FC = () => {
 
           <div className="pt-4 border-t border-neutral-100 dark:border-dark-border flex flex-col sm:flex-row items-center justify-between gap-3">
             <span className="text-xs text-neutral-500 dark:text-dark-textMuted">
-              Akses langsung visualisasi segmentasi untuk ID ini:
+              Direct access to segmentation visualization for this ID:
             </span>
             <Link to={`/analysis/${id}`}>
               <Button variant="accent" size="sm" rightIcon={<ArrowRight className="w-4 h-4" />}>
-                Buka /analysis/{id}
+                Open /analysis/{id}
               </Button>
             </Link>
           </div>
@@ -181,8 +181,8 @@ export const HistoryDetail: React.FC = () => {
             setDeleteError(null);
           }
         }}
-        title="Hapus riwayat pemeriksaan?"
-        description="Tindakan ini akan menghapus hasil analisis beserta seluruh citra tersimpan dan tidak dapat dibatalkan."
+        title="Delete history record?"
+        description="This action will delete the analysis results and all associated images. This cannot be undone."
       >
         <div className="space-y-4">
           {deleteError && (
@@ -200,7 +200,7 @@ export const HistoryDetail: React.FC = () => {
               }}
               disabled={isDeleting}
             >
-              Batal
+              Cancel
             </Button>
             <Button
               variant="danger"
@@ -209,7 +209,7 @@ export const HistoryDetail: React.FC = () => {
               isLoading={isDeleting}
               leftIcon={<Trash2 className="w-3.5 h-3.5" />}
             >
-              Ya, Hapus
+              Yes, Delete
             </Button>
           </div>
         </div>

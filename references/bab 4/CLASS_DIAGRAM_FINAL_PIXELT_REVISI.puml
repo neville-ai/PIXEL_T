@@ -1,0 +1,208 @@
+@startuml
+' ============================================================
+' PIXEL-T — Class Diagram FINAL (hasil audit revisi, Revisi Minor)
+' Sumber utama audit: references/bab 4/class_diagram.png
+' Revisi berdasarkan audit: LAPORAN_AUDIT_CLASS_DIAGRAM_PIXELT.md
+' Status: LAYAK DENGAN REVISI MINOR
+' Render: diperlukan PlantUML renderer (Belum tersedia di lingkungan audit)
+' ============================================================
+
+class AnalysisController <<controller>> {
+  - service: AnalysisService
+  + create_analysis(): Response
+  + get_analysis(analysis_id: String): Response
+  + list_history(): Response
+  + delete_analysis(analysis_id: String): Response
+}
+
+class AnalysisService <<service>> {
+  + repository: AnalysisRepository
+  + storage_service: StorageService
+  + pipeline_runner: Callable[..., PipelineResult>
+  + job_queue: AnalysisJobQueue
+}
+
+class AnalysisRepository <<repository>> {
+  + create(user_id: String, data: Dict, use_service_role: Boolean): Dict
+  + get_by_id(user_id: String, analysis_id: String): Optional[Dict]
+  + list_by_user(user_id: String): List[Dict]
+  + update(analysis_id: String, user_id: String, data: Dict): Optional[Dict]
+  + delete(analysis_id: String, user_id: String): Boolean
+}
+
+class StorageService <<service>> {
+  + bucket_name: String
+  + upload_file(filepath: String, content: String, file_bytes: String, content_type: String, user_id: String, analysis_id: String): String
+  + create_signed_url(filepath: String, expires_in: Integer): String
+  + delete_analysis_files(list: List): Boolean
+}
+
+class AnalysisJobQueue <<service>> {
+  + capacity: Integer
+  + try_enqueue(job: Dict): Boolean
+  + contains(analysis_id: String): Boolean
+  + pending_count(): Integer
+  + drain_one(): Boolean
+}
+
+class AnalysisProgressReporter <<service>> {
+  - repository: AnalysisRepository
+  - analysis_id: String
+  - user_id: String
+  + total_units: Integer
+  + completed_units: Integer
+  + failed_writes: Integer
+  + on_phase(step: String): None
+  + on_pass(): None
+  + percent(): Integer
+}
+
+class AIInferenceFunctions <<module>> {
+  + run_pipeline(original_bytes: Bytes, config: ModelConfig, on_phase: Object, on_pass: Object): PipelineResult
+  + predict(image: Image, model_service: ModelService): SegmentationResult
+  + postprocess_mask(mask: Array, config: ModelConfig): Array
+  + measure_mask(mask: Array): Dict
+  + generate_gradcam(image_tensor: Tensor, model_service: ModelService): GradCAMResult
+}
+
+class ModelService <<service>> {
+  + config: ModelConfig
+  + device: Device
+  + load_count: Integer
+  + load(): Tensor
+  + metadata(): Dict
+  + predict_logits(tensor: Tensor): Tensor
+  + get_gradcam_target_layer(): String
+}
+
+class ModelConfig <<dataclass>> {
+  + architecture: String
+  + encoder: String
+  + decoder_attention: String
+  + gradcam_target_layer: String
+  + framework: String
+  + library: String
+  + model_version: String
+  + input_size: Integer
+  + input_channels: Integer
+  + threshold: Float
+  + tta_enabled: Boolean
+  + multiscale_enabled: Boolean
+  + tta_scales: Tuple[Float, ...]
+  + postprocessing_enabled: Boolean
+  + postprocessing_min_area: Integer
+  + contour_smoothing: Boolean
+  + smoothing_epsilon: Float
+  + checkpoint_filename: String
+  + checkpoint_sha256: String
+}
+
+class PipelineResult {
+  + binary_mask_png: Bytes
+  + segmentation_overlay_png: Bytes
+  + gradcam_heatmap_png: Bytes
+  + gradcam_overlay_png: Bytes
+  + measurements: Dict
+  + summary_text: String
+  + gradcam: GradCAMResult
+}
+
+class SegmentationResult {
+  + probability_map: Tensor
+  + binary_mask: Tensor
+  + threshold: Float
+}
+
+class GradCAMResult {
+  + heatmap: Array
+  + overlay: Array
+  + target_layer: String
+  + target_objective: String
+  + target_mask_empty: Boolean
+}
+
+class analyses <<entity>> {
+  + id: UUID
+  + user_id: UUID
+  + status: String
+  + current_step: String
+  + progress_percent: Integer
+  + original_image_path: String
+  + original_filename: String
+  + binary_mask_path: String
+  + segmentation_overlay_path: String
+  + segmentation_status: String
+  + area_pixels: Integer
+  + area_ratio: Float
+  + gradcam_heatmap_path: String
+  + gradcam_overlay_path: String
+  + gradcam_status: String
+  + summary_text: String
+  + error_code: String
+  + error_message: String
+  + created_at: Timestamp
+  + completed_at: Timestamp
+  + updated_at: Timestamp
+}
+
+class doctor_profiles <<entity>> {
+  + id: UUID
+  + user_id: UUID
+  + full_name: String
+  + primary_specialty: String
+  + hospital: String
+  + education: JSON
+  + experience: JSON
+  + bio: String
+}
+
+class auth_users <<external>> {
+  + id: UUID
+}
+
+class APIError <<exception>> {
+  + code: String
+  + message: String
+  + status_code: Integer
+  + to_dict(): Dict
+}
+
+' ====== RELASI ======
+
+AnalysisController ..> AnalysisService : calls
+AnalysisController ..> APIError : raises
+AnalysisService *-- AnalysisRepository : persistence
+AnalysisService *-- StorageService : assets
+AnalysisService *-- AnalysisJobQueue : queue
+AnalysisService ..> AnalysisProgressReporter : reports progress
+AnalysisProgressReporter ..> AnalysisRepository : writes progress
+AnalysisService ..> AIInferenceFunctions : background pipeline
+AnalysisRepository ..> analyses : CRUD
+AIInferenceFunctions ..> ModelService : inference / Grad-CAM
+AIInferenceFunctions ..> PipelineResult : output
+AIInferenceFunctions ..> SegmentationResult : output
+PipelineResult *-- GradCAMResult : gradcam
+ModelService --> ModelConfig : uses
+
+auth_users "1" -- "0..*" analyses : FK user_id
+auth_users "1" -- "0..1" doctor_profiles : FK user_id UNIQUE
+
+' ====== NOTASI LAPORAN ======
+
+note bottom of AnalysisService
+  Kelas ini mengorkestrasi proses analisis:
+  repository, storage, queue, dan progress reporter.
+end note
+
+note bottom of AIInferenceFunctions
+  <<module>> berisi fungsi stateless:
+  run_pipeline, predict, postprocess_mask,
+  measure_mask, generate_gradcam.
+end note
+
+note right of auth_users
+  <<external>>
+  Otoritas autentikasi: Supabase Auth.
+end note
+
+@enduml

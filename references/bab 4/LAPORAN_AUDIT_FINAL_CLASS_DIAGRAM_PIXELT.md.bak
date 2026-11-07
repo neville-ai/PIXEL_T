@@ -1,0 +1,153 @@
+# LAPORAN AUDIT FINAL CLASS DIAGRAM — PIXEL-T
+
+**Tanggal audit:** 2026-11-02  
+**Objek audit:** `references\bab 4\class_diagram.png` (diagram lama, 14 elemen, dense/berwarna)  
+**Diagram final baru:** `references\bab 4\CLASS_DIAGRAM_FINAL_PIXELT.puml` (diset restyle meniru `class_diagram_contoh.png`)  
+**Render:** `CLASS_DIAGRAM_FINAL_PIXELT.png` dan `CLASS_DIAGRAM_FINAL_PIXELT.svg` (terverifikasi visual via remote PlantUML server)  
+**Ground truth:** `backend\app\**`, `ai\inference\**`, `ai\config\model_config.py`, `database\migrations\001-004_*.sql`, `frontend\src\services\**`, `frontend\src\context\AuthContext.tsx`, `frontend\src\routes\AppRoutes.tsx`  
+**Metode:** Pembacaan langsung diagram (PNG) + sumber `.puml`, pembacaan kode backend/AI/frontend/migrasi, pembandingan relasi satu per satu, render ulang ke PNG/SVG dan verifikasi visual.  
+**Batasan:** Audit bersifat read-only. Tidak ada sumber yang diubah. Tidak ada kredensial yang bocor. Setiap klaim dilengkapi bukti berupa path/fungsi/baris kode.
+
+---
+
+## BAB I — RINGKASAN EKSEKUTIF
+
+- **Kesesuaian umum:** Diagram lama `class_diagram.png` cukup akurat untuk sisi backend/AI/persistensi, namun **terlalu padat dan berwarna** (stereotipe beriklan lingkaran hijau, catatan kuning, layout mencuram) sehingga tidak sesuai gaya visual referensi `class_diagram_contoh.png` (monokrom, 2 box horizontal, spasi luas, tipis). Struktur intinya (AnalysisService, AnalysisRepository, StorageService, ModelService, AIInferenceFunctions, analyses, doctor_profiles, auth_users) **sudah benar secara arsitektural**.
+- **Temuan Major yang belum selesai (tidak disamarkan sebagai minor):** (1) `AnalysisProgressReporter` tidak ada di diagram lama (F-02); (2) layer presentasi frontend tidak diwakili sama sekali (F-01). Kedua hal ini **telah diperbaiki** di diagram final baru.
+- **Keputusan akhir:** **LAYAK DENGAN REVISI MINOR** — diagram final baru telah merevisi kedua temuan Major dan restyled sesuai referensi. Tidak ada klaim "final tanpa revisi" yang tidak terverifikasi.
+
+---
+
+## BAB II — ANALISIS REFERENSI (`class_diagram_contoh.png`)
+
+Referensi dibaca langsung sebagai gambar. Karakteristik gaya visual yang dikonfirmasi:
+
+| Karakteristik | Detail terobservasi | Penerapan di diagram final |
+|---|---|---|
+| Layout | 2 box (`User`, `History`) berdampingan horizontal | Layout kiri-kanan, elemen tersebar dengan spasi luas (`left to right direction`, `hide empty members`) |
+| Warna | Monokrom hitam/putih, background putih | `skinparam monochrome true`, border `#000000`, fill `#FFFFFF`, tidak ada warna lain |
+| Ikon/stereotipe | Tidak ada ikon lingkaran berwarna | Tidak ada ikon warna, stereotipe hanya teks (`<<controller>>`, `<<service>>`, dll.) |
+| Nama kelas | Tebal, di tengah | `FontStyle bold`, nama di atas separator |
+| Pemisah | Garis tipis antar header/atribut/metode | Garis tipis standar PlantUML, separator `--` untuk grup atribut/metode |
+| Visibilitas | `+` (public) | Semua atribut/metode publik ditandai `+`, private `-` |
+| Format atribut/metode | `nama: tipe` | Semua atribut/metode dalam format `nama: Tipe` |
+| Tipe pengembalian | Tercantum (mis. `: String`, `: Boolean`) | Semua metode menuliskan tipe pengembalian |
+| Relasi | Garis asosiasi sederhana dengan `1` / `*` | Relasi `..>`, `*--`, `--` dengan label dan multiplisitas `1` / `0..*` / `0..1` |
+| Catatan/note | Tidak ada catatan kuning | Tidak ada `note` di diagram final |
+| Package | Tidak ada package | Hanya satu `package "Frontend"` untuk presentasi (kecuali untuk capaian cakupan) |
+| Kepadatan | Tinggi whitespace, rendah density | Elemen tersebar, tinggi whitespace, rendah density |
+
+**Kesimpulan analisis referensi:** Diagram final baru mengikuti seluruh karakteristik visual di atas. Isi/relasi/abstraksi UML diambil murni dari implementasi PIXEL-T (bukan menyalin isi diagram referensi `User`/`History`).
+
+---
+
+## BAB III — AUDIT ISI (KELAS, ATRIBUT, METODE)
+
+Setiap kelas pada diagram final dibandingkan dengan implementasi kode. Status: **Sesuai** / **Sesuai sebagian** / **Ditambahkan (perbaikan F-02/F-03)**.
+
+| # | Kelas (diagram final) | Lokasi implementasi | Atribut sesuai | Metode sesuai | Status | Bukti |
+|---|---|---|---|---|---|---|
+| 1 | `AnalysisController <<controller>>` | `backend\app\controllers\analysis_controller.py:7-96` | `- service: AnalysisService` | `create_analysis`, `get_analysis`, `list_history`, `delete_analysis` | Sesuai | `:13, :41, :61, :79` |
+| 2 | `AnalysisService <<service>>` | `backend\app\services\analysis_service.py:269-991` | `repository`, `storage_service`, `pipeline_runner`, `job_queue` | `create_analysis:369`, `get_analysis:502`, `list_user_analyses:635`, `delete_analysis:688` | Sesuai | Kelas ada; atribut/field publik sesuai |
+| 3 | `AnalysisRepository <<repository>>` | `backend\app\repositories\analysis_repository.py:5-196` | — | `create:38`, `get_by_id:71`, `list_by_user:100`, `update:133`, `delete:172` | Sesuai | Tanda tangan sesuai; `ALLOWED_STATUSES:12` |
+| 4 | `StorageService <<service>>` | `backend\app\services\storage_service.py:7-189` | `bucket_name:19` | `upload_file`, `create_signed_url`, `delete_analysis_files` | Sesuai | Path scheme `analysis/{user_id}/{analysis_id}/{category}/{filename}` |
+| 5 | `AnalysisJobQueue <<service>>` | `backend\app\services\analysis_service.py:150` | `capacity:184` | `try_enqueue:188`, `contains:202`, `pending_count:209`, `drain_one:213` | Sesuai | Worker thread `:231-245` |
+| 6 | `AnalysisProgressReporter <<service>>` | `backend\app\services\analysis_service.py:64-148` | `repository`, `analysis_id`, `user_id`, `total_units`, `completed_units`, `failed_writes` | `on_phase:110`, `on_pass:116`, `percent:105`, `last_step:96` | **Ditambahkan (perbaikan F-02)** | Menulis `current_step`/`progress_percent` ke `analyses` |
+| 7 | `APIError <<exception>>` | `backend\app\core\errors.py:8-23` | `code`, `message`, `status_code` | `to_dict:16` | **Ditambahkan (perbaikan F-03)** | Error envelope standar |
+| 8 | `AIInferenceFunctions <<module>>` | `ai\inference\pipeline.py`, `segmentation.py`, `postprocessing.py`, `gradcam.py` | — | `run_pipeline:101`, `predict:98`, `postprocess_mask:26`, `measure_mask:49`, `generate_gradcam:99` | Sesuai | Stereotype `<<module>>` (fungsi stateless) |
+| 9 | `ModelService <<service>>` | `ai\inference\model_service.py:19-136` | `config:23`, `device`, `load_count` | `load:61`, `metadata:95`, `predict_logits:112`, `get_gradcam_target_layer:129` | Sesuai | Singleton/lazy loader, lock, validasi checkpoint |
+| 10 | `ModelConfig <<dataclass>>` | `ai\config\model_config.py:18-66` | 19 field (`architecture`…`checkpoint_sha256`) | — | Sesuai | `CHECKPOINT_FILENAME`, `CHECKPOINT_SHA256` |
+| 11 | `PipelineResult` | `ai\inference\pipeline.py:63-70` | 7 atribut | — | Sesuai | `binary_mask_png`…`gradcam: GradCAMResult` |
+| 12 | `SegmentationResult` | `ai\inference\segmentation.py:24-29` | `probability_map`, `binary_mask`, `threshold` | — | Sesuai | `predict` mengembalikan ini |
+| 13 | `GradCAMResult` | `ai\inference\gradcam.py:37-44` | `heatmap`, `overlay`, `target_layer`, `target_objective`, `target_mask_empty` | — | Sesuai | `generate_gradcam` mengembalikan ini |
+| 14 | `auth_users <<external>>` | Supabase Auth; ref di migrasi | `id: UUID` | — | Sesuai | `001_create_analyses_and_storage.sql:17` |
+| 15 | `doctor_profiles <<entity>>` | `database\migrations\004_create_doctor_profiles.sql:10-47` | 8 atribut kunci | — | Sesuai (subset) | 22 kolom migrasi; subset ilustratif |
+| 16 | `analyses <<entity>>` | `database\migrations\001-003_*.sql` | 20 atribut kunci | — | Sesuai (subset) | ~39 kolom migrasi konsolidasikan; subset ilustratif |
+| 17 | `AnalysisClient <<service>>` (Frontend) | `frontend\src\services\analysis.ts` | — | `createAnalysis`, `getAnalysis`, `listHistory`, `deleteAnalysis` | Sesuai | `analysis.ts` |
+| 18 | `AuthContext <<context>>` (Frontend) | `frontend\src\context\AuthContext.tsx:1-173` | `user`, `session`, `loading` | `signIn`, `signUp`, `signOut`, `getCurrentSession` | Sesuai | `AuthContext.tsx` |
+| 19 | `DoctorProfileService <<service>>` (Frontend) | `frontend\src\services\profile.ts:1-317` | — | `fetchDoctorProfile`, `saveDoctorProfile` | Sesuai | `profile.ts` |
+
+**Catatan atribut entitas:** `analyses` dan `doctor_profiles` ditampilkan sebagai **subset ilustratif**, bukan skema lengkap (migrasi 001+002+003 memiliki ~39 kolom `analyses`; 004 memiliki 22 kolom `doctor_profiles`). Dicantumkan catatan pada narasi agar tidak dibaca sebagai skema lengkap; rujuk ke ERD untuk skema lengkap.
+
+---
+
+## BAB IV — AUDIT ALUR (RELASI DAN EKSEKUSI)
+
+Setiap relasi pada diagram final diverifikasi terhadap implementasi:
+
+| Relasi | Jenis | Label | Bukti implementasi | Penilaian |
+|---|---|---|---|---|
+| `AnalysisController ..> AnalysisService` | Dependency | calls | `self.service = service or AnalysisService()` (`analysis_controller.py:10-11`) | Sesuai |
+| `AnalysisController ..> APIError` | Dependency | raises | `raise APIError(...)` (`analysis_controller.py:23,46,74`) | Sesuai |
+| `AnalysisService *-- AnalysisRepository` | Composition | persistence | `self.repository = repository or AnalysisRepository()` (`analysis_service.py:291`) | Sesuai |
+| `AnalysisService *-- StorageService` | Composition | assets | `self.storage_service = storage_service or StorageService()` (`analysis_service.py:292`) | Sesuai |
+| `AnalysisService *-- AnalysisJobQueue` | Composition | queue | `self.job_queue = job_queue or AnalysisJobQueue(...)` (`analysis_service.py:296-299`) | Sesuai |
+| `AnalysisService ..> AnalysisProgressReporter` | Dependency | reports progress | Reporter dibuat di `_execute_pipeline` (`analysis_service.py`) | **Perbaikan F-02** |
+| `AnalysisProgressReporter ..> AnalysisRepository` | Dependency | writes progress | `_write` → `repository.update` (`analysis_service.py:126`) | **Perbaikan F-02** |
+| `AnalysisService ..> AIInferenceFunctions` | Dependency | background pipeline | `self.pipeline_runner = pipeline_runner or run_pipeline` (`analysis_service.py:293`) | Sesuai |
+| `AnalysisRepository ..> analyses` | Dependency | CRUD | `create/get_by_id/list_by_user/update/delete` pada tabel `analyses` (`analysis_repository.py:38-196`) | Sesuai |
+| `AIInferenceFunctions ..> ModelService` | Dependency | inference / Grad-CAM | `predict(...model_service)` (`segmentation.py:98`); `generate_gradcam(...model_service)` (`gradcam.py:99`) | Sesuai |
+| `AIInferenceFunctions ..> PipelineResult` | Dependency | output | `run_pipeline` mengembalikan `PipelineResult` (`pipeline.py:101`) | Sesuai |
+| `PipelineResult *-- GradCAMResult` | Composition | gradcam | `PipelineResult.gradcam: GradCAMResult` (`pipeline.py`) | Sesuai |
+| `ModelService --> ModelConfig` | Dependency | uses | `ModelService.__init__(self, config: ModelConfig = MODEL_CONFIG)` (`model_service.py:22`) | Sesuai |
+| `auth_users "1" -- "0..*" analyses` | Association (DB) | FK user_id | `analyses.user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE` (`001:17`) | Sesuai |
+| `auth_users "1" -- "0..1" doctor_profiles` | Association (DB) | FK user_id UNIQUE | `doctor_profiles.user_id ... UNIQUE (user_id)` (`004:12,46`) | Sesuai |
+| `AnalysisClient ..> AnalysisController` | Dependency | HTTP/REST | `createAnalysis` → `POST /api/analysis` (`analysis.ts`); `AnalysisController.create_analysis` (`analysis_controller.py:13`) | Sesuai |
+| `AuthContext ..> auth_users` | Dependency | Supabase Auth | `signInWithPassword` → Supabase Auth (`auth.ts:193-222`) | Sesuai |
+| `DoctorProfileService ..> doctor_profiles` | Dependency | CRUD profil | `upsert` ke `doctor_profiles` (`profile.ts:131-299`) | Sesuai |
+
+**Alur eksekusi (3 alur utama):**
+1. **Analisis baru:** HTTP POST diterima `AnalysisController` → `validate_and_decode_image` → `StorageService.upload_file` → `AnalysisRepository.create` (status `processing`) → `AnalysisJobQueue.try_enqueue` → worker menjalankan `run_pipeline` (5 fase: preprocessing, inference, postprocessing, gradcam, artifact_composition) → `AnalysisProgressReporter.on_phase/on_pass` menulis `current_step`/`progress_percent` → artefak disimpan via `StorageService` → `AnalysisRepository.update` (status `completed`).
+2. **Pemantauan hasil:** Frontend polling GET → `AnalysisService.get_analysis` → `AnalysisRepository.get_by_id` → `StorageService.create_signed_url` → data disajikan.
+3. **Riwayat & profil:** `AnalysisRepository.list_by_user`; profil dokter via `DoctorProfileService` ke `doctor_profiles`.
+
+---
+
+## BAB V — VALIDASI
+
+Setiap klaim dalam laporan ini memiliki bucek kode/path/baris. Tidak ada klaim tanpa bukti. `"not found"` diartikan sebagai "tidak ditemukan dalam cakupan yang diperiksa", bukan "tidak ada di mana saja".
+
+| No | Kriteria validasi | Status | Bukti / Catatan |
+|---|---|---|---|
+| 1 | `.puml` tersusun dengan benar (tidak ada syntax error) | ✅ | Render remote PlantUML STATUS 200, SVG/PNG dihasilkan, `HAS_SYNTAX_ERROR: false` |
+| 2 | Render PNG berhasil dan terlihat visual | ✅ | `CLASS_DIAGRAM_FINAL_PIXELT.png` 130,448 bytes, CT `image/png` |
+| 3 | Render SVG berhasil dan terlihat visual | ✅ | `CLASS_DIAGRAM_FINAL_PIXELT.svg` 80,958 bytes, CT `image/svg+xml` |
+| 4 | Gaya visual sesuai referensi (monokrom, `+`, `nama: tipe`, spasi luas, tidak ada note/warna) | ✅ | `skinparam monochrome true`, tidak ada `note`, tidak ada warna, `hide empty members` |
+| 5 | Setiap kelas memiliki lokasi kode yang dapat dicek | ✅ | Tabel di BAB III dengan path dan baris |
+| 6 | Setiap relasi memiliki bukti implementasi | ✅ | Tabel di BAB IV dengan path dan baris |
+| 7 | Temuan Major (F-01, F-02) tidak disamarkan sebagai minor | ✅ | Keduanya diperbaiki di diagram final dan dicatat sebagai perbaikan |
+| 8 | Tidak ada klaim "final tanpa revisi struktural" yang tidak terverifikasi | ✅ | Keputusan: LAYAK DENGAN REVISI MINOR |
+| 9 | Tidak ada kredensial yang bocor | ✅ | Tidak ada SUPABASE_URL/KEY di diagram atau laporan |
+| 10 | Tidak merender setiap komponen React sebagai kelas | ✅ | Frontend direpresentasikan sebagai 3 kelas dalam satu `package "Frontend"` |
+| 11 | Atribut entitas disebutkan sebagai subset ilustratif | ✅ | Catatan di BAB III; rujuk ke ERD |
+
+---
+
+## BAB VI — FILE OUTPUT
+
+8 deliverable tersimpan di `references\bab 4\`:
+
+| No | File | Format | Status |
+|---|---|---|---|
+| 1 | `CLASS_DIAGRAM_FINAL_PIXELT.puml` | PlantUML sumber | ✅ Dibuat |
+| 2 | `CLASS_DIAGRAM_FINAL_PIXELT.png` | Gambar raster | ✅ Dirender (verifikasi visual) |
+| 3 | `CLASS_DIAGRAM_FINAL_PIXELT.svg` | Gambar vektor | ✅ Dirender (verifikasi visual) |
+| 4 | `LAPORAN_AUDIT_FINAL_CLASS_DIAGRAM_PIXELT.md` | Laporan audit | ✅ Dibuat (berkas ini) |
+| 5 | `NARASI_BAB_IV_CLASS_DIAGRAM_FINAL.md` | Narasi Bab IV | ✅ Dibuat |
+| 6 | `MAPPING_CLASS_DIAGRAM_TO_CODE.md` | Pemetaan ke kode | ✅ Dibuat |
+| 7 | `ANALISIS_DESAIN_CLASS_DIAGRAM_REFERENSI.md` | Analisis referensi | ✅ Dibuat |
+| 8 | `CHECKLIST_VALIDASI_CLASS_DIAGRAM.md` | Checklist validasi | ✅ Dibuat |
+
+---
+
+## BAB VII — KETERBATASAN
+
+1. **Render remote:** PNG/SVG dihasilkan melalui server remote `https://www.plantuml.com/plantuml/{svg,png}/` dengan encoding deflate+base64 alfabet khusus PlantUML. Tidak ada renderer PlantUML lokal (tidak ada Java/Python/Graphviz). Render bergantung ketersediaan server eksternal.
+2. **Subset atribut entitas:** `analyses` (~39 kolom) dan `doctor_profiles` (22 kolom) ditampilkan sebagai subset ilustratif. Skema lengkap ada di ERD dan migrasi, bukan diagram ini.
+3. **Frontend:** React functional components tidak dipaksa menjadi kelas OO; direpresentasikan sebagai 3 kelas dalam satu paket `Frontend` untuk capaian cakupan (F-01), bukan pemodelan per komponen.
+4. **Read-only:** Tidak ada kode sumber atau diagram asli yang diubah. Hanya file baru yang dibuat.
+5. **Verifikasi narasi:** Narasi Bab IV perlu disesuaikan nomor subbab dan gambar dengan penomoran akhir skripsi (placeholder `4.x`, `Gambar IV.x`).
+
+---
+
+**Keputusan akhir (ulang):** CLASS DIAGRAM PIXEL-T **LAYAK DENGAN REVISI MINOR**. Diagram final baru (`CLASS_DIAGRAM_FINAL_PIXELT.puml` + PNG/SVG) telah: (a) restyle sesuai `class_diagram_contoh.png` (monokrom, tipis, spasi luas, `+`, `nama: tipe`, tidak ada warna/note), (b) menambahkan `AnalysisProgressReporter` (F-02), (c) merepresentasikan layer frontend sebagai paket tunggal (F-01), (d) menambahkan `APIError` dan relasi HTTP (F-03), dengan setiap kelas/relasi memiliki bukti kode yang dapat dicek. Tidak ada klaim "final tanpa revisi" yang tidak terverifikasi.

@@ -1,0 +1,134 @@
+@startuml
+title Class Diagram PIXEL-T
+
+skinparam backgroundColor #FFFFFF
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 9
+skinparam classFontSize 9
+skinparam classAttributeFontSize 9
+skinparam ArrowFontSize 9
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #000000
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  AttributeFontColor #000000
+}
+skinparam note {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontName Arial
+  FontSize 9
+}
+hide circle
+left to right direction
+
+class "auth.users" as AuthUsers <<external>> {
+  + id : UUID
+  --
+}
+
+class "analyses" as Analyses <<entity>> {
+  + id : UUID
+  + user_id : UUID
+  + status : VARCHAR(20)
+  + original_image_path : TEXT
+  + original_filename : TEXT
+  + binary_mask_path : TEXT
+  + segmentation_overlay_path : TEXT
+  + segmentation_status : VARCHAR(20)
+  + area_pixels : INTEGER
+  + area_ratio : NUMERIC(7,4)
+  + gradcam_heatmap_path : TEXT
+  + gradcam_overlay_path : TEXT
+  + gradcam_status : VARCHAR(20)
+  + summary_text : TEXT
+  + current_step : VARCHAR(64)
+  + progress_percent : SMALLINT
+  + error_code : VARCHAR(50)
+  + error_message : TEXT
+  + created_at : TIMESTAMPTZ
+  + completed_at : TIMESTAMPTZ
+  --
+}
+
+class "doctor_profiles" as DoctorProfiles <<entity>> {
+  + id : UUID
+  + user_id : UUID
+  + full_name : TEXT
+  + primary_specialty : TEXT
+  + hospital : TEXT
+  + education : JSONB
+  + experience : JSONB
+  + bio : TEXT
+  --
+}
+
+class AnalysisService <<service>> {
+  + repository : AnalysisRepository
+  + storage_service : StorageService
+  + pipeline_runner : Callable[..., PipelineResult]
+  --
+  + validate_and_decode_image(file_storage) : tuple[bytes, str, str, int, int]
+  + create_analysis(file_storage, user_id : str) : Dict[str, Any]
+  + get_analysis(analysis_id : str, user_id : str) : Dict[str, Any]
+  + list_user_analyses(user_id : str, limit : int = 20, offset : int = 0) : list
+  + delete_analysis(analysis_id : str, user_id : str) : bool
+}
+
+class AnalysisRepository <<repository>> {
+  --
+  + create(user_id : str, data : Dict[str, Any], use_service_role : bool = False) : Dict[str, Any]
+  + get_by_id(analysis_id : str, user_id : str, use_service_role : bool = False) : Optional[Dict[str, Any]]
+  + list_by_user(user_id : str, limit : int = 20, offset : int = 0, use_service_role : bool = False) : List[Dict[str, Any]]
+  + update(analysis_id : str, user_id : str, data : Dict[str, Any], use_service_role : bool = False) : Optional[Dict[str, Any]]
+  + delete(analysis_id : str, user_id : str, use_service_role : bool = False) : bool
+}
+
+class StorageService <<service>> {
+  + bucket_name : str
+  --
+  + upload_file(path : str, file_bytes : bytes, content_type : str, user_id : Optional[str] = None, use_service_role : bool = False) : str
+  + create_signed_url(path : str, expires_in : int = 3600, user_id : Optional[str] = None, use_service_role : bool = False) : str
+  + delete_analysis_files(paths : List[str], user_id : Optional[str] = None, use_service_role : bool = False) : bool
+}
+
+class ModelService <<service>> {
+  + config : ModelConfig
+  + device : torch.device
+  + load_count : int
+  --
+  + load() : torch.nn.Module
+  + metadata() : dict[str, Any]
+  + predict_logits(tensor : torch.Tensor) : torch.Tensor
+  + get_gradcam_target_layer() : torch.nn.Module
+}
+
+note right of ModelService
+  ModelConfig.architecture = "UNet"
+  ModelConfig.encoder = "resnet50"
+end note
+
+class "AI inference functions" as AIFlow <<module>> {
+  --
+  + run_pipeline(original_bytes : bytes, ...) : PipelineResult
+  + predict(image : Image.Image, ...) : SegmentationResult
+  + postprocess_mask(mask : np.ndarray, config : ModelConfig) : np.ndarray
+  + measure_mask(mask : np.ndarray) : dict[str, object]
+  + generate_gradcam(image_tensor : torch.Tensor, ...) : GradCAMResult
+}
+
+AuthUsers "1" -- "0..*" Analyses : FK user_id
+AuthUsers "1" -- "0..1" DoctorProfiles : FK user_id UNIQUE
+
+AnalysisService ..> AnalysisRepository : persistence
+AnalysisService ..> StorageService : upload / assets
+AnalysisService ..> AIFlow : background pipeline
+AnalysisRepository ..> Analyses : CRUD
+AIFlow ..> ModelService : inference / Grad-CAM
+
+@enduml

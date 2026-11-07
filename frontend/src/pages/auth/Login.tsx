@@ -8,12 +8,13 @@ import { OpeningAnimation } from '@/components/auth/OpeningAnimation';
 import { useOpeningAnimation } from '@/hooks/useOpeningAnimation';
 import { getRememberedEmail, setRememberedEmail, stageIndex } from '@/lib/openingTimeline';
 import { resetPasswordUser } from '@/services/auth';
-import { AlertCircle, ArrowRight, Eye, EyeOff, Send } from 'lucide-react';
+import { AlertCircle, ArrowRight, Eye, EyeOff, Send, User, ShieldCheck, ChevronDown } from 'lucide-react';
 import '@/styles/opening.css';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type LoginMode = 'signIn' | 'reset';
+type SelectedRole = 'admin' | 'doctor';
 
 /**
  * Two-panel Login page.
@@ -28,7 +29,7 @@ type LoginMode = 'signIn' | 'reset';
  * performs or simulates authentication.
  */
 export const Login: React.FC = () => {
-  const { signIn } = useAuth();
+  const { signIn, role, accountStatus } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -60,13 +61,29 @@ export const Login: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Role selector state
+  const [selectedRole, setSelectedRole] = useState<SelectedRole>('doctor');
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
+        setRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Forgot-password (Supabase reset request) state.
   const [isResetting, setIsResetting] = useState(false);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
   const [resetError, setResetError] = useState<string | null>(null);
 
   const from =
-    (location.state as { from?: { pathname?: string } })?.from?.pathname || '/dashboard';
+    (location.state as { from?: { pathname?: string }; pending?: boolean; rejected?: boolean })?.from?.pathname || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,8 +100,10 @@ export const Login: React.FC = () => {
       return;
     }
 
-    // Remember me stores the e-mail ONLY — never the password, and never a
-    // change to Supabase session persistence. Unchecking clears the value.
+    // This preference stores the e-mail ONLY — never the password, and never
+    // a change to Supabase session persistence. Unchecking clears the value.
+    // Supabase keeps its own session (persistSession) independently of this
+    // checkbox; see the implementation report.
     if (rememberMe) {
       setRememberedEmail(trimmedEmail);
     } else {
@@ -93,14 +112,26 @@ export const Login: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const result = await signIn(trimmedEmail, password);
+      const result = await signIn(trimmedEmail, password, selectedRole);
       if (result.error) {
         setErrorMessage(result.error);
         setIsSubmitting(false);
       } else {
         // Clear password from component state
         setPassword('');
-        navigate(from, { replace: true });
+        // Navigate based on resolved role and account status:
+        // - Admin → /admin
+        // - Approved doctor → /dashboard
+        // - Pending / rejected doctor → back to /login with status flag
+        if (role === 'admin') {
+          navigate('/admin', { replace: true });
+        } else if (accountStatus === 'pending') {
+          navigate('/login', { replace: true, state: { from: location, pending: true } });
+        } else if (accountStatus === 'rejected') {
+          navigate('/login', { replace: true, state: { from: location, rejected: true } });
+        } else {
+          navigate(from, { replace: true });
+        }
       }
     } catch {
       setErrorMessage('Terjadi kesalahan yang tidak terduga saat mencoba masuk.');
@@ -213,6 +244,16 @@ export const Login: React.FC = () => {
                   ? 'Sign in to your PIXEL-T account'
                   : 'Enter your email and we will send you a password reset link'}
               </p>
+              {location.state?.pending && (
+                <p className="mt-2 text-sm leading-relaxed text-amber-600 dark:text-amber-400">
+                  ⏳ Akun Anda sedang menunggu persetujuan administrator.
+                </p>
+              )}
+              {location.state?.rejected && (
+                <p className="mt-2 text-sm leading-relaxed text-red-600 dark:text-red-400">
+                  ❌ Pendaftaran Anda ditolak. Hubungi administrator rumah sakit.
+                </p>
+              )}
             </div>
 
             {/* Messages (authentication error / reset flow feedback) */}
@@ -223,6 +264,28 @@ export const Login: React.FC = () => {
               >
                 <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
                 <p className="leading-relaxed">{errorMessage}</p>
+              </div>
+            )}
+            {location.state?.pending && (
+              <div
+                role="status"
+                className="flex items-start gap-2.5 rounded-md border border-amber-300/40 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-600/40 dark:bg-amber-900/20 dark:text-amber-300"
+              >
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                <p className="leading-relaxed">
+                  Akun Anda sedang menunggu persetujuan dari administrator rumah sakit. Silakan tunggu sampai akun Anda disetujui.
+                </p>
+              </div>
+            )}
+            {location.state?.rejected && (
+              <div
+                role="status"
+                className="flex items-start gap-2.5 rounded-md border border-red-300/40 bg-red-50 p-3 text-xs text-red-800 dark:border-red-600/40 dark:bg-red-900/20 dark:text-red-300"
+              >
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                <p className="leading-relaxed">
+                  Pendaftaran akun Anda telah ditolak. Silakan hubungi administrator rumah sakit Anda untuk informasi lebih lanjut.
+                </p>
               </div>
             )}
             {mode === 'reset' && resetError && (
@@ -245,6 +308,83 @@ export const Login: React.FC = () => {
 
             {mode === 'signIn' ? (
               <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                {/* Role Selector */}
+                <div className="relative" ref={roleDropdownRef}>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 mb-1.5">
+                    Masuk sebagai
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setRoleDropdownOpen((v) => !v)}
+                    disabled={fieldDisabled}
+                    aria-haspopup="listbox"
+                    aria-expanded={roleDropdownOpen}
+                    className="w-full flex items-center justify-between gap-2 px-3.5 py-2 text-sm rounded-md border border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text transition-colors focus:outline-none focus:ring-2 focus:ring-primary-700/20 dark:focus:border-primary-600 disabled:bg-neutral-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      {selectedRole === 'admin' ? (
+                        <ShieldCheck className="h-4 w-4 shrink-0 text-accent-600 dark:text-accent-500" aria-hidden="true" />
+                      ) : (
+                        <User className="h-4 w-4 shrink-0 text-accent-600 dark:text-accent-500" aria-hidden="true" />
+                      )}
+                      <span className="truncate">{selectedRole === 'admin' ? 'Admin' : 'Dokter'}</span>
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 text-neutral-400 shrink-0 transition-transform ${roleDropdownOpen ? 'rotate-180' : ''}`}
+                      aria-hidden="true"
+                    />
+                  </button>
+
+                  {roleDropdownOpen && (
+                    <div
+                      role="listbox"
+                      className="absolute z-50 mt-1 w-full rounded-md border border-neutral-200 bg-white shadow-lg dark:border-dark-border dark:bg-dark-surface overflow-hidden"
+                    >
+                      {/* Admin option */}
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedRole('admin'); setRoleDropdownOpen(false); }}
+                        className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors ${
+                          selectedRole === 'admin'
+                            ? 'bg-primary-50 dark:bg-dark-elevated'
+                            : 'hover:bg-neutral-50 dark:hover:bg-dark-elevated'
+                        }`}
+                        role="option"
+                        aria-selected={selectedRole === 'admin'}
+                      >
+                        <ShieldCheck className="h-5 w-5 shrink-0 mt-0.5 text-accent-600 dark:text-accent-500" aria-hidden="true" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-neutral-900 dark:text-dark-text">Admin</p>
+                          <p className="mt-0.5 text-xs text-neutral-500 dark:text-dark-textMuted leading-relaxed">
+                            Menggunakan akun admin yang telah dibuat oleh pengelola sistem. Digunakan untuk mengelola dan memverifikasi pendaftaran dokter.
+                          </p>
+                        </div>
+                      </button>
+
+                      {/* Doctor option */}
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedRole('doctor'); setRoleDropdownOpen(false); }}
+                        className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors ${
+                          selectedRole === 'doctor'
+                            ? 'bg-primary-50 dark:bg-dark-elevated'
+                            : 'hover:bg-neutral-50 dark:hover:bg-dark-elevated'
+                        }`}
+                        role="option"
+                        aria-selected={selectedRole === 'doctor'}
+                      >
+                        <User className="h-5 w-5 shrink-0 mt-0.5 text-accent-600 dark:text-accent-500" aria-hidden="true" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-neutral-900 dark:text-dark-text">Dokter</p>
+                          <p className="mt-0.5 text-xs text-neutral-500 dark:text-dark-textMuted leading-relaxed">
+                            Digunakan oleh dokter atau tenaga medis yang telah mendaftarkan akun. Memiliki akses ke fitur analisis polip setelah akun disetujui admin.
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <Input
                   label="Email address"
                   type="email"
@@ -293,7 +433,7 @@ export const Login: React.FC = () => {
                       disabled={fieldDisabled}
                       className="h-4 w-4 cursor-pointer rounded border-neutral-300 accent-primary-900"
                     />
-                    <span>Remember me</span>
+                    <span>Remember my email</span>
                   </label>
                   <button
                     type="button"

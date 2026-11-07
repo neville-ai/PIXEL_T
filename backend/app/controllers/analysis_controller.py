@@ -1,6 +1,7 @@
 from flask import request, jsonify, g
 from app.core.errors import APIError
 from app.services.analysis_service import AnalysisService
+import time
 
 
 class AnalysisController:
@@ -12,8 +13,12 @@ class AnalysisController:
     def create_analysis(self):
         """Handle POST /api/analysis.
 
-        Accepts multipart/form-data with 'image' field and initiates analysis session.
+        Accepts multipart/form-data with 'image' field, validates it, persists
+        the original, and enqueues the AI pipeline as a background job. Returns
+        202 Accepted with the stable analysis_id and status 'processing'; the
+        caller polls GET /api/analysis/<id> for completion (Batch P-02).
         """
+        start_time = time.perf_counter()
         if "image" not in request.files:
             raise APIError("MISSING_FILE", "No image file provided in request. Expected form field 'image'.", 400)
 
@@ -23,23 +28,31 @@ class AnalysisController:
         if not user_id:
             raise APIError("UNAUTHORIZED", "Authenticated user identity could not be verified.", 401)
 
+        print(f"[CORRELATION] user_id={user_id} stage=create_analysis start")
         result = self.service.create_analysis(file_storage=image_file, user_id=user_id)
+        analysis_id = result.get("analysis_id", "unknown")
+        duration_ms = (time.perf_counter() - start_time) * 1000
+        print(f"[CORRELATION] analysis_id={analysis_id} user_id={user_id} stage=create_analysis end duration_ms={duration_ms:.1f}")
         return jsonify({
             "success": True,
             "data": result,
-        }), 201
+        }), 202
 
     def get_analysis(self, analysis_id: str):
         """Handle GET /api/analysis/<analysis_id>.
 
         Retrieves analysis metadata and signed original image URL verifying ownership.
         """
+        start_time = time.perf_counter()
         user_id = getattr(g, "current_user", {}).get("id") or getattr(getattr(request, "user", None), "get", lambda k: None)("id")
 
         if not user_id:
             raise APIError("UNAUTHORIZED", "Authenticated user identity could not be verified.", 401)
 
+        print(f"[CORRELATION] analysis_id={analysis_id} user_id={user_id} stage=get_analysis start")
         result = self.service.get_analysis(analysis_id=analysis_id, user_id=user_id)
+        duration_ms = (time.perf_counter() - start_time) * 1000
+        print(f"[CORRELATION] analysis_id={analysis_id} user_id={user_id} stage=get_analysis end duration_ms={duration_ms:.1f}")
         return jsonify({
             "success": True,
             "data": result,

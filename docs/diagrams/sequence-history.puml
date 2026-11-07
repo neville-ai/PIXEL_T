@@ -1,0 +1,99 @@
+@startuml sequence-history
+' Sequence Diagram History - PIXEL-T
+
+title Sequence Diagram History - PIXEL-T
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipant underline false
+skinparam roundcorner 5
+
+skinparam participant {
+  BackgroundColor #DCE9F7
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam database {
+  BackgroundColor #DCE9F7
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam sequence {
+  ArrowColor #2E5E9E
+  LifeLineBorderColor #2E5E9E
+  LifeLineBackgroundColor #EEF5FC
+  GroupBorderColor #2E5E9E
+  GroupBackgroundColor #EEF5FC
+  GroupHeaderFontColor #172B4D
+}
+
+actor "Pengguna" as User
+participant "Halaman History\n(React + API Client)" as History
+participant "Flask API\n+ AnalysisService" as API
+participant "Supabase Auth" as Auth
+database "Supabase Database" as Database
+participant "Supabase Storage" as Storage
+
+User -> History: Membuka halaman History
+History -> API: GET /api/history\n(access token)
+API -> Auth: Verifikasi token
+Auth --> API: User terautentikasi
+API -> Database: Ambil maksimal 20 riwayat milik user\n(urut terbaru)
+Database --> API: Daftar riwayat
+loop Untuk setiap gambar asli
+  API -> Storage: Buat signed URL thumbnail
+  Storage --> API: URL thumbnail
+end
+API --> History: Daftar riwayat
+alt Riwayat kosong
+  History --> User: Menampilkan empty state\n& tombol New Analysis
+else Riwayat tersedia
+  History --> User: Menampilkan daftar
+
+  loop Pengguna mencari atau memfilter riwayat
+    User -> History: Cari nama file / pilih status atau tanggal
+    History -> History: Filter data yang sudah dimuat
+    History --> User: Menampilkan hasil filter\n(4 item per halaman)
+  end
+
+  alt Membuka hasil analisis
+    User -> History: Pilih SEE RESULT / DETAIL LOG
+    History -> History: Buka /analysis/{id}
+  else Menghapus riwayat
+    User -> History: Pilih Delete
+    History --> User: Meminta konfirmasi
+    User -> History: Konfirmasi penghapusan
+    History -> API: DELETE /api/history/{id}\n(access token)
+    API -> Auth: Verifikasi token
+    Auth --> API: User terautentikasi
+    API -> Database: Verifikasi kepemilikan dan hapus record
+    Database --> API: Record dihapus
+    opt Jika ada file terkait
+      API -> Storage: Hapus file terkait
+      Storage --> API: Hasil penghapusan file
+    end
+    API --> History: Respons berhasil
+    History --> User: Menghapus item dari daftar
+  end
+end
+
+note over History,API
+  Filter dilakukan di frontend.
+  Jika request gagal, halaman menampilkan pesan error.
+end note
+
+note over Database,Storage
+  Record database dihapus lebih dahulu.
+  Kegagalan menghapus file Storage tidak membatalkan
+  keberhasilan penghapusan riwayat.
+end note
+
+@enduml

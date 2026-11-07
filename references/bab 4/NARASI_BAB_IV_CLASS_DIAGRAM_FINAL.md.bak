@@ -1,0 +1,196 @@
+# NARASI BAB IV — CLASS DIAGRAM FINAL PIXEL-T
+
+> **Petunjuk bagi Penulis:** Nomor subbab `4.x` dan nomor gambar `Gambar IV.x` merupakan *placeholder* yang disesuaikan dengan penomoran akhir skripsi. Gambar yang dirujuk adalah `references/bab 4/CLASS_DIAGRAM_FINAL_PIXELT.png` (atau `.svg`).
+
+---
+
+## 4.x Perancangan Struktur Perangkat Lunak (Class Diagram)
+
+Setelah memodelkan aspek fungsionalitas melalui *Use Case Diagram* dan urutan interaksi melalui *Sequence Diagram*, tahap perancangan berikutnya adalah mendefinisikan struktur statis perangkat lunak menggunakan *Class Diagram*. *Class Diagram* menggambarkan kelas-kelas yang menyusun sistem beserta atribut, operasi, dan relasi antarkelas, sehingga menjadi acuan implementasi dan dokumentasi arsitektur perangkat lunak PIXEL-T.
+
+Antarmuka pengguna (*frontend*) PIXEL-T dibangun menggunakan React 18 dan TypeScript dengan paradigma komponen fungsional (*functional components*), *custom hooks*, dan *context*. Dalam rekayasa perangkat lunak modern, memaksakan komponen fungsional React ke dalam kelas berorientasi objek merupakan kesalahan pemodelan karena komponen tersebut tidak memiliki state dan operasi dalam pengertian UML. Oleh karena itu, *Class Diagram* PIXEL-T difokuskan pada arsitektur berorientasi objek di sisi peladen (*backend*), mesin inferensi kecerdasan buatan, dan entitas persistensi basis data relasional. Lapisan presentasi tetap direpresentasikan secara ringkas sebagai satu paket `Frontend` agar cakupan arsitektur *full-stack* tetap terlihat, tanpa memecah setiap komponen React menjadi kelas tersendiri.
+
+Rancangan kelas sistem PIXEL-T disajikan pada Gambar IV.x berikut.
+
+```
+[Sisipkan Gambar: references/bab 4/CLASS_DIAGRAM_FINAL_PIXELT.png]
+Gambar IV.x Class Diagram Sistem PIXEL-T
+```
+
+Berdasarkan Gambar IV.x, komponen perangkat lunak sistem PIXEL-T terbagi ke dalam empat lapisan tanggung jawab utama:
+
+1. **Lapisan Kontrol dan Layanan Bisnis (*Controller & Service Layer*)**
+2. **Lapisan Mesin Kecerdasan Buatan (*AI Engine & Pipeline Layer*)**
+3. **Lapisan Persistensi Basis Data (*Persistence Layer*)**
+4. **Lapisan Presentasi (*Presentation Layer*)**
+
+---
+
+### 1. Deskripsi Komponen Berdasarkan Lapisan Arsitektur
+
+#### A. Lapisan Kontrol dan Layanan Bisnis
+
+Lapisan ini mengimplementasikan pemisahan tanggung jawab (*separation of concerns*) dengan pola *Controller–Service–Repository*.
+
+##### 1. Kelas `AnalysisController` (`«controller»`)
+
+Kelas `AnalysisController` diimplementasikan pada `backend/app/controllers/analysis_controller.py`. Kelas ini menerima permintaan HTTP REST dari dokter melalui endpoint `/api/analysis` dan mendelegasikan logika bisnis kepada `AnalysisService`. Kelas ini juga membangkitkan `APIError` untuk respons kesalahan yang konsisten.
+
+- **Atribut:** `- service : AnalysisService`.
+- **Operasi:**
+  1. `+ create_analysis() : Response`
+  2. `+ get_analysis(analysis_id : String) : Response`
+  3. `+ list_history() : Response`
+  4. `+ delete_analysis(analysis_id : String) : Response`
+
+##### 2. Kelas `AnalysisService` (`«service»`)
+
+Kelas `AnalysisService` (`backend/app/services/analysis_service.py`) merupakan orkestrator utama siklus hidup analisis citra, mulai dari validasi masukan, pengunggahan berkas, penjadwalan inferensi latar belakang, hingga pembersihan data.
+
+- **Atribut:**
+  1. `+ repository : AnalysisRepository`
+  2. `+ storage_service : StorageService`
+  3. `+ pipeline_runner : Callable[..., PipelineResult]`
+  4. `+ job_queue : AnalysisJobQueue`
+- **Operasi:**
+  1. `+ create_analysis() : Dict`
+  2. `+ get_analysis(analysis_id : String) : Dict`
+  3. `+ list_user_analyses(user_id : String) : List[Dict]`
+  4. `+ delete_analysis(analysis_id : String) : Boolean`
+
+##### 3. Kelas `AnalysisRepository` (`«repository»`)
+
+Kelas `AnalysisRepository` (`backend/app/repositories/analysis_repository.py`) menerapkan pola *Repository* untuk mengisolasi akses data dari logika bisnis, dengan validasi status siklus hidup (`processing`, `completed`, `failed`) dan status segmentasi (`detected`, `not_detected`).
+
+- **Operasi:**
+  1. `+ create(user_id : String, data : Dict) : Dict`
+  2. `+ get_by_id(user_id : String, analysis_id : String) : Optional[Dict]`
+  3. `+ list_by_user(user_id : String) : List[Dict]`
+  4. `+ update(analysis_id : String, user_id : String, data : Dict) : Optional[Dict]`
+  5. `+ delete(analysis_id : String, user_id : String) : Boolean`
+
+##### 4. Kelas `StorageService` (`«service»`)
+
+Kelas `StorageService` (`backend/app/services/storage_service.py`) mengabstraksi komunikasi dengan *Supabase Storage* pada bucket `analysis-assets` dengan pola path `analysis/{user_id}/{analysis_id}/{category}/{filename}`.
+
+- **Atribut:** `+ bucket_name : String`.
+- **Operasi:**
+  1. `+ upload_file(filepath, content, content_type, user_id, analysis_id) : String`
+  2. `+ create_signed_url(filepath : String, expires_in : Integer) : String`
+  3. `+ delete_analysis_files(list : List) : Boolean`
+
+##### 5. Kelas `AnalysisJobQueue` (`«service»`)
+
+Kelas `AnalysisJobQueue` (`backend/app/services/analysis_service.py:150`) merupakan antrean kerja FIFO berbasis memori dan *thread* yang mengisolasi proses inferensi berat dari *thread* utama web server.
+
+- **Atribut:** `+ capacity : Integer`.
+- **Operasi:** `+ try_enqueue(job : Dict) : Boolean`, `+ contains(analysis_id : String) : Boolean`, `+ pending_count() : Integer`, `+ drain_one() : Boolean`.
+
+##### 6. Kelas `AnalysisProgressReporter` (`«service»`)
+
+Kelas `AnalysisProgressReporter` (`backend/app/services/analysis_service.py:64`) bertanggung jawab menulis `current_step` dan `progress_percent` ke tabel `analyses` selama pipeline berjalan. Progres dihitung dari jumlah unit kerja yang selesai (fase pipeline dan *forward pass*), bukan dari waktu berjalan.
+
+- **Atribut:** `- repository : AnalysisRepository`, `- analysis_id : String`, `- user_id : String`, `+ total_units : Integer`, `+ completed_units : Integer`, `+ failed_writes : Integer`.
+- **Operasi:** `+ on_phase(step : String) : None`, `+ on_pass() : None`, `+ percent() : Integer`, `+ last_step() : Optional[String]`.
+
+##### 7. Kelas `APIError` (`«exception»`)
+
+Kelas `APIError` (`backend/app/core/errors.py`) mendefinisikan *error envelope* standar untuk seluruh respons kesalahan API.
+
+- **Atribut:** `+ code : String`, `+ message : String`, `+ status_code : Integer`.
+- **Operasi:** `+ to_dict() : Dict`.
+
+---
+
+#### B. Lapisan Mesin Kecerdasan Buatan
+
+Lapisan ini memuat algoritma *deep learning*, model segmentasi citra kolonoskopi, dan modul transparansi keputusan model (*Explainable AI*).
+
+##### 1. Modul `AIInferenceFunctions` (`«module»`)
+
+Modul ini merepresentasikan kumpulan fungsi komputasi stateless pada `ai/inference/pipeline.py`, `segmentation.py`, `postprocessing.py`, dan `gradcam.py`. Stereotipe `«module»` dipakai agar fungsi prosedural Python tidak didistorsi menjadi kelas berstate.
+
+- **Fungsi utama:**
+  1. `+ run_pipeline(original_bytes, config, on_phase, on_pass) : PipelineResult`
+  2. `+ predict(image, model_service) : SegmentationResult`
+  3. `+ postprocess_mask(mask, config) : Array`
+  4. `+ measure_mask(mask) : Dict`
+  5. `+ generate_gradcam(image_tensor, model_service) : GradCAMResult`
+
+##### 2. Kelas `ModelService` (`«service»`)
+
+Kelas `ModelService` (`ai/inference/model_service.py`) mengelola siklus hidup model PyTorch tunggal secara *lazy* dan *thread-safe* agar bobot model tidak dimuat ulang pada setiap permintaan.
+
+- **Atribut:** `+ config : ModelConfig`, `+ device : Device`, `+ load_count : Integer`.
+- **Operasi:** `+ load() : Tensor`, `+ metadata() : Dict`, `+ predict_logits(tensor : Tensor) : Tensor`, `+ get_gradcam_target_layer() : String`.
+
+##### 3. Kelas `ModelConfig` (`«dataclass»`)
+
+Kelas `ModelConfig` (`ai/config/model_config.py`) adalah wadah konfigurasi tak-berubah yang memuat arsitektur (`UNet`), *encoder* (`resnet50`), ukuran input (512), ambang batas (0.55), konfigurasi TTA, serta verifikasi integritas checkpoint SHA-256. Diagram menampilkan 19 atribut kunci.
+
+##### 4. Kelas Data `PipelineResult`, `SegmentationResult`, `GradCAMResult`
+
+Ketiganya adalah objek transfer data terstruktur (`«dataclass»`) yang membungkus luaran inferensi secara deterministik. `PipelineResult` mengomposisikan artefak masker biner, overlay segmentasi, peta panas *heatmap* dan overlay Grad-CAM, metrik luasan, ringkasan naratif, serta objek `GradCAMResult`.
+
+---
+
+#### C. Lapisan Persistensi Basis Data
+
+Lapisan ini memetakan entitas data relasional PostgreSQL.
+
+##### 1. Entitas `auth_users` (`«external»`)
+
+Merepresentasikan tabel `auth.users` yang dikelola *Supabase Auth*. Atribut utamanya `id : UUID`, menjadi kunci induk bagi seluruh data pengguna.
+
+##### 2. Entitas `doctor_profiles` (`«entity»`)
+
+Merepresentasikan tabel `public.doctor_profiles` yang menyimpan profil klinis dokter. Diagram menampilkan subset atribut kunci (`id`, `user_id`, `full_name`, `primary_specialty`, `hospital`, `education`, `experience`, `bio`); skema lengkap (22 kolom) dijelaskan pada ERD.
+
+##### 3. Entitas `analyses` (`«entity»`)
+
+Merepresentasikan tabel utama `public.analyses` yang menyimpan siklus hidup analisis: status, progres (`current_step`, `progress_percent`), jalur artefak (`original_image_path`, `binary_mask_path`, `segmentation_overlay_path`, `gradcam_heatmap_path`, `gradcam_overlay_path`), metrik klinis (`area_pixels`, `area_ratio`, `segmentation_status`), ringkasan, dan stempel waktu. Diagram menampilkan subset representatif; skema lengkap (~39 kolom) dijelaskan pada ERD.
+
+---
+
+#### D. Lapisan Presentasi
+
+Lapisan presentasi direpresentasikan sebagai satu paket `Frontend` yang memuat tiga kelas layanan antarmuka:
+
+1. `AnalysisClient` (`«service»`) — `createAnalysis`, `getAnalysis`, `listHistory`, `deleteAnalysis` (`frontend/src/services/analysis.ts`).
+2. `AuthContext` (`«context»`) — `user`, `signIn`, `signUp`, `signOut` (`frontend/src/context/AuthContext.tsx`).
+3. `DoctorProfileService` (`«service»`) — `fetchDoctorProfile`, `saveDoctorProfile` (`frontend/src/services/profile.ts`).
+
+Paket ini menunjukkan bahwa frontend berkomunikasi dengan backend melalui REST (`AnalysisClient ..> AnalysisController`), dengan *Supabase Auth* (`AuthContext ..> auth_users`), dan langsung ke tabel profil (`DoctorProfileService ..> doctor_profiles`).
+
+---
+
+### 2. Relasi Antarkomponen dan Semantik Notasi UML
+
+Seluruh relasi mengikuti UML 2.5 dengan semantik konsisten terhadap implementasi.
+
+#### A. Relasi Asosiasi Basis Data (Garis Solid)
+
+1. **`auth_users` — `doctor_profiles`** (kardinalitas `1 : 0..1`): Satu akun paling banyak memiliki satu profil dokter, diikat `doctor_profiles.user_id` dengan kendala `UNIQUE`.
+2. **`auth_users` — `analyses`** (kardinalitas `1 : 0..*`): Satu akun dapat memiliki banyak rekaman analisis, diikat `analyses.user_id` dengan `ON DELETE CASCADE`.
+
+#### B. Relasi Komposisi (`*--`)
+
+`AnalysisService` mengomposisikan `AnalysisRepository`, `StorageService`, dan `AnalysisJobQueue` karena service membuat instans default bila dependensi tidak diinjeksi. `PipelineResult` mengomposisikan `GradCAMResult`.
+
+#### C. Relasi Dependensi (`..>`)
+
+Dependensi menunjukkan penggunaan tanpa ikatan siklus hidup, antara lain `AnalysisController ..> AnalysisService`, `AnalysisService ..> AnalysisProgressReporter`, `AnalysisProgressReporter ..> AnalysisRepository`, `AnalysisService ..> AIInferenceFunctions`, `AIInferenceFunctions ..> ModelService`, `AnalysisRepository ..> analyses`, dan `ModelService --> ModelConfig`.
+
+---
+
+### 3. Alur Eksekusi Berdasarkan Struktur Kelas
+
+1. **Alur Analisis Baru:** Permintaan HTTP → `AnalysisController` → `AnalysisService.validate_and_decode_image()` → `StorageService.upload_file()` → `AnalysisRepository.create()` (status `processing`) → `AnalysisJobQueue.try_enqueue()` → worker menjalankan `AIInferenceFunctions.run_pipeline()` (preprocessing, inference, postprocessing, gradcam, artifact_composition) → `AnalysisProgressReporter` menulis progres → artefak disimpan via `StorageService` → `AnalysisRepository.update()` (status `completed`).
+2. **Alur Pemantauan Hasil:** Frontend *polling* → `AnalysisService.get_analysis()` → `AnalysisRepository.get_by_id()` → `StorageService.create_signed_url()` → data disajikan.
+3. **Alur Riwayat dan Profil:** `AnalysisRepository.list_by_user()`; profil dokter melalui `DoctorProfileService` ke `doctor_profiles`.
+
+---
+
+### 4. Ringkasan Perancangan Struktur Perangkat Lunak
+
+*Class Diagram* PIXEL-T menggambarkan arsitektur berlapis yang memisahkan tanggung jawab secara tegas: `AnalysisController` sebagai gerbang HTTP, `AnalysisService` sebagai orkestrator bisnis, `StorageService`/`AnalysisRepository`/`AnalysisJobQueue`/`AnalysisProgressReporter` sebagai infrastruktur, `AIInferenceFunctions`/`ModelService`/`ModelConfig` sebagai mesin komputasi, entitas basis data sebagai persistensi, dan paket `Frontend` sebagai konsumen antarmuka. Pemisahan ini mendukung kemandirian komponen, pengujian terpisah, dan pemeliharaan jangka panjang.

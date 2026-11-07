@@ -1,0 +1,70 @@
+@startuml AD_07_Sign_Out
+' =====================================================================
+'  AD-07 Activity Diagram Keluar Akun (Sign Out) - PIXEL-T
+'  Diverifikasi dari:
+'    - frontend/src/components/layout/AppShell.tsx (requestSignOut, cancelSignOut, confirmSignOut)
+'    - frontend/src/context/AuthContext.tsx (signOut: logoutUser, reset user & session state)
+'    - frontend/src/services/auth.ts (logoutUser: supabase.auth.signOut)
+'  Standar Desain Visual: #3DADFF, bold white, Corner 8, 2 swimlanes
+'  Catatan UML: Kedua stop node berada pada swimlane |User| karena proses
+'               berakhir dari perspektif pengguna.
+' =====================================================================
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultTextAlignment center
+skinparam shadowing false
+
+skinparam activity {
+  BackgroundColor #3DADFF
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #FFFFFF
+  FontSize 11
+  FontStyle bold
+  Corner 8
+  DiamondBackgroundColor #3DADFF
+  DiamondBorderColor #2D2D2D
+  DiamondFontColor #FFFFFF
+  DiamondFontSize 10
+  DiamondFontStyle bold
+  StartColor #3DADFF
+  EndColor #3DADFF
+}
+
+skinparam ArrowColor #2D2D2D
+skinparam ArrowFontColor #000000
+skinparam ArrowFontSize 10
+
+skinparam partition {
+  BackgroundColor transparent
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #000000
+  FontSize 13
+  FontStyle bold
+}
+
+|User|
+start
+:Menekan tombol Sign Out\npada menu navigasi;
+
+|System|
+:Menutup menu navigasi;
+:Menampilkan modal dialog\nkonfirmasi Sign Out;
+
+if (Konfirmasi Sign Out?) then (Batal)
+  :Menutup modal tanpa\nmengakhiri sesi;
+  |User|
+  :Tetap berada pada\nhalaman saat ini;
+  stop
+else (Ya)
+  |System|
+  :Memanggil Supabase Auth\nuntuk mencabut sesi aktif;
+  :Menghapus data user & session\ndari AuthContext;
+  :Mengarahkan pengguna\nke halaman Sign In;
+  |User|
+  :Dialihkan ke\nhalaman Sign In;
+  stop
+endif
+@enduml

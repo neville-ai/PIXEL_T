@@ -1,0 +1,68 @@
+@startuml AD_02_Sign_In
+' =====================================================================
+'  Activity Diagram Sign In - PIXEL-T (Bab IV Skripsi)
+'  Diverifikasi dari: Login.tsx, services/auth.ts, AuthContext.tsx
+'  Gaya Desain Visual: Mengikuti referensi activity_diagram_sign_in_contoh.png
+'  (#3DADFF blue, teks putih tebal, sudut rounded corner 8)
+' =====================================================================
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultTextAlignment center
+skinparam shadowing false
+
+skinparam activity {
+  BackgroundColor #3DADFF
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #FFFFFF
+  FontSize 11
+  FontStyle bold
+  Corner 8
+  DiamondBackgroundColor #3DADFF
+  DiamondBorderColor #2D2D2D
+  DiamondFontColor #FFFFFF
+  DiamondFontSize 10
+  DiamondFontStyle bold
+  StartColor #3DADFF
+  EndColor #3DADFF
+}
+
+skinparam ArrowColor #2D2D2D
+skinparam ArrowFontColor #000000
+skinparam ArrowFontSize 10
+
+skinparam partition {
+  BackgroundColor transparent
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #000000
+  FontSize 13
+  FontStyle bold
+}
+
+|User|
+start
+:Membuka halaman sign in;
+
+repeat :Mengisi form sign in;
+
+|System|
+:Memvalidasi input user;
+
+if (Email dan\npassword sesuai?) then (Tidak)
+  :Mengirim pesan "Email\nor password is incorrect";
+  |User|
+  :Menerima pesan "Email\nor password is incorrect";
+else (Ya)
+  |System|
+  :Membuat sesi user\n(Supabase Auth);
+  :Mengalihkan user\nke halaman utama;
+
+  |User|
+  :Dialihkan ke\nhalaman utama;
+  stop
+endif
+
+repeat while ()
+@enduml

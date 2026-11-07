@@ -110,6 +110,8 @@ def generate_gradcam(
     When the predicted/ supplied mask is empty, the objective is a zero scalar
     connected to the graph, producing a deterministic all-zero heatmap.
     """
+    import time
+    gradcam_start = time.perf_counter()
     service = model_service or ModelService(config)
     try:
         target_layer = service.get_gradcam_target_layer()
@@ -118,7 +120,12 @@ def generate_gradcam(
     if image_tensor.ndim != 4:
         raise GradCAMObjectiveError("GRADCAM_OBJECTIVE_ERROR")
 
+    model_load_start = time.perf_counter()
     model = service.load()
+    model_load_dur = time.perf_counter() - model_load_start
+    if model_load_dur > 0.01:  # Only log if actual loading occurred
+        print(f"[TIMING] stage=gradcam_model_load duration_ms={model_load_dur * 1000:.1f} load_count={service.load_count}")
+
     activations: dict[str, torch.Tensor] = {}
     gradients: dict[str, torch.Tensor] = {}
 
@@ -170,6 +177,8 @@ def generate_gradcam(
         original_rgb.astype(np.float32) * (1.0 - overlay_alpha)
         + heatmap_rgb.astype(np.float32) * overlay_alpha
     ).clip(0, 255).astype(np.uint8)
+    gradcam_dur = time.perf_counter() - gradcam_start
+    print(f"[TIMING] stage=gradcam_total duration_ms={gradcam_dur * 1000:.1f} model_load_ms={model_load_dur * 1000:.1f} device={service.device}")
     return GradCAMResult(
         heatmap=normalized,
         overlay=overlay,

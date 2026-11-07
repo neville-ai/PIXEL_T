@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="OpenCode" version="24.0.0" type="device">
+  <diagram name="PIXEL-T Revised" id="pixelt-revised">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="obj1" value="User / Login Page" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="160" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="obj2" value="AuthContext" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="160" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="obj3" value="services/auth" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="180" width="160" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="obj4" value="Supabase Auth" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="240" width="160" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="obj5" value="Route Guard" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="160" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;strokeColor=#000000;" edge="1" parent="1" source="obj1" target="obj2">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="200" y="80"/><mxPoint x="40" y="135"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;strokeColor=#000000;" edge="1" parent="1" source="obj2" target="obj3">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="200" y="145"/><mxPoint x="40" y="195"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;strokeColor=#000000;" edge="1" parent="1" source="obj3" target="obj4">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="200" y="205"/><mxPoint x="40" y="255"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;strokeColor=#000000;" edge="1" parent="1" source="obj4" target="obj2">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="200" y="255"/><mxPoint x="40" y="195"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="s5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;strokeColor=#000000;" edge="1" parent="1" source="obj2" target="obj5">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="200" y="215"/><mxPoint x="40" y="315"/></Array></mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

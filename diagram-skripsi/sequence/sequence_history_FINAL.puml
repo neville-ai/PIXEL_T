@@ -1,0 +1,91 @@
+@startuml
+title Sequence Diagram Melihat dan Mengelola Riwayat Analisis
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam monochrome true
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 12
+autonumber
+skinparam sequence {
+    ArrowColor black
+    ActorBorderColor black
+    LifeLineColor black
+    BoxBorderColor black
+    BoxBgColor #FFFFFF
+}
+
+actor "Pengguna" as U
+participant "Frontend\n(History.tsx)" as FE
+participant "Backend\n(Flask API)" as BE
+participant "Supabase\n(Database + Storage)" as SB
+
+U -> FE: Buka halaman riwayat
+FE -> BE: GET /api/history
+
+note over FE,BE
+Route memerlukan sesi terautentikasi.
+Frontend mengirim access token; jika menerima 401,
+frontend mencoba refresh sesi dan mengulang request.
+end note
+
+BE -> SB: Ambil riwayat dan buat signed URL thumbnail
+note right of SB
+Backend membaca public.analyses milik pengguna,
+maksimal 20 record terbaru. Signed URL Storage
+dibuat untuk gambar asli yang tersedia (3600 detik).
+end note
+BE --> FE: Daftar riwayat dan thumbnail_url
+
+alt Gagal memuat
+    FE --> U: Tampilkan ErrorState
+else Daftar kosong
+    FE --> U: "No analysis history yet"
+else Daftar tersedia
+    FE --> U: Tampilkan daftar dan thumbnail
+
+    opt Pengguna menelusuri dan membuka hasil
+        U -> FE: Cari/filter lokal, ubah halaman,\npilih hasil
+        note over U,FE
+        Filter nama, status, dan tanggal serta pagination
+        berjalan di frontend tanpa request baru;
+        halaman menampilkan 4 item dari data yang dimuat.
+        Tombol detail tersedia untuk status completed/failed.
+        end note
+        FE -> BE: GET /api/analysis/{id}
+        BE -> SB: Ambil detail dan buat signed URL aset
+        note right of SB
+        Backend membaca record milik pengguna dan
+        menandatangani URL untuk aset yang tersedia.
+        end note
+        BE --> FE: Detail, aset, ringkasan, status, dan error
+        FE --> U: Tampilkan hasil analisis
+    end
+end
+
+opt Pengguna memilih hapus riwayat
+    FE --> U: "Delete this analysis session?"
+
+    alt Pengguna membatalkan
+        U -> FE: Klik "Cancel"
+        note over FE,BE: Dialog ditutup; tidak ada request penghapusan.
+    else Pengguna mengonfirmasi
+        U -> FE: Klik "Yes, Delete"
+        FE -> BE: DELETE /api/history/{id}
+        BE -> SB: Verifikasi pemilik; hapus record DB,\nlalu hapus berkas Storage
+        note over BE,SB
+        Record database dihapus lebih dahulu.
+        Cleanup Storage bersifat best-effort;
+        kegagalannya tidak membatalkan sukses penghapusan.
+        end note
+        BE --> FE: HTTP 200 atau respons error
+        note over FE,U
+        Pada HTTP 200, frontend menghapus item dari daftar.
+        Jika gagal, frontend menampilkan deleteError.
+        end note
+    end
+end
+
+@enduml

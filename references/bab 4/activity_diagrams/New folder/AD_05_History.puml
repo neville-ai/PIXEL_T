@@ -1,0 +1,104 @@
+@startuml AD_05_History
+' =====================================================================
+'  AD-05 Activity Diagram Riwayat Analisis (History) - PIXEL-T
+'  Diverifikasi dari:
+'    - frontend/src/pages/history/History.tsx
+'    - frontend/src/services/analysis.ts
+'    - backend/app/routes/analysis.py
+'    - backend/app/controllers/analysis_controller.py
+'    - backend/app/services/analysis_service.py
+'  Standar Desain Visual: #3DADFF, bold white, Corner 8, 2 swimlanes
+'  Catatan UML: stop node berada di |User| karena proses berakhir
+'               dari perspektif pengguna yang menerima hasil akhir.
+' =====================================================================
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultTextAlignment center
+skinparam shadowing false
+
+skinparam activity {
+  BackgroundColor #3DADFF
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #FFFFFF
+  FontSize 11
+  FontStyle bold
+  Corner 8
+  DiamondBackgroundColor #3DADFF
+  DiamondBorderColor #2D2D2D
+  DiamondFontColor #FFFFFF
+  DiamondFontSize 10
+  DiamondFontStyle bold
+  StartColor #3DADFF
+  EndColor #3DADFF
+}
+
+skinparam ArrowColor #2D2D2D
+skinparam ArrowFontColor #000000
+skinparam ArrowFontSize 10
+
+skinparam partition {
+  BackgroundColor transparent
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #000000
+  FontSize 13
+  FontStyle bold
+}
+
+|User|
+start
+:Membuka halaman\nRiwayat Analisis;
+
+|System|
+:Meminta data riwayat\n(GET /api/history);
+:Mengambil data analisis\nmilik pengguna dari database;
+
+if (Daftar riwayat kosong?) then (Ya)
+  :Menampilkan halaman\nriwayat kosong;
+  |User|
+  :Menekan tombol\n"Start New Analysis";
+  |System|
+  :Mengarahkan ke halaman\nNew Analysis;
+  |User|
+  stop
+endif
+
+|System|
+:Menampilkan tabel riwayat\n& panel filter pencarian;
+
+|User|
+:Memilih filter atau memasukkan\nkata kunci pencarian;
+
+|System|
+:Menyaring dan memperbarui\ntampilan tabel riwayat;
+
+|User|
+if (Tindakan yang dipilih?) then (Lihat Detail)
+  :Menekan tombol\n"SEE RESULT" / "DETAIL LOG";
+  |System|
+  :Mengarahkan ke halaman\ndetail hasil analisis;
+  |User|
+  stop
+else (Hapus Riwayat)
+  |User|
+  :Menekan tombol hapus\npada baris riwayat;
+  |System|
+  :Menampilkan modal dialog\nkonfirmasi penghapusan;
+  |User|
+  if (Konfirmasi hapus?) then (Batal)
+    |System|
+    :Menutup modal tanpa\nmenghapus data;
+    |User|
+    stop
+  else (Ya)
+    |System|
+    :Mengirim permintaan hapus\n(DELETE /api/history/<id>);
+    :Menghapus data di database\n& berkas di Supabase Storage;
+    :Memperbarui tampilan tabel\n& menutup modal;
+    |User|
+    stop
+  endif
+endif
+@enduml

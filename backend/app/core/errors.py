@@ -1,5 +1,8 @@
+import logging
 from flask import jsonify
 from werkzeug.exceptions import HTTPException
+
+logger = logging.getLogger(__name__)
 
 
 class APIError(Exception):
@@ -110,6 +113,8 @@ def register_error_handlers(app):
                     "message": error.description
                 }
             }), error.code
+
+        logger.exception("Unhandled exception occurred: %s", error)
 
         return jsonify({
             "success": False,

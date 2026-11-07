@@ -1,0 +1,109 @@
+@startuml AD_06_Doctor_Profile_FINAL
+' =====================================================================
+'  AD-06 Activity Diagram Profil Dokter (Doctor Profile) — PIXEL-T
+'  VERSI REVISI FINAL — Disederhanakan sesuai instruksi
+'
+'  Perubahan dari versi sebelumnya (AD_06_Doctor_Profile.puml):
+'    1. SATU activity final node (stop) — semua jalur bertemu di satu titik akhir.
+'    2. Cabang "Lihat Saja" dari diamond pertama langsung menuju stop yang sama
+'       via merge, bukan stop terpisah.
+'    3. Cabang "Batal" dari formulir bertemu di merge node yang sama.
+'    4. Error validasi dikembalikan ke pengguna dengan loop pengisian ulang
+'       (bukan stop terpisah), menggambarkan perilaku modal yang sebenarnya.
+'    5. Label detail teknis (nama tabel, sinkronisasi metadata) dipertahankan
+'       karena merupakan perilaku nyata (upsert + updateUser) yang penting
+'       untuk pemahaman fitur.
+'    6. Jumlah simbol berkurang signifikan (dari 3 stop → 1 stop).
+'
+'  Diverifikasi dari:
+'    - frontend/src/pages/profile/DoctorProfile.tsx
+'    - frontend/src/services/profile.ts
+'      (fetchDoctorProfile, validateProfileData, saveDoctorProfile)
+'    - frontend/src/services/analysis.ts (listHistory → statistik aktivitas)
+'    - Supabase: tabel doctor_profiles + supabase.auth.updateUser()
+'  Standar Desain Visual: #3DADFF, bold white, Corner 8, 2 swimlanes
+' =====================================================================
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultTextAlignment center
+skinparam shadowing false
+
+skinparam activity {
+  BackgroundColor #3DADFF
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #FFFFFF
+  FontSize 11
+  FontStyle bold
+  Corner 8
+  DiamondBackgroundColor #3DADFF
+  DiamondBorderColor #2D2D2D
+  DiamondFontColor #FFFFFF
+  DiamondFontSize 10
+  DiamondFontStyle bold
+  StartColor #3DADFF
+  EndColor #3DADFF
+}
+
+skinparam ArrowColor #2D2D2D
+skinparam ArrowFontColor #000000
+skinparam ArrowFontSize 10
+
+skinparam partition {
+  BackgroundColor transparent
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #000000
+  FontSize 13
+  FontStyle bold
+}
+
+|User|
+start
+:Membuka halaman\nProfil Dokter;
+
+|System|
+:Mengambil data profil\n& riwayat analisis;
+:Menampilkan profil dokter\n& statistik aktivitas;
+
+|User|
+if (Edit profil?) then (Tidak)
+  ' Langsung menuju stop (via merge implisit PlantUML)
+else (Ya)
+  :Menekan tombol\n"Edit Profile";
+
+  |System|
+  :Menampilkan modal formulir\nEdit Profile;
+
+  |User|
+  repeat
+    :Mengisi & memperbarui\ndata profil;
+
+    if (Aksi formulir?) then (Batal)
+      |System|
+      :Menutup modal tanpa\nmenyimpan perubahan;
+      |User|
+      stop
+    else (Simpan)
+      :Menekan tombol\n"Simpan Profil";
+      |System|
+      :Memvalidasi data\ninput profil dokter;
+      if (Data valid?) then (Ya)
+        :Menyimpan ke doctor_profiles\n& sinkronisasi metadata;
+        :Menampilkan notifikasi sukses\n& menutup modal formulir;
+        |User|
+        :Melihat profil yang\ntelah diperbarui;
+        stop
+      else (Tidak)
+        :Menampilkan pesan\nerror validasi;
+      endif
+    endif
+  repeat while (Perbaiki data?) is (Ya)
+  -> Batal;
+endif
+
+stop
+
+@enduml
+

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-11-05T00:00:00.000Z" agent="OpenCode" version="24.0.0" type="device">
+  <diagram name="Class Diagram PIXEL-T" id="class-diagram-pixelt-final">
+    <mxGraphModel dx="1800" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="1580" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+    <mxCell id="AuthContext" value="&lt;i&gt;&lt;&lt;module&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AuthContext&lt;/b&gt;&#xa;----&#xa;- user: User&#xa;- session: Session&#xa;- loading: Boolean&#xa;- role: String&#xa;- accountStatus: String&#xa;----&#xa;+ signIn(email, password): Promise&#xa;+ signUp(email, password, ...): Promise&#xa;+ signOut(): Promise" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="30" y="50" width="298" height="195" as="geometry"/>
+    </mxCell>
+    <mxCell id="AnalysisClient" value="&lt;i&gt;&lt;&lt;module&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisClient&lt;/b&gt;&#xa;----&#xa;+ createAnalysis(file: File): Promise&#xa;+ getAnalysis(id: String): Promise&#xa;+ listHistory(): Promise&#xa;+ deleteAnalysis(id: String): Promise" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="365" y="50" width="285" height="145" as="geometry"/>
+    </mxCell>
+    <mxCell id="DoctorProfileService" value="&lt;i&gt;&lt;&lt;module&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;DoctorProfileService&lt;/b&gt;&#xa;----&#xa;+ fetchDoctorProfile(user): Promise&#xa;+ saveDoctorProfile(user, data): Promise&#xa;+ calculateCompleteness(profile): ProfileCompleteness&#xa;+ validateProfileData(data): Object" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="685" y="50" width="320" height="179" as="geometry"/>
+    </mxCell>
+    <mxCell id="AdminController" value="&lt;i&gt;&lt;&lt;controller&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AdminController&lt;/b&gt;&#xa;----&#xa;- service: AdminService&#xa;----&#xa;+ list_doctors(status: String): Response&#xa;+ get_doctor(doctor_id: String): Response&#xa;+ approve_doctor(doctor_id: String): Response&#xa;+ reject_doctor(doctor_id: String): Response&#xa;+ get_statistics(): Response" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="160" y="270" width="330" height="195" as="geometry"/>
+    </mxCell>
+    <mxCell id="AnalysisController" value="&lt;i&gt;&lt;&lt;controller&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisController&lt;/b&gt;&#xa;----&#xa;- service: AnalysisService&#xa;----&#xa;+ create_analysis(): Response&#xa;+ get_analysis(analysis_id: String): Response&#xa;+ list_history(): Response&#xa;+ delete_analysis(analysis_id: String): Response" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="530" y="270" width="305" height="155" as="geometry"/>
+    </mxCell>
+    <mxCell id="AdminService" value="&lt;i&gt;&lt;&lt;service&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AdminService&lt;/b&gt;&#xa;----&#xa;- client: SupabaseClient&#xa;----&#xa;+ list_doctors(status?: String): List[Dict]&#xa;+ get_doctor(doctor_id: String): Optional[Dict]&#xa;+ approve_doctor(doctor_id, approved_by): Dict&#xa;+ reject_doctor(doctor_id, approved_by, reason): Dict&#xa;+ get_statistics(): Dict" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="30" y="495" width="340" height="225" as="geometry"/>
+    </mxCell>
+    <mxCell id="AnalysisService" value="&lt;i&gt;&lt;&lt;service&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisService&lt;/b&gt;&#xa;----&#xa;+ repository: AnalysisRepository&#xa;+ storage_service: StorageService&#xa;+ pipeline_runner: Callable&#xa;+ job_queue: AnalysisJobQueue&#xa;----&#xa;+ validate_and_decode_image(file): Tuple&#xa;+ create_analysis(file, user_id): Dict&#xa;+ get_analysis(analysis_id, user_id): Dict&#xa;+ list_user_analyses(user_id): List[Dict]&#xa;+ delete_analysis(analysis_id, user_id): Boolean" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="405" y="495" width="360" height="257" as="geometry"/>
+    </mxCell>
+    <mxCell id="AnalysisRepository" value="&lt;i&gt;&lt;&lt;repository&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisRepository&lt;/b&gt;&#xa;----&#xa;+ create(user_id, data, use_service_role): Dict&#xa;+ get_by_id(user_id, analysis_id): Optional[Dict]&#xa;+ list_by_user(user_id): List[Dict]&#xa;+ update(analysis_id, user_id, data): Optional[Dict]&#xa;+ delete(analysis_id, user_id): Boolean" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="790" y="495" width="350" height="211" as="geometry"/>
+    </mxCell>
+    <mxCell id="StorageService" value="&lt;i&gt;&lt;&lt;service&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;StorageService&lt;/b&gt;&#xa;----&#xa;+ bucket_name: String&#xa;----&#xa;+ upload_file(path, file_bytes, content_type): String&#xa;+ create_signed_url(path, expires_in): String&#xa;+ delete_analysis_files(paths): Boolean" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="1175" y="495" width="315" height="187" as="geometry"/>
+    </mxCell>
+    <mxCell id="AnalysisJobQueue" value="&lt;i&gt;&lt;&lt;service&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisJobQueue&lt;/b&gt;&#xa;----&#xa;+ capacity: Integer&#xa;----&#xa;+ try_enqueue(job): Boolean&#xa;+ contains(analysis_id): Boolean&#xa;+ pending_count(): Integer&#xa;+ drain_one(): Boolean" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="1525" y="495" width="275" height="155" as="geometry"/>
+    </mxCell>
+    <mxCell id="AnalysisProgressReporter" value="&lt;i&gt;&lt;&lt;service&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisProgressReporter&lt;/b&gt;&#xa;----&#xa;- repository: AnalysisRepository&#xa;- analysis_id: String&#xa;- user_id: String&#xa;----&#xa;+ on_phase(step: String): None&#xa;+ on_pass(): None&#xa;+ percent(): Integer" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="1825" y="495" width="285" height="171" as="geometry"/>
+    </mxCell>
+    <mxCell id="AIInferenceFunctions" value="&lt;i&gt;&lt;&lt;module&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AIInferenceFunctions&lt;/b&gt;&#xa;----&#xa;+ run_pipeline(original_bytes, config, on_phase, on_pass, analysis_id): PipelineResult&#xa;+ predict(image, model_service, config, on_pass): SegmentationResult&#xa;+ postprocess_mask(mask, config): Array&#xa;+ measure_mask(mask): Dict&#xa;+ generate_gradcam(image_tensor, model_service, target_mask, original_image, config): GradCAMResult&#xa;+ prepare_image(image, config): Tensor" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="130" y="745" width="610" height="227" as="geometry"/>
+    </mxCell>
+    <mxCell id="ModelService" value="&lt;i&gt;&lt;&lt;service&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;ModelService&lt;/b&gt;&#xa;----&#xa;+ config: ModelConfig&#xa;+ device: Device&#xa;+ load_count: Integer&#xa;----&#xa;+ load(): Module&#xa;+ metadata(): Dict&#xa;+ predict_logits(tensor): Tensor&#xa;+ get_gradcam_target_layer(): Module" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="775" y="745" width="313" height="187" as="geometry"/>
+    </mxCell>
+    <mxCell id="ModelConfig" value="&lt;i&gt;&lt;&lt;dataclass&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;ModelConfig&lt;/b&gt;&#xa;----&#xa;+ architecture: String&#xa;+ encoder: String&#xa;+ gradcam_target_layer: String&#xa;+ model_version: String&#xa;+ input_size: Integer&#xa;+ threshold: Float&#xa;+ tta_enabled: Boolean&#xa;+ postprocessing_enabled: Boolean&#xa;+ checkpoint_filename: String&#xa;+ checkpoint_sha256: String" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="1115" y="745" width="321" height="211" as="geometry"/>
+    </mxCell>
+    <mxCell id="PipelineResult" value="&lt;i&gt;&lt;&lt;dataclass&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;PipelineResult&lt;/b&gt;&#xa;----&#xa;+ binary_mask_png: Bytes&#xa;+ segmentation_overlay_png: Bytes&#xa;+ gradcam_heatmap_png: Bytes&#xa;+ gradcam_overlay_png: Bytes&#xa;+ measurements: Dict&#xa;+ summary_text: String&#xa;+ gradcam: GradCAMResult" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="1465" y="745" width="320" height="179" as="geometry"/>
+    </mxCell>
+    <mxCell id="SegmentationResult" value="&lt;i&gt;&lt;&lt;dataclass&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;SegmentationResult&lt;/b&gt;&#xa;----&#xa;+ probability_map: Tensor&#xa;+ binary_mask: Tensor&#xa;+ threshold: Float" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="1815" y="745" width="254" height="109" as="geometry"/>
+    </mxCell>
+    <mxCell id="GradCAMResult" value="&lt;i&gt;&lt;&lt;dataclass&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;GradCAMResult&lt;/b&gt;&#xa;----&#xa;+ heatmap: Array&#xa;+ overlay: Array&#xa;+ target_layer: String&#xa;+ target_objective: String&#xa;+ target_mask_empty: Boolean" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="1815" y="880" width="268" height="141" as="geometry"/>
+    </mxCell>
+    <mxCell id="auth_users" value="&lt;i&gt;&lt;&lt;external&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;auth_users&lt;/b&gt;&#xa;----&#xa;+ id: UUID" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="175" y="1050" width="118" height="77" as="geometry"/>
+    </mxCell>
+    <mxCell id="doctor_profiles" value="&lt;i&gt;&lt;&lt;entity&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;doctor_profiles&lt;/b&gt;&#xa;----&#xa;+ id: UUID&#xa;+ user_id: UUID&#xa;+ full_name: String&#xa;+ primary_specialty: String&#xa;+ hospital: String&#xa;+ account_status: String&#xa;+ approved_by: UUID&#xa;+ approved_at: Timestamp&#xa;+ education: JSON&#xa;+ experience: JSON&#xa;+ bio: String" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="325" y="1050" width="278" height="227" as="geometry"/>
+    </mxCell>
+    <mxCell id="analyses" value="&lt;i&gt;&lt;&lt;entity&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;analyses&lt;/b&gt;&#xa;----&#xa;+ id: UUID&#xa;+ user_id: UUID&#xa;+ status: String&#xa;+ segmentation_status: String&#xa;+ gradcam_status: String&#xa;+ summary_text: String&#xa;+ created_at: Timestamp&#xa;+ completed_at: Timestamp&#xa;+ updated_at: Timestamp" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="635" y="1050" width="269" height="211" as="geometry"/>
+    </mxCell>
+    <mxCell id="APIError" value="&lt;i&gt;&lt;&lt;exception&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;APIError&lt;/b&gt;&#xa;----&#xa;+ code: String&#xa;+ message: String&#xa;+ status_code: Integer&#xa;----&#xa;+ to_dict(): Dict" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+      <mxGeometry x="935" y="1050" width="196" height="133" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge1" value="Supabase Auth" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AuthContext" target="auth_users">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge2" value="HTTP/REST" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AnalysisClient" target="AnalysisController">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge3" value="CRUD profil" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="DoctorProfileService" target="doctor_profiles">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge4" value="calls" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AdminController" target="AdminService">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge5" value="raises" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AdminController" target="APIError">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge6" value="calls" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AnalysisController" target="AnalysisService">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge7" value="raises" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AnalysisController" target="APIError">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge8" value="CRUD" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AdminService" target="doctor_profiles">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge9" value="repository" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AnalysisService" target="AnalysisRepository">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge10" value="assets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AnalysisService" target="StorageService">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge11" value="queue" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AnalysisService" target="AnalysisJobQueue">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge12" value="reports" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AnalysisService" target="AnalysisProgressReporter">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge13" value="writes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AnalysisProgressReporter" target="AnalysisRepository">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge14" value="pipeline" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AnalysisService" target="AIInferenceFunctions">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge15" value="inference" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AIInferenceFunctions" target="ModelService">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge16" value="returns" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AIInferenceFunctions" target="PipelineResult">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge17" value="returns" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AIInferenceFunctions" target="SegmentationResult">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge18" value="returns" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AIInferenceFunctions" target="GradCAMResult">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge19" value="gradcam" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="PipelineResult" target="GradCAMResult">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge20" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="ModelService" target="ModelConfig">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge21" value="CRUD" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="AnalysisRepository" target="analyses">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge23" value="user_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="auth_users" target="doctor_profiles">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge24" value="user_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;fontFamily=Segoe UI;" edge="1" parent="1" source="auth_users" target="analyses">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

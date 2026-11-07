@@ -40,3 +40,30 @@ def test_error_handler_405_method_not_allowed(client):
     assert data["success"] is False
     assert "error" in data
     assert data["error"]["code"] == "METHOD_NOT_ALLOWED"
+
+
+def test_error_handler_500_logs_exception(app, client, caplog):
+    """Test that unexpected exceptions return HTTP 500 envelope and log with traceback."""
+    import logging
+
+    @app.route('/api/test-trigger-500')
+    def trigger_500():
+        raise RuntimeError("Simulated unexpected failure for testing traceback logging")
+
+    with caplog.at_level(logging.ERROR):
+        response = client.get('/api/test-trigger-500')
+
+    assert response.status_code == 500
+    data = response.get_json()
+    assert data == {
+        "success": False,
+        "error": {
+            "code": "INTERNAL_ERROR",
+            "message": "An unexpected error occurred."
+        }
+    }
+
+    error_logs = [record for record in caplog.records if record.levelno >= logging.ERROR]
+    assert len(error_logs) >= 1
+    assert any("Simulated unexpected failure" in record.getMessage() for record in error_logs)
+    assert any(record.exc_info is not None for record in error_logs)

@@ -1,0 +1,69 @@
+@startuml AD_01_Sign_Up
+' =====================================================================
+'  Activity Diagram Sign Up - PIXEL-T (Bab IV Skripsi)
+'  Diverifikasi dari: Register.tsx, services/auth.ts, AuthContext.tsx
+'  Gaya Desain Visual: Mengikuti referensi activity_diagram_sign_up_contoh.png
+'  (#3DADFF blue, teks putih tebal, sudut rounded corner 8)
+' =====================================================================
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultTextAlignment center
+skinparam shadowing false
+
+skinparam activity {
+  BackgroundColor #3DADFF
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #FFFFFF
+  FontSize 11
+  FontStyle bold
+  Corner 8
+  DiamondBackgroundColor #3DADFF
+  DiamondBorderColor #2D2D2D
+  DiamondFontColor #FFFFFF
+  DiamondFontSize 10
+  DiamondFontStyle bold
+  StartColor #3DADFF
+  EndColor #3DADFF
+}
+
+skinparam ArrowColor #2D2D2D
+skinparam ArrowFontColor #000000
+skinparam ArrowFontSize 10
+
+skinparam partition {
+  BackgroundColor transparent
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #000000
+  FontSize 13
+  FontStyle bold
+}
+
+|User|
+start
+:Membuka halaman sign up;
+
+repeat :Mengisi form sign up;
+
+|System|
+:Memvalidasi input user;
+
+if (Email sudah\ndigunakan?) then (Ya)
+  :Mengirim pesan konfirmasi\n"Email is already in use";
+  |User|
+  :Menerima pesan konfirmasi\n"Email is already in use";
+else (Tidak)
+  |System|
+  :Menyimpan data kedalam\ndatabase (Supabase Auth);
+  :Mengirim pesan berhasil;
+
+  |User|
+  :Menerima pesan berhasil;
+  :Dialihkan ke halaman\nsign in;
+  stop
+endif
+
+repeat while ()
+@enduml

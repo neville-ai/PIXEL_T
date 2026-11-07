@@ -1,0 +1,145 @@
+@startuml sequence-sign-in
+' Sequence Diagram Sign In - PIXEL-T
+' Alur diverifikasi dari Login.tsx, AuthContext.tsx, dan services/auth.ts.
+
+title Sequence Diagram Sign In - PIXEL-T
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipant underline false
+skinparam roundcorner 5
+
+skinparam participant {
+  BackgroundColor #DCE9F7
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam sequence {
+  ArrowColor #2E5E9E
+  LifeLineBorderColor #2E5E9E
+  LifeLineBackgroundColor #EEF5FC
+  GroupBorderColor #2E5E9E
+  GroupBackgroundColor #EEF5FC
+  GroupHeaderFontColor #172B4D
+  DividerBackgroundColor #DCE9F7
+  DividerBorderColor #2E5E9E
+  DividerFontColor #172B4D
+}
+
+actor "Pengguna" as Pengguna
+participant "Sign In\n(Login.tsx)" as Login
+participant "AuthContext\n(signIn)" as AuthContext
+participant "Auth Service\n(loginUser /\nresetPasswordUser)" as AuthService
+participant "Supabase Auth" as Supabase
+
+Pengguna -> Login: Membuka halaman Sign In
+activate Login
+Login --> Pengguna: Menampilkan formulir Sign In
+
+alt Sign In
+  Pengguna -> Login: Mengisi email dan kata sandi,\nlalu menekan tombol Masuk
+  Login -> Login: handleSubmit()\nValidasi input wajib
+
+  alt Input tidak valid
+    Login --> Pengguna: Menampilkan pesan validasi
+  else Input valid
+    Login -> AuthContext: signIn(email, password)
+    activate AuthContext
+    AuthContext -> AuthService: loginUser(email, password)
+    activate AuthService
+
+    alt Supabase tidak dikonfigurasi
+      AuthService --> AuthContext: Error konfigurasi autentikasi
+    else Supabase telah dikonfigurasi
+      AuthService -> Supabase: signInWithPassword(email, password)
+      activate Supabase
+
+      alt Login berhasil
+        Supabase --> AuthService: { user, session }
+        AuthService --> AuthContext: Data autentikasi berhasil
+      else Login gagal atau user/session tidak tersedia
+        Supabase --> AuthService: Error atau respons tidak lengkap
+        AuthService --> AuthContext: Pesan kesalahan autentikasi
+      end
+
+      deactivate Supabase
+    end
+
+    deactivate AuthService
+
+    alt Login gagal
+      AuthContext --> Login: { error }
+      Login --> Pengguna: Menampilkan pesan kesalahan login
+    else Login berhasil
+      AuthContext -> AuthContext: Menyimpan user dan session
+      AuthContext --> Login: Sign in berhasil
+      Login -> Login: navigate(from || '/dashboard',\n{ replace: true })
+      Login --> Pengguna: Membuka halaman tujuan\natau Dashboard
+    end
+
+    deactivate AuthContext
+  end
+
+else Lupa Kata Sandi (opsional)
+  Pengguna -> Login: Memilih "Lupa kata sandi?"
+  Login -> Login: Menampilkan formulir reset
+  Login --> Pengguna: Meminta alamat email
+  Pengguna -> Login: Mengirim alamat email
+  Login -> Login: Validasi format email
+
+  alt Format email tidak valid
+    Login --> Pengguna: Menampilkan pesan validasi email
+  else Format email valid
+    Login -> AuthService: resetPasswordUser(email)
+    activate AuthService
+
+    alt Supabase tidak dikonfigurasi
+      AuthService --> Login: Error konfigurasi autentikasi
+    else Supabase telah dikonfigurasi
+      AuthService -> Supabase: resetPasswordForEmail(email,\nredirectTo: '/reset-password')
+      activate Supabase
+
+      alt Permintaan reset gagal
+        Supabase --> AuthService: Error atau request gagal
+        AuthService --> Login: Pesan kesalahan
+      else Permintaan reset diterima
+        Supabase --> AuthService: Permintaan diproses
+        AuthService --> Login: Permintaan berhasil
+      end
+
+      deactivate Supabase
+    end
+
+    deactivate AuthService
+
+    alt Permintaan reset gagal
+      Login --> Pengguna: Menampilkan pesan kesalahan reset
+    else Permintaan reset berhasil
+      Login --> Pengguna: Menampilkan pesan netral bahwa\njika akun terdaftar, tautan reset dikirim
+    end
+
+  end
+end
+
+deactivate Login
+
+note right of AuthContext
+  User dan session hanya disimpan
+  setelah respons login valid.
+end note
+
+note over Pengguna,Supabase
+  Alur reset hanya mencakup permintaan tautan.
+  Penyelesaian reset pada /reset-password
+  tidak ditampilkan di sini.
+end note
+
+@enduml

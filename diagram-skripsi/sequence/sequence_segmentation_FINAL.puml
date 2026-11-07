@@ -1,0 +1,109 @@
+@startuml
+title Sequence Diagram Upload Image dan Segmentasi PIXEL-T
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+autonumber
+
+skinparam sequence {
+    ArrowColor black
+    ActorBorderColor black
+    LifeLineColor black
+    BoxBorderColor black
+    BoxBgColor white
+}
+
+actor "Pengguna" as U
+participant "Frontend\n(NewAnalysis.tsx / AnalysisResult.tsx)" as FE
+participant "Backend\n(Flask API)" as BE
+participant "Pipeline AI\n(U-Net + ResNet50,\nGrad-CAM)" as AI
+participant "Supabase\n(Auth + Database + Storage)" as SB
+
+U -> FE: Pilih citra
+
+alt [validasi_gagal]
+    FE --> U: Tampilkan pesan validasi sesuai kasus
+else [validasi_sukses]
+end
+
+note over FE,U
+Contoh pesan UI:
+Select a JPG, JPEG, or PNG image.
+File size exceeds the 10 MB limit.
+end note
+
+U -> FE: Klik "Start analysis"
+FE -> BE: POST /api/analysis\n(multipart image + Authorization)
+
+alt [validasi_backend_gagal]
+    BE --> FE: HTTP 400 dengan pesan validasi API
+    FE --> U: Tampilkan pesan dari API
+else [validasi_backend_sukses]
+end
+
+note over BE,SB
+Citra asli diunggah ke Storage terlebih dahulu,
+lalu record status processing dibuat di Database.
+end note
+BE -> SB: Storage: unggah citra asli;\nDatabase: buat record processing
+BE -> BE: Antrekan pekerjaan analisis
+
+alt [queue_penuh]
+    BE -> SB: Database: hapus record analisis
+    BE -> SB: Storage: hapus citra asli
+    BE --> FE: HTTP 429 QUEUE_FULL
+    FE --> U: The analysis queue is full. Please try again in a moment.
+else [queue_tidak_penuh]
+end
+
+par Respons HTTP dan pemantauan frontend
+    BE --> FE: HTTP 202 Accepted\n(analysis_id, status=processing)
+
+    loop Polling awal dan tiap 2 detik selama processing
+        FE -> BE: GET /api/analysis/{id}\n(Authorization)
+        BE -> SB: Baca status/progres;\nbuat signed URL citra asli
+        BE --> FE: HTTP 200: status dan progres
+    end
+else Pemrosesan worker di background
+    BE ->> AI: Jalankan pipeline analisis
+
+    note over AI
+    Decode RGB, preprocessing 512x512,
+    inferensi U-Net + ResNet50, post-processing,
+    metrik area, Grad-CAM, dan ringkasan template.
+    end note
+
+    loop Callback fase dan progres yang dilaporkan
+        BE -> SB: Database: simpan progres dari callback pipeline
+    end
+
+    alt Pipeline dan penyimpanan berhasil
+        AI --> BE: PipelineResult\n(mask, overlay, metrik, Grad-CAM, ringkasan)
+        BE -> SB: Storage: unggah mask, overlay,\nheatmap dan overlay Grad-CAM
+        BE -> SB: Database: simpan metadata;\nstatus completed
+    else Pipeline atau penyimpanan gagal
+        BE -> SB: Storage: bersihkan hasil parsial;\nDatabase: simpan status failed dan error
+    end
+end
+
+FE -> BE: GET /api/analysis/{id}\n(detail halaman hasil)
+BE -> SB: Ambil record dan signed URL aset
+BE --> FE: Detail, metrik, aset, ringkasan,\nstatus dan error
+
+alt Status completed
+    FE --> U: Tampilkan citra, mask, overlay,\nGrad-CAM, metrik dan ringkasan
+else Status failed
+    FE --> U: Analysis could not be completed. Please try again.
+end
+
+note over FE,SB
+Frontend memperoleh sesi melalui Supabase Auth.
+require_auth memvalidasi setiap request terlindungi.
+end note
+
+@enduml

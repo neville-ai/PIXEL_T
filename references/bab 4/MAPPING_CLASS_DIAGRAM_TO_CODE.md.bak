@@ -1,0 +1,124 @@
+# MAPPING CLASS DIAGRAM → KODE — PIXEL-T
+
+**Tujuan:** Memberikan bukti yang dapat dicek untuk setiap kelas, atribut, metode, dan relasi pada `CLASS_DIAGRAM_FINAL_PIXELT.puml` terhadap implementasi nyata.  
+**Metode:** Pembacaan langsung berkas kode; baris merujuk pada nomor baris aktual (1-based). Tidak ada name/path yang direkayasa.  
+**Catatan:** "Tidak ditemukan" berarti tidak ditemukan dalam cakupan berkas yang diperiksa, bukan berarti tidak ada di tempat lain.
+
+---
+
+## 1. Tabel Pemetaan Kelas
+
+| # | Kelas di diagram | Stereotype | Berkas implementasi | Baris | Atribut di kode | Metode di kode | Status |
+|---|---|---|---|---|---|---|---|
+| 1 | `AnalysisController` | `<<controller>>` | `backend\app\controllers\analysis_controller.py` | 7–96 | `service` (10–11) | `create_analysis` (13), `get_analysis` (41), `list_history` (61), `delete_analysis` (79) | Sesuai |
+| 2 | `AnalysisService` | `<<service>>` | `backend\app\services\analysis_service.py` | 269–991 | `repository` (291), `storage_service` (292), `pipeline_runner` (293), `job_queue` (296–299) | `validate_and_decode_image` (301), `create_analysis` (369), `get_analysis` (502), `list_user_analyses` (635), `delete_analysis` (688) | Sesuai |
+| 3 | `AnalysisRepository` | `<<repository>>` | `backend\app\repositories\analysis_repository.py` | 5–196 | `_client` (17) | `create` (38), `get_by_id` (71), `list_by_user` (100), `update` (133), `delete` (172); validasi `ALLOWED_STATUSES` (12), `ALLOWED_SEGMENTATION_STATUSES` (13) | Sesuai |
+| 4 | `StorageService` | `<<service>>` | `backend\app\services\storage_service.py` | 7–189 | `_client`, `bucket_name` (20), `ALLOWED_CATEGORIES` (14) | `generate_asset_path` (39), `upload_file`, `create_signed_url`, `delete_analysis_files`, `sanitize_id` (32) | Sesuai |
+| 5 | `AnalysisJobQueue` | `<<service>>` | `backend\app\services\analysis_service.py` | 150–266 | `capacity` (184) | `try_enqueue` (188), `contains` (202), `pending_count` (209), `drain_one` (213), `_ensure_worker` (231), `_work_loop` (240) | Sesuai |
+| 6 | `AnalysisProgressReporter` | `<<service>>` | `backend\app\services\analysis_service.py` | 64–148 | `_repository`, `_analysis_id`, `_user_id`, `total_units`, `completed_units`, `failed_writes` | `last_step` (96), `completed_units` (101), `percent` (105), `on_phase` (110), `on_pass` (116), `_write` (126) | Sesuai (perbaikan F-02) |
+| 7 | `APIError` | `<<exception>>` | `backend\app\core\errors.py` | 8–23 | `code`, `message`, `status_code` (10–14) | `to_dict` (16) | Sesuai (perbaikan F-03) |
+| 8 | `AIInferenceFunctions` | `<<module>>` | `ai\inference\pipeline.py`, `segmentation.py`, `postprocessing.py`, `gradcam.py`, `preprocessing.py`, `model_service.py` | lihat detail §2 | — | `run_pipeline` (pipeline.py:101), `predict` (segmentation.py:98), `postprocess_mask` (postprocessing.py:26), `measure_mask` (postprocessing.py:49), `generate_gradcam` (gradcam.py:99) | Sesuai |
+| 9 | `ModelService` | `<<service>>` | `ai\inference\model_service.py` | 19–136 | `config` (23), `_model` (24), `_device` (25), `_lock` (26), `load_count` (27) | `load` (61), `metadata` (95), `predict_logits` (112), `get_gradcam_target_layer` (129) | Sesuai |
+| 10 | `ModelConfig` | `<<dataclass>>` | `ai\config\model_config.py` | 18–66 | 19 field: `architecture`, `encoder`, `decoder_attention`, `gradcam_target_layer`, `framework`, `library`, `model_version`, `input_size`, `input_channels`, `threshold`, `tta_enabled`, `multiscale_enabled`, `tta_scales`, `postprocessing_enabled`, `postprocessing_min_area`, `contour_smoothing`, `smoothing_epsilon`, `checkpoint_filename`, `checkpoint_sha256` | properti/metode tambahan di luar diagram (subset) | Sesuai (subset) |
+| 11 | `PipelineResult` | `<<dataclass>>` | `ai\inference\pipeline.py` | 63–70 | `binary_mask_png`, `segmentation_overlay_png`, `gradcam_heatmap_png`, `gradcam_overlay_png`, `measurements`, `summary_text`, `gradcam` | — | Sesuai |
+| 12 | `SegmentationResult` | `<<dataclass>>` | `ai\inference\segmentation.py` | 24–29 | `probability_map`, `binary_mask`, `threshold` | — | Sesuai |
+| 13 | `GradCAMResult` | `<<dataclass>>` | `ai\inference\gradcam.py` | 37–44 | `heatmap`, `overlay`, `target_layer`, `target_objective`, `target_mask_empty` | — | Sesuai |
+| 14 | `auth_users` | `<<external>>` | Supabase Auth; referensi `database\migrations\001_create_analyses_and_storage.sql` | 17 | `id: UUID` | — | Sesuai |
+| 15 | `doctor_profiles` | `<<entity>>` | `database\migrations\004_create_doctor_profiles.sql` | 10–47 | 22 kolom; diagram 8 kunci | — | Sesuai (subset) |
+| 16 | `analyses` | `<<entity>>` | `database\migrations\001_create_analyses_and_storage.sql`, `002`, `003` | 001:14–65; 002:3–6; 003:6–7 | ~39 kolom; diagram 20 kunci | — | Sesuai (subset) |
+| 17 | `AnalysisClient` | `<<service>>` | `frontend\src\services\analysis.ts` | 1–224 | `API_BASE_URL`, `ApiRequestError` | `createAnalysis`, `getAnalysis`, `listHistory`, `deleteAnalysis` | Sesuai |
+| 18 | `AuthContext` | `<<context>>` | `frontend\src\context\AuthContext.tsx` | 1–173 | `user`, `session`, `loading` | `signIn`, `signUp`, `signOut`, `getCurrentSession`, `onAuthStateChange` | Sesuai |
+| 19 | `DoctorProfileService` | `<<service>>` | `frontend\src\services\profile.ts` | 1–317 | `DoctorProfileData`, `EducationItem`, `ExperienceItem` | `fetchDoctorProfile`, `saveDoctorProfile`, `calculateCompleteness` | Sesuai |
+
+---
+
+## 2. Detail Fungsi AI (`AIInferenceFunctions`)
+
+Berdasarkan `grep` inventaris fungsi pada `ai/inference/*.py` (44 definisi terdeteksi):
+
+| Fungsi | Berkas | Baris | Peran |
+|---|---|---|---|
+| `run_pipeline` | `pipeline.py` | 101 | Orkestrasi 5 fase: preprocessing, inference, postprocessing, gradcam, artifact_composition |
+| `predict` | `segmentation.py` | 98 | Inferensi segmentasi + TTA (5 orientasi) + threshold |
+| `postprocess_mask` | `postprocessing.py` | 26 | Close/open, area filter, hole fill, smoothing |
+| `measure_mask` | `postprocessing.py` | 49 | Hitung `area_pixels`, `area_ratio`, bounding box |
+| `generate_gradcam` | `gradcam.py` | 99 | Grad-CAM pada `decoder.blocks.4.conv2.0` |
+
+Fungsi pendukung yang tidak dimodelkan terpisah (wajar disederhanakan): `prepare_image` (`preprocessing.py:15`), `smooth_contours` (`postprocessing.py:12`), `resize_binary_mask` (`postprocessing.py:44`), `count_forward_passes` (`segmentation.py:43`), `_predict_scale` (`segmentation.py:56`), `_restore_orientation` (`segmentation.py:31`).
+
+Konstanta fase pipeline (bukti alur): `PHASE_PREPROCESSING`, `PHASE_INFERENCE`, `PHASE_POSTPROCESSING`, `PHASE_GRADCAM`, `PHASE_ARTIFACT_COMPOSITION` (`pipeline.py:22-26`). Konstanta service-side: `_STEP_UPLOADING_RESULTS`, `_STEP_COMPLETED` (`analysis_service.py:46-47`).
+
+---
+
+## 3. Tabel Pemetaan Relasi
+
+| Relasi di diagram | Jenis UML | Bukti kode | Baris | Status |
+|---|---|---|---|---|
+| `AnalysisController ..> AnalysisService` | Dependency | `self.service = service or AnalysisService()` | `analysis_controller.py:10-11` | Sesuai |
+| `AnalysisController ..> APIError` | Dependency | `raise APIError(...)` | `analysis_controller.py:23,46,74` | Sesuai |
+| `AnalysisService *-- AnalysisRepository` | Composition | `self.repository = repository or AnalysisRepository()` | `analysis_service.py:291` | Sesuai |
+| `AnalysisService *-- StorageService` | Composition | `self.storage_service = storage_service or StorageService()` | `analysis_service.py:292` | Sesuai |
+| `AnalysisService *-- AnalysisJobQueue` | Composition | `self.job_queue = job_queue or AnalysisJobQueue(...)` | `analysis_service.py:296-299` | Sesuai |
+| `AnalysisService ..> AnalysisProgressReporter` | Dependency | Reporter dibuat di `_execute_pipeline` | `analysis_service.py` (kelas 64) | Perbaikan F-02 |
+| `AnalysisProgressReporter ..> AnalysisRepository` | Dependency | `_write` → `repository.update` | `analysis_service.py:126` | Perbaikan F-02 |
+| `AnalysisService ..> AIInferenceFunctions` | Dependency | `self.pipeline_runner = pipeline_runner or run_pipeline` | `analysis_service.py:293` | Sesuai |
+| `AnalysisRepository ..> analyses` | Dependency | CRUD tabel `analyses` | `analysis_repository.py:38-196` | Sesuai |
+| `AIInferenceFunctions ..> ModelService` | Dependency | `predict(...model_service)`, `generate_gradcam(...model_service)` | `segmentation.py:98`; `gradcam.py:99` | Sesuai |
+| `AIInferenceFunctions ..> PipelineResult` | Dependency | `run_pipeline` mengembalikan `PipelineResult` | `pipeline.py:101` | Sesuai |
+| `AIInferenceFunctions ..> SegmentationResult` | Dependency | `predict` mengembalikan `SegmentationResult` | `segmentation.py:98` | Sesuai |
+| `AIInferenceFunctions ..> GradCAMResult` | Dependency | `generate_gradcam` mengembalikan `GradCAMResult` | `gradcam.py:99` | Sesuai |
+| `PipelineResult *-- GradCAMResult` | Composition | `gradcam: GradCAMResult` (field) | `pipeline.py:63-70` | Sesuai |
+| `ModelService --> ModelConfig` | Dependency | `def __init__(self, config: ModelConfig = MODEL_CONFIG)` | `model_service.py:22` | Sesuai |
+| `auth_users "1" -- "0..*" analyses` | Association DB | `analyses.user_id ... REFERENCES auth.users(id) ON DELETE CASCADE` | `001:17` | Sesuai |
+| `auth_users "1" -- "0..1" doctor_profiles` | Association DB | `doctor_profiles.user_id ... UNIQUE (user_id)` | `004:12,46` | Sesuai |
+| `AnalysisClient ..> AnalysisController` | Dependency | `createAnalysis` → `POST /api/analysis` | `analysis.ts`; `analysis_controller.py:13` | Sesuai |
+| `AuthContext ..> auth_users` | Dependency | `signInWithPassword` → Supabase Auth | `auth.ts:193-222` | Sesuai |
+| `DoctorProfileService ..> doctor_profiles` | Dependency | `upsert` tabel `doctor_profiles` | `profile.ts:131-299` | Sesuai |
+
+---
+
+## 4. Pemetaan Entitas Basis Data
+
+### 4.1 `analyses` — subset diagram vs migrasi
+
+**Diagram (20 atribut):** `id, user_id, status, current_step, progress_percent, original_image_path, original_filename, binary_mask_path, segmentation_overlay_path, segmentation_status, area_pixels, area_ratio, gradcam_heatmap_path, gradcam_overlay_path, gradcam_status, summary_text, error_code, error_message, created_at, completed_at, updated_at`.
+
+**Migrasi `001_create_analyses_and_storage.sql:14-65`:** `id, user_id, status, original_image_path, original_filename, original_mime_type, original_width, original_height, binary_mask_path, segmentation_overlay_path, segmentation_status, area_pixels, area_ratio, bounding_width_pixels, bounding_height_pixels, gradcam_heatmap_path, gradcam_overlay_path, gradcam_target_layer, gradcam_method, gradcam_config_version, model_architecture, model_version, model_config_version, model_input_size, model_threshold, tta_enabled, postprocessing_enabled, summary_text, error_code, error_message, created_at, completed_at, updated_at`.
+
+**Migrasi `002_add_ai_pipeline_metadata.sql:3-6`:** `model_checkpoint_sha256, tta_scales, tta_orientations, gradcam_status`.
+
+**Migrasi `003_add_analysis_progress.sql:6-7`:** `current_step, progress_percent`.
+
+**Kesimpulan:** Diagram adalah subset ilustratif. Kolom metadata reproduktibilitas (`model_checkpoint_sha256`, `tta_scales`, `gradcam_target_layer`, `postprocessing_enabled`, dll.) dan dimensi (`original_width/height`, `bounding_*`) tidak ditampilkan agar diagram tidak padat. Skema lengkap → ERD.
+
+### 4.2 `doctor_profiles` — subset diagram vs migrasi
+
+**Diagram (8 atribut):** `id, user_id, full_name, primary_specialty, hospital, education, experience, bio`.
+
+**Migrasi `004_create_doctor_profiles.sql:10-47`:** `id, user_id, full_name, phone, birth_date, city, profession_category, academic_title, primary_specialty, subspecialty, clinical_focus, hospital, department, clinical_role, years_experience, practice_address, str_number, is_verified, bio, education, experience, created_at, updated_at` (22 kolom).
+
+**Kesimpulan:** Diagram subset; 15 kolom tidak ditampilkan. Skema lengkap → ERD.
+
+---
+
+## 5. Pemetaan Fitur → Kelas
+
+| Fitur | Kelas yang terlibat | Bukti |
+|---|---|---|
+| Sign Up | `AuthContext` → `auth_users` | `auth.ts` (`registerUser` → `signUp`) |
+| Sign In | `AuthContext` → `auth_users`; backend `require_auth` | `auth.ts:193-222`; `core/auth.py:7-80` |
+| Upload Image | `AnalysisClient` → `AnalysisController` → `AnalysisService` → `StorageService` → `AnalysisRepository` → `analyses` | `analysis.ts`; `analysis_controller.py:13`; `analysis_service.py:369` |
+| Segmentation | `AnalysisService` → `AnalysisJobQueue` → `AIInferenceFunctions` → `ModelService`/`ModelConfig`; `AnalysisProgressReporter`; `StorageService`; `analyses` | `analysis_service.py`; `pipeline.py:101`; `model_service.py:61` |
+| History | `AnalysisClient` (`listHistory`) → `AnalysisController.list_history` → `AnalysisService.list_user_analyses` → `AnalysisRepository.list_by_user` → `analyses` | `analysis.ts`; `analysis_controller.py:61`; `analysis_service.py:635` |
+| Doctor Profile | `DoctorProfileService` → `doctor_profiles` | `profile.ts:131-299`; `004_create_doctor_profiles.sql` |
+| Sign Out | `AuthContext.signOut` → `auth_users` (Supabase signOut) | `auth.ts`; `AuthContext.tsx` |
+
+---
+
+## 6. Catatan Konsistensi & Keterbatasan
+
+1. **Nama kelas** pada diagram semuanya cocok dengan definisi `class`/fungsi nyata; tidak ada nama yang direkayasa.
+2. **Atribut/service-side** yang tidak publik (mis. `_client`) tidak ditampilkan; diagram menampilkan antarmuka publik.
+3. **Metode internal** (`_run_analysis_job`, `_execute_pipeline`, `_work_loop`) tidak ditampilkan agar diagram tetap bersih; keberadaannya dapat dicek di `analysis_service.py`.
+4. **Frontend** tidak dipecah per komponen React; hanya 3 kelas layanan dalam paket `Frontend`.
+5. **Angka baris** dapat bergeser bila kode diedit; gunakan nama simbol (fungsi/kelas) sebagai rujukan utama jika baris tidak cocok.

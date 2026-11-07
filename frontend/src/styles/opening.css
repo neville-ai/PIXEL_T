@@ -107,19 +107,6 @@
   transition: opacity 700ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/* Thin technical grid — matches the futuristic reference backdrop.
-   Purely decorative, opacity-animated only (no layout cost). */
-.pixel-t-intro__grid {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  background-image:
-    linear-gradient(rgba(138, 214, 214, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(138, 214, 214, 0.055) 1px, transparent 1px);
-  background-size: 46px 46px;
-  transition: opacity 900ms cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
 /* Soft cyan ambient bloom behind the forming cluster. */
 .pixel-t-intro__glow {
   position: absolute;
@@ -139,16 +126,8 @@
   transition: opacity 1100ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/* Grid fades in during the establishing/formation phase; the bloom follows
-   one stage later so the backdrop builds up instead of popping in. */
-.pixel-t-intro[data-stage='focalPixelFormation'] .pixel-t-intro__grid,
-.pixel-t-intro[data-stage='supportingPixels'] .pixel-t-intro__grid,
-.pixel-t-intro[data-stage='segmentationFrame'] .pixel-t-intro__grid,
-.pixel-t-intro[data-stage='completeLogo'] .pixel-t-intro__grid,
-.pixel-t-intro[data-stage='identityMoment'] .pixel-t-intro__grid {
-  opacity: 1;
-}
-
+/* Bloom fades in one stage after the establishing phase so the backdrop builds
+   up instead of popping in. */
 .pixel-t-intro[data-stage='supportingPixels'] .pixel-t-intro__glow,
 .pixel-t-intro[data-stage='segmentationFrame'] .pixel-t-intro__glow,
 .pixel-t-intro[data-stage='completeLogo'] .pixel-t-intro__glow,
@@ -156,16 +135,13 @@
   opacity: 1;
 }
 
-/* The navy backdrop, grid and bloom all fade away together as the real
+/* The navy backdrop and bloom both fade away together as the real
    Login UI is revealed (stage 8) — one single, synchronised dissolve. */
 .pixel-t-intro[data-stage='loginUiReveal'] .pixel-t-intro__bg,
-.pixel-t-intro[data-stage='loginUiReveal'] .pixel-t-intro__grid,
 .pixel-t-intro[data-stage='loginUiReveal'] .pixel-t-intro__glow,
 .pixel-t-intro[data-stage='layoutSettlement'] .pixel-t-intro__bg,
-.pixel-t-intro[data-stage='layoutSettlement'] .pixel-t-intro__grid,
 .pixel-t-intro[data-stage='layoutSettlement'] .pixel-t-intro__glow,
 .pixel-t-intro[data-stage='finalHold'] .pixel-t-intro__bg,
-.pixel-t-intro[data-stage='finalHold'] .pixel-t-intro__grid,
 .pixel-t-intro[data-stage='finalHold'] .pixel-t-intro__glow {
   opacity: 0;
 }
@@ -343,7 +319,6 @@
    defensive guarantee that no intro-related motion ever runs anyway. */
 @media (prefers-reduced-motion: reduce) {
   .pixel-t-intro__bg,
-  .pixel-t-intro__grid,
   .pixel-t-intro__glow,
   .pixel-t-intro__pixel,
   .pixel-t-intro__logo,

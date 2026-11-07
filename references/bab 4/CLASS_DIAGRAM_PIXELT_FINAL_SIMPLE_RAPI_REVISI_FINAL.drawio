@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-11-06T00:00:00.000Z" agent="OpenCode" version="24.0.0" type="device">
+  <diagram name="Class Diagram PIXEL-T Final Simple RAPI Revisi Final" id="class-diagram-pixelt-final-simple-rapi-revisi-final">
+    <mxGraphModel dx="1600" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1420" pageHeight="1350" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ================= FRONTEND MODULES ================= -->
+        <mxCell id="AuthContext" value="&lt;i&gt;&lt;&lt;module&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AuthContext&lt;/b&gt;&#xa;----&#xa;- user: User&#xa;- session: Session&#xa;- loading: Boolean&#xa;- role: String&#xa;- accountStatus: String&#xa;----&#xa;+ signIn(email, password, role): Promise&#xa;+ signUp(email, password, ...): Promise&#xa;+ signOut(): Promise" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="30" y="40" width="280" height="170" as="geometry"/>
+        </mxCell>
+        <mxCell id="AnalysisClient" value="&lt;i&gt;&lt;&lt;module&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisClient&lt;/b&gt;&#xa;----&#xa;----&#xa;+ createAnalysis(file: File): Promise&#xa;+ getAnalysis(id: String): Promise&#xa;+ listHistory(): Promise&#xa;+ deleteAnalysis(id: String): Promise" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="330" y="40" width="280" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="DoctorProfileService" value="&lt;i&gt;&lt;&lt;module&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;DoctorProfileService&lt;/b&gt;&#xa;----&#xa;----&#xa;+ fetchDoctorProfile(user): Promise&#xa;+ saveDoctorProfile(user, data): Promise&#xa;+ uploadAvatar(user, file): Promise" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="630" y="40" width="290" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- ================= BACKEND CONTROLLERS ================= -->
+        <mxCell id="AnalysisController" value="&lt;i&gt;&lt;&lt;controller&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisController&lt;/b&gt;&#xa;----&#xa;- service: AnalysisService&#xa;----&#xa;+ create_analysis(): Response&#xa;+ get_analysis(id: String): Response&#xa;+ list_history(): Response&#xa;+ delete_analysis(id: String): Response" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="30" y="230" width="290" height="170" as="geometry"/>
+        </mxCell>
+        <mxCell id="AdminController" value="&lt;i&gt;&lt;&lt;controller&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AdminController&lt;/b&gt;&#xa;----&#xa;- service: AdminService&#xa;----&#xa;+ list_doctors(status?): Response&#xa;+ approve_doctor(id: String): Response&#xa;+ reject_doctor(id: String): Response&#xa;+ get_statistics(): Response" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="340" y="230" width="290" height="170" as="geometry"/>
+        </mxCell>
+        <mxCell id="AnalysisService" value="&lt;i&gt;&lt;&lt;service&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisService&lt;/b&gt;&#xa;----&#xa;- repository: AnalysisRepository&#xa;- storage: StorageService&#xa;- job_queue: AnalysisJobQueue&#xa;- pipeline_runner: Callable&#xa;----&#xa;+ validate_and_decode_image(file): Tuple&#xa;+ create_analysis(file, user_id): Dict&#xa;+ get_analysis(id, user_id): Dict&#xa;+ list_user_analyses(user_id): List&#xa;+ delete_analysis(id, user_id): Boolean" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="660" y="230" width="310" height="200" as="geometry"/>
+        </mxCell>
+
+        <!-- ================= BACKEND SERVICES ================= -->
+        <mxCell id="AdminService" value="&lt;i&gt;&lt;&lt;service&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AdminService&lt;/b&gt;&#xa;----&#xa;- client: SupabaseClient&#xa;----&#xa;+ list_doctors(status?): List&#xa;+ approve_doctor(id, approved_by): Dict&#xa;+ reject_doctor(id, approved_by, reason): Dict&#xa;+ get_statistics(): Dict" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="30" y="450" width="290" height="170" as="geometry"/>
+        </mxCell>
+        <mxCell id="AnalysisRepository" value="&lt;i&gt;&lt;&lt;repository&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisRepository&lt;/b&gt;&#xa;----&#xa;- client: SupabaseClient&#xa;----&#xa;+ create(user_id, data): Dict&#xa;+ get_by_id(id, user_id): Optional&#xa;+ list_by_user(user_id): List&#xa;+ update(id, user_id, data): Optional&#xa;+ delete(id, user_id): Boolean" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="340" y="450" width="350" height="190" as="geometry"/>
+        </mxCell>
+        <mxCell id="StorageService" value="&lt;i&gt;&lt;&lt;service&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;StorageService&lt;/b&gt;&#xa;----&#xa;- client: SupabaseClient&#xa;- bucket_name: String&#xa;----&#xa;+ upload_file(path, bytes, type): String&#xa;+ download_file(path): Bytes&#xa;+ create_signed_url(path, expires): String&#xa;+ delete_file(path): Boolean&#xa;+ generate_asset_path(user, analysis, cat, file): String" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="720" y="450" width="310" height="190" as="geometry"/>
+        </mxCell>
+        <mxCell id="AnalysisJobQueue" value="&lt;i&gt;&lt;&lt;module&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisJobQueue&lt;/b&gt;&#xa;----&#xa;- max_waiting: Integer&#xa;- jobs: Queue&lt;Job&gt;&#xa;- worker: Thread&#xa;----&#xa;+ try_enqueue(job): Boolean&#xa;+ drain_one(): Boolean&#xa;+ pending_count(): Integer" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="450" width="260" height="170" as="geometry"/>
+        </mxCell>
+
+        <!-- ================= AI PIPELINE ================= -->
+        <mxCell id="AIInference" value="&lt;i&gt;&lt;&lt;module&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AIInference&lt;/b&gt;&#xa;----&#xa;----&#xa;+ run_pipeline(bytes, config): PipelineResult&#xa;+ predict(image, config): SegmentationResult&#xa;+ generate_gradcam(tensor, ...): GradCAMResult" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="30" y="660" width="310" height="190" as="geometry"/>
+        </mxCell>
+        <mxCell id="ModelService" value="&lt;i&gt;&lt;&lt;service&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;ModelService&lt;/b&gt;&#xa;----&#xa;+ config: ModelConfig&#xa;----&#xa;+ load(): Module&#xa;+ predict_logits(tensor): Tensor&#xa;+ metadata(): Dict&#xa;+ get_gradcam_target_layer(): Module" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="360" y="660" width="290" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="ModelConfig" value="&lt;i&gt;&lt;&lt;dataclass&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;ModelConfig&lt;/b&gt;&#xa;----&#xa;+ architecture: String&#xa;+ encoder: String&#xa;+ input_size: Integer&#xa;+ threshold: Float&#xa;+ checkpoint_sha256: String&#xa;----" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="680" y="660" width="310" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- ================= EXTERNAL ================= -->
+        <mxCell id="SupabasePlatform" value="&lt;i&gt;&lt;&lt;external&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;SupabasePlatform&lt;/b&gt;&#xa;----&#xa;----&#xa;+ Auth: signUp, signIn, signOut&#xa;+ DB: doctor_profiles, analyses&#xa;+ Storage: analysis-assets, profile-avatars" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#F5F5F5;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="660" width="290" height="180" as="geometry"/>
+        </mxCell>
+
+        <!-- ================= DATABASE ENTITIES ================= -->
+        <mxCell id="User" value="&lt;i&gt;&lt;&lt;entity&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;User&lt;/b&gt;&#xa;----&#xa;+ id: UUID&#xa;+ email: String&#xa;+ app_metadata.role: String&#xa;----&#xa;+ get_profile(): DoctorProfile&#xa;+ get_analyses(): List&lt;Analysis&gt;" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="30" y="880" width="270" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="DoctorProfile" value="&lt;i&gt;&lt;&lt;entity&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;DoctorProfile&lt;/b&gt;&#xa;----&#xa;+ id: UUID&#xa;+ user_id: UUID&#xa;+ full_name: String&#xa;+ hospital: String&#xa;+ primary_specialty: String&#xa;+ account_status: String&#xa;+ role: String&#xa;----&#xa;+ get_user(): User" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="330" y="880" width="290" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="Analysis" value="&lt;i&gt;&lt;&lt;entity&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;Analysis&lt;/b&gt;&#xa;----&#xa;+ id: UUID&#xa;+ user_id: UUID&#xa;+ status: String&#xa;+ created_at: Timestamp&#xa;+ segmentation_status: String&#xa;+ gradcam_status: String&#xa;----&#xa;+ get_user(): User" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;fontFamily=Segoe UI;" vertex="1" parent="1">
+          <mxGeometry x="650" y="880" width="290" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- ================= RELATIONSHIPS ================= -->
+        <!-- AuthContext -> SupabasePlatform (Supabase Auth) -->
+        <mxCell id="edge_auth_supabase" value="Supabase Auth" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="AuthContext" target="SupabasePlatform">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="170" y="210"/>
+              <mxPoint x="1155" y="210"/>
+              <mxPoint x="1155" y="750"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- AnalysisClient -> AnalysisController (calls REST API) -->
+        <mxCell id="edge_client_controller" value="calls REST API" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="AnalysisClient" target="AnalysisController">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="470" y="190"/>
+              <mxPoint x="470" y="230"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- AnalysisClient -> SupabasePlatform (access token) -->
+        <mxCell id="edge_client_supabase" value="access token" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="AnalysisClient" target="SupabasePlatform">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="470" y="210"/>
+              <mxPoint x="1155" y="210"/>
+              <mxPoint x="1155" y="750"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- DoctorProfileService -> SupabasePlatform -->
+        <mxCell id="edge_profile_supabase" value="DB + Storage" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="DoctorProfileService" target="SupabasePlatform">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="775" y="210"/>
+              <mxPoint x="1155" y="210"/>
+              <mxPoint x="1155" y="750"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- AnalysisController -> AnalysisService (dependency) -->
+        <mxCell id="edge_controller_service" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="AnalysisController" target="AnalysisService">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="175" y="410"/>
+              <mxPoint x="815" y="410"/>
+              <mxPoint x="815" y="330"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- AdminController -> AdminService (dependency) -->
+        <mxCell id="edge_admin_controller_service" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="AdminController" target="AdminService">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="485" y="410"/>
+              <mxPoint x="485" y="535"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- AnalysisService -> AnalysisRepository (dependency) -->
+        <mxCell id="edge_service_repo" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="AnalysisService" target="AnalysisRepository">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="815" y="430"/>
+              <mxPoint x="515" y="430"/>
+              <mxPoint x="515" y="545"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- AnalysisService -> StorageService (dependency) -->
+        <mxCell id="edge_service_storage" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="AnalysisService" target="StorageService">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="970" y="430"/>
+              <mxPoint x="875" y="430"/>
+              <mxPoint x="875" y="545"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- AnalysisService -> AnalysisJobQueue (dependency) -->
+        <mxCell id="edge_service_queue" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="AnalysisService" target="AnalysisJobQueue">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="970" y="430"/>
+              <mxPoint x="1190" y="430"/>
+              <mxPoint x="1190" y="535"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- AnalysisService -> SupabasePlatform (dependency) -->
+        <mxCell id="edge_service_supabase" value="DB + Storage" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="AnalysisService" target="SupabasePlatform">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="970" y="330"/>
+              <mxPoint x="1155" y="330"/>
+              <mxPoint x="1155" y="750"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- AnalysisService -> AIInference (dependency) -->
+        <mxCell id="edge_service_ai" value="run_pipeline" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="AnalysisService" target="AIInference">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="970" y="330"/>
+              <mxPoint x="990" y="330"/>
+              <mxPoint x="990" y="755"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- AnalysisRepository -> SupabasePlatform -->
+        <mxCell id="edge_repo_supabase" value="DB" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="AnalysisRepository" target="SupabasePlatform">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="515" y="640"/>
+              <mxPoint x="1155" y="640"/>
+              <mxPoint x="1155" y="750"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- StorageService -> SupabasePlatform -->
+        <mxCell id="edge_storage_supabase" value="Storage" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="StorageService" target="SupabasePlatform">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="875" y="640"/>
+              <mxPoint x="1155" y="640"/>
+              <mxPoint x="1155" y="750"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- AdminService -> SupabasePlatform -->
+        <mxCell id="edge_admin_supabase" value="DB (service role)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="AdminService" target="SupabasePlatform">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="175" y="620"/>
+              <mxPoint x="1155" y="620"/>
+              <mxPoint x="1155" y="750"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- AIInference -> ModelService (dependency) -->
+        <mxCell id="edge_ai_modelservice" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="AIInference" target="ModelService">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="340" y="850"/>
+              <mxPoint x="505" y="850"/>
+              <mxPoint x="505" y="740"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ModelService -> ModelConfig (aggregation) -->
+        <mxCell id="edge_modelservice_config" value="1 : 1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamond;startFill=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="ModelService" target="ModelConfig">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="505" y="820"/>
+              <mxPoint x="835" y="820"/>
+              <mxPoint x="835" y="740"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- User -> DoctorProfile (1 : 0..1) -->
+        <mxCell id="edge_user_doctorprofile" value="1 : 0..1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="User" target="DoctorProfile">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="1020"/>
+              <mxPoint x="475" y="1020"/>
+              <mxPoint x="475" y="960"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- User -> Analysis (1 : *) -->
+        <mxCell id="edge_user_analysis" value="1 : *" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="User" target="Analysis">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="1020"/>
+              <mxPoint x="795" y="1020"/>
+              <mxPoint x="795" y="960"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- SupabasePlatform -> DoctorProfile (trigger) -->
+        <mxCell id="edge_doctorprofile_supabase" value="trigger" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="SupabasePlatform" target="DoctorProfile">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1155" y="840"/>
+              <mxPoint x="475" y="840"/>
+              <mxPoint x="475" y="960"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- SupabasePlatform -> Analysis (DB) -->
+        <mxCell id="edge_analysis_supabase" value="DB" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Segoe UI;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="SupabasePlatform" target="Analysis">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1155" y="840"/>
+              <mxPoint x="795" y="840"/>
+              <mxPoint x="795" y="960"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,74 @@
+@startuml activity-sign-up
+' =====================================================================
+'  Activity Diagram Sign Up - PIXEL-T (Versi Revisi Final)
+'  Diverifikasi dari: Register.tsx, services/auth.ts, AuthContext.tsx
+'
+'  Perbaikan dari versi draft:
+'   1. "Menampilkan formulir Sign Up" berada di swimlane System (bukan User).
+'   2. Kegagalan validasi & pendaftaran melakukan loop kembali (repeat-while)
+'      ke pengisian data, bukan langsung stop/selesai.
+'   3. Menghilangkan redundansi double decision.
+'   4. Setelah pendaftaran sukses, alur menampilkan status berhasil dan
+'      mengarahkan ke halaman Sign In.
+'   5. Desain & warna konsisten (#60E5E6, border #333333).
+' =====================================================================
+
+title Activity Diagram Sign Up - PIXEL-T
+
+skinparam backgroundColor white
+skinparam activity {
+  BackgroundColor #60E5E6
+  BorderColor #333333
+  FontColor #222222
+  DiamondBackgroundColor #60E5E6
+  DiamondBorderColor #333333
+  StartColor black
+  EndColor black
+}
+skinparam ArrowColor #333333
+skinparam shadowing false
+
+|User|
+start
+:Membuka halaman Sign Up;
+
+|System|
+:Menampilkan formulir Sign Up;
+
+repeat
+
+  |User|
+  :Mengisi data pendaftaran;
+  note right
+    Nama lengkap, email, rumah sakit,
+    spesialisasi, dan kata sandi
+  end note
+  :Menekan tombol Sign Up;
+
+  |System|
+  :Memvalidasi data pendaftaran;
+
+  if (Data pendaftaran valid?) then (Ya)
+    :Memproses pendaftaran melalui Supabase Auth;
+
+    if (Pendaftaran berhasil?) then (Ya)
+      :Menampilkan status pendaftaran berhasil;
+
+      |User|
+      :Memilih Masuk ke PIXEL-T;
+
+      |System|
+      :Mengarahkan ke halaman Sign In;
+      stop
+    else (Tidak)
+      :Menampilkan pesan pendaftaran gagal;
+    endif
+
+  else (Tidak)
+    :Menampilkan pesan validasi gagal;
+  endif
+
+repeat while (Mencoba kembali?) is (Ya) not (Tidak)
+
+stop
+@enduml

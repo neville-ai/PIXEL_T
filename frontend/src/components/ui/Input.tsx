@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -7,8 +7,18 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, className = '', id, ...props }, ref) => {
+  ({ label, error, helperText, className = '', id, 'aria-describedby': ariaDescribedBy, ...props }, ref) => {
     const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
+    const errorId = useId();
+    const helperId = useId();
+    const hasError = Boolean(error);
+    const describedByParts = [ariaDescribedBy];
+    if (hasError) {
+      describedByParts.push(errorId);
+    } else if (helperText) {
+      describedByParts.push(helperId);
+    }
+    const describedBy = describedByParts.filter(Boolean).join(' ') || undefined;
 
     return (
       <div className="w-full space-y-1.5">
@@ -23,6 +33,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           id={inputId}
+          {...(hasError ? { 'aria-invalid': 'true' as const } : {})}
+          aria-describedby={describedBy}
           className={`w-full px-3.5 py-2 text-sm rounded-md border transition-colors bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder:text-neutral-400 focus:outline-none focus:ring-2 ${
             error
               ? 'border-semantic-error focus:ring-semantic-error/30'
@@ -31,10 +43,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {error && (
-          <p className="text-xs text-badgeText-error dark:text-badgeText-error-dark font-medium">{error}</p>
+          <p id={errorId} className="text-xs text-badgeText-error dark:text-badgeText-error-dark font-medium">{error}</p>
         )}
         {!error && helperText && (
-          <p className="text-xs text-neutral-600 dark:text-dark-textMuted">{helperText}</p>
+          <p id={helperId} className="text-xs text-neutral-600 dark:text-dark-textMuted">{helperText}</p>
         )}
       </div>
     );

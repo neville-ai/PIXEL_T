@@ -1,0 +1,15 @@
+@startuml test
+skinparam backgroundColor #FFFFFF
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+hide circle
+hide empty methods
+
+class "User" as User {
+  {field} id : int (PK)
+  {field} fullname : varchar
+  {field} email : varchar
+}
+
+@enduml

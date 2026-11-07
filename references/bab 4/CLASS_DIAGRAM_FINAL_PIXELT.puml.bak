@@ -1,0 +1,282 @@
+@startuml
+' ============================================================
+' PIXEL-T — Class Diagram FINAL (disingkat & direstail sesuai referensi class_diagram_contoh.png)
+' Sumber kebenaran (ground truth): implementasi PIXEL-T terverifikasi
+'   backend/app/** , ai/inference/**, ai/config/model_config.py,
+'   database/migrations/001-004_*.sql, frontend/src/services/**
+' Gaya visual mengikuti class_diagram_contoh.png:
+'   - Monokrom hitam/putih, tanpa warna, tanpa ikon lingkaran, tanpa catatan kuning
+'   - Nama kelas tebal, di tengah, dipisah garis tipis
+'   - Visibilitas '+', format 'nama: tipe', tipe pengembalian tercantum
+'   - Relasi sederhana dengan multiplisitas (1 / *), Jarak antar elemen luas (high whitespace)
+'   - Tidak ada package, tidak ada note, tidak ada ikon warna
+' Isi/relasi/abstraksi UML murni dari implementasi PIXEL-T; tidak menyalin isi diagram referensi.
+' ============================================================
+
+skinparam monochrome true
+skinparam shadowing false
+!option handwritten false
+skinparam sequenceMessageAlign false
+skinparam class {
+    BorderColor #000000
+    BackgroundColor #FFFFFF
+    FontName "Segoe UI"
+    FontSize 13
+    FontStyle bold
+    AttributeFontName "Segoe UI"
+    AttributeFontSize 11
+    AttributeFontStyle normal
+    MethodFontName "Segoe UI"
+    MethodFontSize 11
+    MethodFontStyle normal
+}
+skinparam stereotypeCBackgroundColor #FFFFFF
+skinparam stereotypeCBorderColor #000000
+skinparam arrow {
+    Color #000000
+    FontName "Segoe UI"
+    FontSize 10
+    FontStyle normal
+}
+hide empty members
+left to right direction
+
+' ============================================================
+' LAYER 1 — Kontrol & Layanan Bisnis (Backend Flask)
+' ============================================================
+
+class AnalysisController <<controller>> {
+  - service: AnalysisService
+  + create_analysis(): Response
+  + get_analysis(analysis_id: String): Response
+  + list_history(): Response
+  + delete_analysis(analysis_id: String): Response
+}
+
+class AnalysisService <<service>> {
+  + repository: AnalysisRepository
+  + storage_service: StorageService
+  + pipeline_runner: Callable[..., PipelineResult]
+  + job_queue: AnalysisJobQueue
+  + create_analysis(): Dict
+  + get_analysis(analysis_id: String): Dict
+  + list_user_analyses(user_id: String): List[Dict]
+  + delete_analysis(analysis_id: String): Boolean
+}
+
+class AnalysisRepository <<repository>> {
+  + create(user_id: String, data: Dict): Dict
+  + get_by_id(user_id: String, analysis_id: String): Optional[Dict]
+  + list_by_user(user_id: String): List[Dict]
+  + update(analysis_id: String, user_id: String, data: Dict): Optional[Dict]
+  + delete(analysis_id: String, user_id: String): Boolean
+}
+
+class StorageService <<service>> {
+  + bucket_name: String
+  + upload_file(filepath: String, content: String, content_type: String, user_id: String, analysis_id: String): String
+  + create_signed_url(filepath: String, expires_in: Integer): String
+  + delete_analysis_files(list: List): Boolean
+}
+
+class AnalysisJobQueue <<service>> {
+  + capacity: Integer
+  + try_enqueue(job: Dict): Boolean
+  + contains(analysis_id: String): Boolean
+  + pending_count(): Integer
+  + drain_one(): Boolean
+}
+
+class AnalysisProgressReporter <<service>> {
+  - repository: AnalysisRepository
+  - analysis_id: String
+  - user_id: String
+  + total_units: Integer
+  + completed_units: Integer
+  + failed_writes: Integer
+  + on_phase(step: String): None
+  + on_pass(): None
+  + percent(): Integer
+  + last_step(): Optional[String]
+}
+
+class APIError <<exception>> {
+  + code: String
+  + message: String
+  + status_code: Integer
+  + to_dict(): Dict
+}
+
+' ============================================================
+' LAYER 2 — Mesin Kecerdasan Buatan & Pipeline AI
+' ============================================================
+
+class AIInferenceFunctions <<module>> {
+  + run_pipeline(original_bytes: Bytes, config: ModelConfig, on_phase: Object, on_pass: Object): PipelineResult
+  + predict(image: Image, model_service: ModelService): SegmentationResult
+  + postprocess_mask(mask: Array, config: ModelConfig): Array
+  + measure_mask(mask: Array): Dict
+  + generate_gradcam(image_tensor: Tensor, model_service: ModelService): GradCAMResult
+}
+
+class ModelService <<service>> {
+  + config: ModelConfig
+  + device: Device
+  + load_count: Integer
+  + load(): Tensor
+  + metadata(): Dict
+  + predict_logits(tensor: Tensor): Tensor
+  + get_gradcam_target_layer(): String
+}
+
+class ModelConfig <<dataclass>> {
+  + architecture: String
+  + encoder: String
+  + decoder_attention: String
+  + gradcam_target_layer: String
+  + framework: String
+  + library: String
+  + model_version: String
+  + input_size: Integer
+  + input_channels: Integer
+  + threshold: Float
+  + tta_enabled: Boolean
+  + multiscale_enabled: Boolean
+  + tta_scales: Tuple[Float, ...]
+  + postprocessing_enabled: Boolean
+  + postprocessing_min_area: Integer
+  + contour_smoothing: Boolean
+  + smoothing_epsilon: Float
+  + checkpoint_filename: String
+  + checkpoint_sha256: String
+}
+
+class PipelineResult {
+  + binary_mask_png: Bytes
+  + segmentation_overlay_png: Bytes
+  + gradcam_heatmap_png: Bytes
+  + gradcam_overlay_png: Bytes
+  + measurements: Dict
+  + summary_text: String
+  + gradcam: GradCAMResult
+}
+
+class SegmentationResult {
+  + probability_map: Tensor
+  + binary_mask: Tensor
+  + threshold: Float
+}
+
+class GradCAMResult {
+  + heatmap: Array
+  + overlay: Array
+  + target_layer: String
+  + target_objective: String
+  + target_mask_empty: Boolean
+}
+
+' ============================================================
+' LAYER 3 — Persistensi Basis Data (Entitas)
+' ============================================================
+
+class auth_users <<external>> {
+  + id: UUID
+}
+
+class doctor_profiles <<entity>> {
+  + id: UUID
+  + user_id: UUID
+  + full_name: String
+  + primary_specialty: String
+  + hospital: String
+  + education: JSON
+  + experience: JSON
+  + bio: String
+}
+
+class analyses <<entity>> {
+  + id: UUID
+  + user_id: UUID
+  + status: String
+  + current_step: String
+  + progress_percent: Integer
+  + original_image_path: String
+  + original_filename: String
+  + binary_mask_path: String
+  + segmentation_overlay_path: String
+  + segmentation_status: String
+  + area_pixels: Integer
+  + area_ratio: Float
+  + gradcam_heatmap_path: String
+  + gradcam_overlay_path: String
+  + gradcam_status: String
+  + summary_text: String
+  + error_code: String
+  + error_message: String
+  + created_at: Timestamp
+  + completed_at: Timestamp
+  + updated_at: Timestamp
+}
+
+' ============================================================
+' LAYER 4 — Presentasi (Frontend React/TS — direpresentasikan sebagai paket tunggal)
+' Karena komponen React adalah functional component (bukan kelas OO),
+' layer ini tidak dipecah menjadi kelas per komponen.
+' ============================================================
+
+package "Frontend" <<package>> {
+  class AnalysisClient <<service>> {
+    + createAnalysis(): CreatedAnalysis
+    + getAnalysis(analysis_id: String): Analysis
+    + listHistory(): List[HistoryItem]
+    + deleteAnalysis(analysis_id: String): Boolean
+  }
+  class AuthContext <<context>> {
+    + user: User | null
+    + signIn(email: String, password: String): Promise
+    + signUp(email: String, password: String): Promise
+    + signOut(): Promise
+  }
+  class DoctorProfileService <<service>> {
+    + fetchDoctorProfile(): DoctorProfileData
+    + saveDoctorProfile(data: DoctorProfileData): Promise
+  }
+}
+
+' ============================================================
+' RELASI
+' ============================================================
+
+' Kontrol
+AnalysisController ..> AnalysisService : calls
+AnalysisController ..> APIError : raises
+
+' Layanan bisnis
+AnalysisService *-- AnalysisRepository : persistence
+AnalysisService *-- StorageService : assets
+AnalysisService *-- AnalysisJobQueue : queue
+AnalysisService ..> AnalysisProgressReporter : reports progress
+AnalysisProgressReporter ..> AnalysisRepository : writes current_step / progress_percent
+AnalysisService ..> AIInferenceFunctions : background pipeline
+
+' AI & pipeline
+AIInferenceFunctions ..> ModelService : inference / Grad-CAM
+AIInferenceFunctions ..> PipelineResult : output
+AIInferenceFunctions ..> SegmentationResult : output
+AIInferenceFunctions ..> GradCAMResult : output
+PipelineResult *-- GradCAMResult : gradcam
+ModelService --> ModelConfig : uses
+
+' Persistensi
+AnalysisRepository ..> analyses : CRUD
+
+' Entitas & autentikasi eksternal
+auth_users "1" -- "0..*" analyses : FK user_id
+auth_users "1" -- "0..1" doctor_profiles : FK user_id UNIQUE
+
+' Frontend (presentasi) -> backend
+AnalysisClient ..> AnalysisController : HTTP/REST
+AuthContext ..> auth_users : Supabase Auth
+DoctorProfileService ..> doctor_profiles : CRUD profil
+
+@enduml

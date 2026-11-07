@@ -327,7 +327,9 @@ Contoh:
 
 # 11. Analysis Processing
 
-Setelah validasi berhasil:
+Setelah validasi berhasil, pipeline berikut dijalankan sebagai **pekerjaan latar
+belakang** (Batch P-02) di dalam antrean in-memori, bukan di dalam request POST.
+Penerimaan pekerjaan (`202`) dan penyelesaian analisis adalah fase terpisah:
 
 ```text
 Receive Image
@@ -369,15 +371,106 @@ Parameter yang masih ditandai `[FINALIZE]` di Model Integration Specification ti
 
 ### Status
 
+Analisis dieksekusi sebagai **pekerjaan latar belakang dua fase** (Batch P-02):
+
+- **Penerimaan pekerjaan** — `POST /api/analysis` memvalidasi gambar, menyimpan
+  original, membuat record `processing`, menerima pekerjaan ke antrean, lalu
+  mengembalikan `202 Accepted` berisi `analysis_id` stabil dan `status:
+  "processing"` **sebelum pipeline AI selesai**.
+- **Penyelesaian analisis** — hasil akhir dibaca lewat `GET /api/analysis/{id}`
+  (struktur di bawah) dengan status `completed` setelah pekerjaan benar-benar
+  selesai. Klien melakukan polling hingga status terminal `completed` atau
+  `failed`.
+
+Respons `202` (penerimaan):
+
+```json
+{
+  "success": true,
+  "data": {
+    "analysis_id": "analysis-id",
+    "status": "processing"
+  }
+}
+```
+
+Antrean penuh:
+
+```http
+429 Too Many Requests
+```
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "QUEUE_FULL",
+    "message": "Analysis queue is at capacity. Please try again shortly."
+  }
+}
+```
+
+Bila penerimaan ke antrean gagal, record tidak dibiarkan sebagai `processing`
+yang menyesatkan: record dan objek original dibersihkan (kompensasi) sebelum
+`429` dikembalikan.
+
+### Field Progres (opsional)
+
+Respons `GET /api/analysis/{id}` dapat menyertakan kemajuan nyata yang
+diinstrumentasi Batch P-03. Kedua field **hanya disertakan bila bernilai
+non-null** — bila null, field tidak muncul sama sekali dalam objek
+`analysis` (klien tidak boleh mengarang angka bila field absen):
+
+| Field | Type | Availability | Notes |
+|---|---|---|---|
+| `current_step` | string | optional | Tahap progres terakhir yang dikonfirmasi backend; hanya saat tersedia |
+| `progress_percent` | integer (0-100) | optional | Pekerjaan nyata yang benar-benar selesai; hanya saat tersedia |
+
+**Vocabulary `current_step` (Batch P-03).** Nilai berikut adalah satu-satunya
+yang benar-benar dikirim, masing-masing pada waktu yang ditentukan:
+
+| Value | Kapan dikirim | Makna |
+|---|---|---|
+| `preprocessing` | setelah dekoding/normalisasi input citra selesai | fase **sudah selesai** |
+| `inference` | (a) selama loop forward pass TTA, ditulis kira-kira setiap 5 pass; (b) setelah seluruh pass selesai | (a) **tahap aktif yang sedang berjalan** (nilai contoh §12); (b) fase inferensi selesai |
+| `postprocessing` | setelah postprocessing mask dan pengukuran area selesai | fase sudah selesai |
+| `gradcam` | setelah pembuatan Grad-CAM selesai | fase sudah selesai |
+| `artifact_composition` | setelah komposisi empat artefak hasil selesai | fase sudah selesai |
+| `uploading_results` | oleh service, **setelah** keempat artefak wajib benar-benar terunggah | fase sudah selesai (dilaporkan service, bukan callback pipeline) |
+| `completed` | bersama `status: "completed"` dan `progress_percent: 100` pada update DB akhir | penyelesaian tersimpan |
+
+Perbedaan fase yang sudah selesai vs tahap aktif: hanya `inference` yang dapat
+mewakili keduanya. Setiap laporan "fase selesai" (`preprocessing`,
+`postprocessing`, `gradcam`, `artifact_composition`, `uploading_results`,
+`completed`) hanya ditulis **setelah** fase itu benar-benar selesai, sedangkan
+laporan `inference` selama loop pass menandai tahap yang sedang berjalan — di
+dalamnya kemajuan persentase tetap maju hanya per forward pass yang selesai.
+
+**Makna `progress_percent`.** Rumusnya
+`floor(completed_units / total_units × 100)` dengan
+`total_units = 6 + jumlah forward pass` (6 = 5 fase pipeline + 1 fase unggah
+artefak service; jumlah pass dihitung dari konfigurasi dan loop runtime yang
+benar-benar dieksekusi, yaitu 5 skala × 5 orientasi = 25 pass). Satu unit =
+satu fase selesai atau satu forward pass selesai — bukan waktu berjalan,
+animasi, atau bobot durasi yang diasumsikan. Penulisan ke database
+di-throttle: setiap perubahan fase dan kira-kira setiap 5 pass, selalu dengan
+`updated_at` yang diperbarui secara eksplisit.
+
+- Selama `processing`, nilai maksimum yang ditulis adalah **99**. **100 hanya
+  ditulis bersama `status: "completed"`** pada update DB yang sama, setelah
+  pipeline, unggahan keempat artefak wajib, dan penyimpanan hasil selesai.
+- Bila analisis `failed`, `status: "failed"` adalah sumber kebenaran;
+  `current_step`/`progress_percent` (bila tersedia) mempertahankan nilai
+  progres terakhir yang nyata — tidak pernah 100, dan tidak pernah berkurang
+  selama pekerjaan normal.
+- Record lama tanpa instrumentasi, atau detik pertama sebelum fase pertama
+  selesai, tidak menyertakan kedua field ini. Nilai tidak pernah dibuat-buat.
+
+### Response
+
 ```http
 200 OK
 ```
-
-atau `201 Created` apabila implementation memperlakukan analysis sebagai resource baru yang langsung tersimpan.
-
-Implementasi harus memilih satu convention dan menggunakannya secara konsisten.
-
-### Response
 
 ```json
 {
@@ -416,6 +509,20 @@ Implementasi harus memilih satu convention dan menggunakannya secara konsisten.
   }
 }
 ```
+
+### Keterbatasan Antrean In-Memori & Pemulihan Setelah Restart
+
+- Antrean pekerjaan berjalan **di memori dan per-proses**. Restart proses server
+  menghilangkan setiap pekerjaan yang sedang menunggu atau berjalan.
+- record yang terdampak tetap berstatus `processing` dan **tidak diubah otomatis
+  menjadi `failed`**. Klien terus melihat `processing` sampai diperiksa.
+- Penandaan `stale` bersifat **non-mutating**: respons GET dapat menyertakan
+  `"stale": true` untuk record `processing` yang lebih tua dari ambang dan tidak
+  berada di antrean proses saat ini — hanya sebagai tanda untuk diperiksa, tidak
+  mengubah `status`. Pekerjaan yang sedang berjalan di antrean tidak pernah
+  ditandai stale berapa pun lamanya.
+- Setiap pekerjaan dieksekusi **satu kali** dalam siklus hidup antrean normal; tidak
+  ada retry dan tidak ada koordinasi antar-proses.
 
 ---
 

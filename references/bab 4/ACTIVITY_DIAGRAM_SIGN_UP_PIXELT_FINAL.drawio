@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="OpenCode" version="24.0.0" type="device">
+  <diagram name="Activity Diagram Sign Up PIXEL-T Final Audited" id="act-signup-final-audited">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="860" pageHeight="1010" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Initial node -->
+        <mxCell id="st" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="290" y="40" width="20" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Final node -->
+        <mxCell id="en" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="280" y="946" width="40" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="en_in" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="290" y="956" width="20" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- User activities -->
+        <mxCell id="a1" value="Membuka halaman /register" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="170" y="88" width="260" height="42" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2" value="Mengisi formulir pendaftaran&lt;br&gt;(nama lengkap, email, kata sandi,&lt;br&gt;konfirmasi kata sandi, rumah sakit,&lt;br&gt;spesialisasi dokter)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="170" y="146" width="260" height="64" as="geometry"/>
+        </mxCell>
+        <mxCell id="a3" value="Memvalidasi input&lt;br&gt;(wajib, format email, kata sandi &amp;gt;= 6,&lt;br&gt;konfirmasi cocok)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="170" y="226" width="260" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="d1" value="Input valid?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="220" y="298" width="160" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="aerr" value="Menampilkan pesan kesalahan&lt;br&gt;(validasi / Supabase Auth)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="560" y="430" width="180" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a4" value="Memanggil signUp() -&amp;gt; supabase.auth.signUp()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="170" y="384" width="260" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="d3" value="Permintaan signUp berhasil?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="220" y="444" width="160" height="64" as="geometry"/>
+        </mxCell>
+        <mxCell id="a5" value="Supabase membuat auth.users&lt;br&gt;(dengan user_metadata)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="170" y="524" width="260" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="a6" value="Trigger handle_new_doctor_signup&lt;br&gt;INSERT doctor_profiles (role=&#39;doctor&#39;, account_status=&#39;pending&#39;)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="140" y="588" width="320" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="d2" value="Sesi dikembalikan?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="210" y="664" width="180" height="68" as="geometry"/>
+        </mxCell>
+        <mxCell id="a7" value="Memperbarui state autentikasi&lt;br&gt;role=doctor, account_status=pending" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="160" y="748" width="280" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="a8" value="Menampilkan instruksi&lt;br&gt;konfirmasi email" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="480" y="748" width="200" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="a9" value="Menampilkan pesan pendaftaran berhasil&lt;br&gt;(menunggu persetujuan admin)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="150" y="820" width="300" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="a10" value="Mengakses halaman /login" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=10;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="170" y="884" width="260" height="42" as="geometry"/>
+        </mxCell>
+
+        <!-- Note -->
+        <mxCell id="note" value="Catatan:&lt;br&gt;Rute /register dilindungi PublicOnlyRoute.&lt;br&gt;Pendaftaran publik hanya untuk Dokter.&lt;br&gt;Admin dibuat via Supabase Admin API&lt;br&gt;(app_metadata.role=&#39;admin&#39;) dan tidak memiliki&lt;br&gt;baris doctor_profiles. Kegagalan trigger dicatat&lt;br&gt;sebagai WARNING dan tidak membatalkan pendaftaran." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;dashed=1;fontColor=#000000;fontSize=9;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="560" y="70" width="250" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- Edges: User / validation / error -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="st" target="a1">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="300" y="50"/><mxPoint x="300" y="88"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="a1" target="a2">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="300" y="130"/><mxPoint x="300" y="146"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="a2" target="a3">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="300" y="210"/><mxPoint x="300" y="226"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="a3" target="d1">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="300" y="282"/><mxPoint x="300" y="298"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="[Ya]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d1" target="a4">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="300" y="368"/><mxPoint x="300" y="384"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="[Tidak]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d1" target="aerr">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="500" y="333"/><mxPoint x="500" y="430"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="aerr" target="a2">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="650" y="470"/><mxPoint x="650" y="368"/><mxPoint x="490" y="368"/><mxPoint x="490" y="178"/></Array></mxGeometry>
+        </mxCell>
+
+        <!-- Edges: registration / database / session -->
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="a4" target="d3">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="300" y="432"/><mxPoint x="300" y="444"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="[Ya]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d3" target="a5">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="300" y="508"/><mxPoint x="300" y="524"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="[Tidak]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d3" target="aerr">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="380" y="476"/><mxPoint x="650" y="476"/><mxPoint x="650" y="470"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="a5" target="a6">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="300" y="572"/><mxPoint x="300" y="588"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="a6" target="d2">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="300" y="648"/><mxPoint x="300" y="664"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e13" value="[Ya]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d2" target="a7">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="300" y="732"/><mxPoint x="300" y="748"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e14" value="[Tidak]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d2" target="a8">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="465" y="698"/><mxPoint x="465" y="776"/></Array></mxGeometry>
+        </mxCell>
+
+        <!-- Edges: success / final -->
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="a7" target="a9">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="300" y="804"/><mxPoint x="300" y="820"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="a8" target="a9">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="580" y="804"/><mxPoint x="580" y="844"/><mxPoint x="450" y="844"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="a9" target="a10">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="300" y="868"/><mxPoint x="300" y="884"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;fontSize=9;" edge="1" parent="1" source="a10" target="en">
+          <mxGeometry as="geometry"><Array as="points"><mxPoint x="300" y="926"/><mxPoint x="300" y="946"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

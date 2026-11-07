@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="OpenCode" version="24.0.0" type="device">
+  <diagram name="PIXEL-T Sign In Verified" id="pixelt-si-verified">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="t1" value="Sequence Diagram Sign In - PIXEL-T" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="10" width="400" height="30" as="geometry"/>
+        </mxCell>
+        <!-- Frame -->
+        <mxCell id="f1" value="Sign In" style="swimlane;html=1;startSize=20;horizontal=0;container=1;collapsible=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=10;fontStyle=1;rounded=0;arcSize=0;" vertex="1" parent="1">
+          <mxGeometry x="20" y="50" width="920" height="700" as="geometry"/>
+        </mxCell>
+        <!-- Lifelines inside frame -->
+        <mxCell id="u1" value="User" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=center;" vertex="1" parent="f1">
+          <mxGeometry x="0" y="0" width="110" height="680" as="geometry"/>
+        </mxCell>
+        <mxCell id="lp1" value="Login Page" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=center;" vertex="1" parent="f1">
+          <mxGeometry x="110" y="0" width="120" height="680" as="geometry"/>
+        </mxCell>
+        <mxCell id="ac1" value="AuthContext" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=center;" vertex="1" parent="f1">
+          <mxGeometry x="230" y="0" width="120" height="680" as="geometry"/>
+        </mxCell>
+        <mxCell id="as1" value="AuthService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=center;" vertex="1" parent="f1">
+          <mxGeometry x="350" y="0" width="120" height="680" as="geometry"/>
+        </mxCell>
+        <mxCell id="sa1" value="Supabase Auth" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=center;" vertex="1" parent="f1">
+          <mxGeometry x="470" y="0" width="120" height="680" as="geometry"/>
+        </mxCell>
+        <mxCell id="dp1" value="doctor_profiles" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=center;" vertex="1" parent="f1">
+          <mxGeometry x="590" y="0" width="130" height="680" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== MESSAGES ===== -->
+        <!-- 1: User → Login Page: buka /login -->
+        <mxCell id="m1" value="buka /login" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"/>
+            <mxPoint x="55" y="30" as="sourcePoint"/>
+            <mxPoint x="170" y="30" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 2: Login Page → User: tampilkan formulir (dashed return) -->
+        <mxCell id="m2" value="tampilkan formulir" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endFill=0;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"/>
+            <mxPoint x="170" y="50" as="sourcePoint"/>
+            <mxPoint x="55" y="50" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 3: User → Login Page: submit -->
+        <mxCell id="m3" value="submit(email, password, selectedRole)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"/>
+            <mxPoint x="55" y="80" as="sourcePoint"/>
+            <mxPoint x="170" y="80" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 4: Login Page self: validasi input -->
+        <mxCell id="m4" value="validasi input" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="220" y="100"/>
+              <mxPoint x="220" y="118"/>
+            </Array>
+            <mxPoint x="190" y="100" as="sourcePoint"/>
+            <mxPoint x="190" y="100" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 5: Login Page → AuthContext: signIn -->
+        <mxCell id="m5" value="signIn(email, password, selectedRole)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"/>
+            <mxPoint x="190" y="130" as="sourcePoint"/>
+            <mxPoint x="290" y="130" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 6: AuthContext → AuthService: loginUser -->
+        <mxCell id="m6" value="loginUser(email, password)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"/>
+            <mxPoint x="310" y="155" as="sourcePoint"/>
+            <mxPoint x="410" y="155" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 7: AuthService → Supabase Auth: signInWithPassword -->
+        <mxCell id="m7" value="signInWithPassword(email, password)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"/>
+            <mxPoint x="430" y="180" as="sourcePoint"/>
+            <mxPoint x="530" y="180" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 8: Supabase Auth → AuthService: {user, session} (dashed) -->
+        <mxCell id="m8" value="{ user, session }" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endFill=0;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"/>
+            <mxPoint x="530" y="210" as="sourcePoint"/>
+            <mxPoint x="430" y="210" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 9: AuthService → AuthContext: {data, error: null} (dashed) -->
+        <mxCell id="m9" value="{ data, error: null }" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endFill=0;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"/>
+            <mxPoint x="410" y="238" as="sourcePoint"/>
+            <mxPoint x="310" y="238" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 10: AuthContext self: resolve role -->
+        <mxCell id="m10" value="resolve role (app_metadata.role)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="360" y="265"/>
+              <mxPoint x="360" y="283"/>
+            </Array>
+            <mxPoint x="330" y="265" as="sourcePoint"/>
+            <mxPoint x="330" y="265" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 11: AuthContext → doctor_profiles: SELECT role, account_status -->
+        <mxCell id="m11" value="SELECT role, account_status WHERE user_id" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"/>
+            <mxPoint x="310" y="300" as="sourcePoint"/>
+            <mxPoint x="655" y="300" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 12: doctor_profiles → AuthContext: {role, accountStatus} (dashed) -->
+        <mxCell id="m12" value="{ role, accountStatus }" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endFill=0;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"/>
+            <mxPoint x="655" y="330" as="sourcePoint"/>
+            <mxPoint x="310" y="330" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ===== ALT1: kredensial valid / tidak valid ===== -->
+        <mxCell id="alt1" value="" style="shape=umlFrame;whiteSpace=wrap;html=1;rounded=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="f1">
+          <mxGeometry x="10" y="350" width="890" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="alt1title" value="[alt] kredensial valid" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=9;fontStyle=1;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="352" width="130" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="alt1div" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#000000;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"/>
+            <mxPoint x="18" y="390" as="sourcePoint"/>
+            <mxPoint x="900" y="390" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a1s1" value="periksa role &amp; account_status" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="230" y="362" width="200" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="a1s2" value="kredensial salah" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="350" y="400" width="120" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="a1s3" value="email belum dikonfirmasi" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="350" y="416" width="130" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== ALT2: navigasi ===== -->
+        <mxCell id="alt2" value="" style="shape=umlFrame;whiteSpace=wrap;html=1;rounded=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="f1">
+          <mxGeometry x="10" y="450" width="890" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="alt2title" value="[alt] role cocok" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=9;fontStyle=1;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="452" width="100" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="alt2div" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"/>
+            <mxPoint x="18" y="515" as="sourcePoint"/>
+            <mxPoint x="900" y="515" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a2s1" value="Admin → /admin" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="230" y="462" width="130" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2s2" value="Dokter pending → /login" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="230" y="480" width="150" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2s3" value="Dokter rejected → /login" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="230" y="498" width="155" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2s4" value="Dokter approved → /dashboard" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="230" y="536" width="165" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2s5" value="role mismatch → tampilkan error" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="230" y="554" width="170" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== NOTE BOX ===== -->
+        <mxCell id="note" value="" style="shape=note;whiteSpace=wrap;html=1;rounded=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=8;size=20;" vertex="1" parent="f1">
+          <mxGeometry x="10" y="600" width="890" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="noteT" value="Catatan:" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=9;fontStyle=1;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="602" width="60" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="note1" value="• Login menggunakan Supabase Auth, tidak ada panggilan Flask API" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="618" width="380" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="note2" value="• Role Admin: app_metadata.role (server-write-only, tidak dapat diubah client)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="632" width="400" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="note3" value="• Role Dokter: doctor_profiles.role (diambil dari database setelah autentikasi)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="646" width="400" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="note4" value="• &quot;Remember my email&quot; hanya menyimpan alamat email di localStorage, bukan session" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="660" width="420" height="14" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

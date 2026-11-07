@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-11-05T00:00:00.000Z" agent="OpenCode" version="24.0.0" type="device">
+  <diagram name="Class Diagram PIXEL-T Final Revised" id="class-diagram-pixelt-final-revised">
+    <mxGraphModel dx="1800" dy="1300" grid="1" gridSize="20" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1300" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ============================================================ -->
+        <!-- COLUMN 1: FRONTEND (x=60, width=300)                           -->
+        <!-- ============================================================ -->
+        <mxCell id="AuthContext" value="&lt;i&gt;&lt;&lt;module&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AuthContext&lt;/b&gt;&#xa;----&#xa;- user: User&#xa;- session: Session&#xa;- role: String&#xa;- accountStatus: String&#xa;----&#xa;+ signIn(email, password): Promise&#xa;+ signUp(...): Promise&#xa;+ signOut(): Promise" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="300" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="AnalysisClient" value="&lt;i&gt;&lt;&lt;module&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisClient&lt;/b&gt;&#xa;----&#xa;- authenticatedRequest: Function&#xa;----&#xa;+ createAnalysis(file): Dict&#xa;+ getAnalysis(id): Dict&#xa;+ listHistory(): List&#xa;+ deleteAnalysis(id): Promise" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="300" width="300" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="DoctorProfileService" value="&lt;i&gt;&lt;&lt;module&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;DoctorProfileService&lt;/b&gt;&#xa;----&#xa;- supabase: SupabaseClient&#xa;----&#xa;+ upsertProfile(data): Dict&#xa;+ getProfile(user_id): Dict&#xa;+ deleteProfile(user_id): Boolean&#xa;+ calculateStats(): Dict" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="500" width="300" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- COLUMN 2: CONTROLLERS (x=400, width=300)                       -->
+        <!-- ============================================================ -->
+        <mxCell id="AnalysisController" value="&lt;i&gt;&lt;&lt;controller&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisController&lt;/b&gt;&#xa;----&#xa;- service: AnalysisService&#xa;----&#xa;+ create_analysis()&#xa;+ get_analysis(id)&#xa;+ list_history()&#xa;+ delete_analysis(id)" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="400" y="80" width="300" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="AdminController" value="&lt;i&gt;&lt;&lt;controller&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AdminController&lt;/b&gt;&#xa;----&#xa;- service: AdminService&#xa;----&#xa;+ list_doctors()&#xa;+ get_doctor(id)&#xa;+ approve_doctor(id)&#xa;+ reject_doctor(id)&#xa;+ get_statistics()" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="400" y="280" width="300" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- COLUMN 3: SERVICES (x=740, width=300)                          -->
+        <!-- ============================================================ -->
+        <mxCell id="AnalysisService" value="&lt;i&gt;&lt;&lt;service&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisService&lt;/b&gt;&#xa;----&#xa;- repository: AnalysisRepository&#xa;- storage_service: StorageService&#xa;----&#xa;+ create_analysis(file, user_id): Dict&#xa;+ get_analysis(id, user_id): Dict&#xa;+ list_user_analyses(user_id): List&#xa;+ delete_analysis(id, user_id): Boolean" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="740" y="80" width="300" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="AdminService" value="&lt;i&gt;&lt;&lt;service&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AdminService&lt;/b&gt;&#xa;----&#xa;- client: SupabaseClient&#xa;----&#xa;+ list_doctors(status): List&#xa;+ approve_doctor(id, by): Dict&#xa;+ reject_doctor(id, by, reason): Dict&#xa;+ get_statistics(): Dict" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="740" y="300" width="300" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="StorageService" value="&lt;i&gt;&lt;&lt;service&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;StorageService&lt;/b&gt;&#xa;----&#xa;- bucket_name: String&#xa;----&#xa;+ upload_file(path, bytes, type): String&#xa;+ create_signed_url(path, exp): String&#xa;+ delete_analysis_files(paths): Boolean" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="740" y="500" width="300" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="APIError" value="&lt;i&gt;&lt;&lt;exception&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;APIError&lt;/b&gt;&#xa;----&#xa;+ code: String&#xa;+ message: String&#xa;+ status_code: Integer&#xa;----&#xa;+ to_dict(): Dict" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="740" y="700" width="240" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- COLUMN 4: REPOSITORY + AI PIPELINE (x=1080, width=300)         -->
+        <!-- ============================================================ -->
+        <mxCell id="AnalysisRepository" value="&lt;i&gt;&lt;&lt;repository&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AnalysisRepository&lt;/b&gt;&#xa;----&#xa;- client: SupabaseClient&#xa;----&#xa;+ create(record): Dict&#xa;+ get_by_id(id): Dict&#xa;+ list_by_user(user_id): List&#xa;+ update_status(id, status)&#xa;+ delete(id): Boolean" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="120" width="300" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="AISegmentationPipeline" value="&lt;i&gt;&lt;&lt;module&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;AISegmentationPipeline&lt;/b&gt;&#xa;----&#xa;+ run_pipeline(original, config,&#xa;on_phase, on_pass): PipelineResult&#xa;+ predict(image, model_service,&#xa;config): SegmentationResult&#xa;+ generate_gradcam(tensor, model_service): GradCAMResult" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="320" width="300" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- COLUMN 5: EXTERNAL + DB (x=1420, width=300)                    -->
+        <!-- ============================================================ -->
+        <mxCell id="SupabaseAuth" value="&lt;i&gt;&lt;&lt;external&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;SupabaseAuth&lt;/b&gt;&#xa;----&#xa;+ id: UUID" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1420" y="80" width="300" height="76" as="geometry"/>
+        </mxCell>
+        <mxCell id="doctor_profiles" value="&lt;i&gt;&lt;&lt;entity&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;doctor_profiles&lt;/b&gt;&#xa;----&#xa;+ id: UUID&#xa;+ user_id: UUID&#xa;+ full_name: String&#xa;+ primary_specialty: String&#xa;+ hospital: String&#xa;+ account_status: String&#xa;+ approved_by: UUID&#xa;+ approved_at: Timestamp" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1420" y="200" width="300" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="analyses" value="&lt;i&gt;&lt;&lt;entity&gt;&gt;&lt;/i&gt;&#xa;&lt;b&gt;analyses&lt;/b&gt;&#xa;----&#xa;+ id: UUID&#xa;+ user_id: UUID&#xa;+ status: String&#xa;+ segmentation_status: String&#xa;+ gradcam_status: String&#xa;+ summary_text: String&#xa;+ created_at: Timestamp&#xa;+ completed_at: Timestamp" style="shape=rectangle;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#FFFFFF;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1420" y="420" width="300" height="180" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- EDGES (14 Relasi Antarclass)                                   -->
+        <!-- ============================================================ -->
+
+        <!-- 1. AuthContext -> SupabaseAuth (Association, 1 : 1) -->
+        <mxCell id="edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;" edge="1" parent="1" source="AuthContext" target="SupabaseAuth">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="360" y="170"/><mxPoint x="1420" y="118"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="mult1" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="162" width="30" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="mult2" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1385" y="110" width="30" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- 2. AnalysisClient -> AnalysisController (Association, 1 : 1) -->
+        <mxCell id="edge2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;" edge="1" parent="1" source="AnalysisClient" target="AnalysisController">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="360" y="380"/><mxPoint x="540" y="160"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="mult3" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="285" width="30" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="mult4" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="505" y="152" width="30" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- 3. DoctorProfileService -> doctor_profiles (Association, 1 : 1) -->
+        <mxCell id="edge3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;" edge="1" parent="1" source="DoctorProfileService" target="doctor_profiles">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="360" y="580"/><mxPoint x="1420" y="290"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="mult5" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="460" width="30" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="mult6" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1370" y="282" width="30" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- 4. AnalysisController -> AnalysisService (Association, 1 : 1) -->
+        <mxCell id="edge4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;" edge="1" parent="1" source="AnalysisController" target="AnalysisService">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="540" y="160"/><mxPoint x="740" y="170"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="mult7" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="630" y="162" width="30" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="mult8" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="710" y="162" width="30" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- 5. AdminController -> AdminService (Association, 1 : 1) -->
+        <mxCell id="edge5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;" edge="1" parent="1" source="AdminController" target="AdminService">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="540" y="360"/><mxPoint x="740" y="380"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="mult9" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="630" y="370" width="30" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="mult10" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="710" y="370" width="30" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- 6. AnalysisService -> AnalysisRepository (Association, 1 : 1) -->
+        <mxCell id="edge6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;" edge="1" parent="1" source="AnalysisService" target="AnalysisRepository">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="890" y="260"/><mxPoint x="1080" y="200"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="mult11" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="960" y="230" width="30" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="mult12" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="208" width="30" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- 7. AnalysisService -> StorageService (Association, 1 : 1) -->
+        <mxCell id="edge7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;" edge="1" parent="1" source="AnalysisService" target="StorageService">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="890" y="260"/><mxPoint x="890" y="580"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="mult13" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="880" y="420" width="30" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="mult14" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="880" y="570" width="30" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- 8. AnalysisService -> AISegmentationPipeline (Association, 1 : 1) -->
+        <mxCell id="edge8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;" edge="1" parent="1" source="AnalysisService" target="AISegmentationPipeline">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="890" y="260"/><mxPoint x="890" y="400"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="mult15" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="880" y="330" width="30" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="mult16" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="880" y="390" width="30" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- 9. AnalysisService -> analyses (Association, 1 : *) -->
+        <mxCell id="edge9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;" edge="1" parent="1" source="AnalysisService" target="analyses">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="890" y="260"/><mxPoint x="1420" y="510"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="mult17" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="385" width="30" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="mult18" value="*" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1380" y="500" width="30" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- 10. AnalysisService -> APIError (Dependency, dashed) -->
+        <mxCell id="edge10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;" edge="1" parent="1" source="AnalysisService" target="APIError">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="890" y="260"/><mxPoint x="860" y="765"/></Array></mxGeometry>
+        </mxCell>
+
+        <!-- 11. AdminService -> doctor_profiles (Association, 1 : *) -->
+        <mxCell id="edge11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;" edge="1" parent="1" source="AdminService" target="doctor_profiles">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="890" y="380"/><mxPoint x="1420" y="290"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="mult19" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="335" width="30" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="mult20" value="*" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1385" y="282" width="30" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- 12. AdminService -> APIError (Dependency, dashed) -->
+        <mxCell id="edge12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;" edge="1" parent="1" source="AdminService" target="APIError">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="890" y="460"/><mxPoint x="860" y="765"/></Array></mxGeometry>
+        </mxCell>
+
+        <!-- 13. doctor_profiles -> SupabaseAuth (Association, 1 : 0..1) [FIXED] -->
+        <mxCell id="edge13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;" edge="1" parent="1" source="doctor_profiles" target="SupabaseAuth">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1570" y="200"/><mxPoint x="1570" y="156"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="mult21" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1545" y="190" width="30" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="mult22" value="0..1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1530" y="142" width="50" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- 14. analyses -> SupabaseAuth (Association, 1 : *) [FIXED] -->
+        <mxCell id="edge14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeColor=#000000;" edge="1" parent="1" source="analyses" target="SupabaseAuth">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1570" y="420"/><mxPoint x="1570" y="156"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="mult23" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1545" y="410" width="30" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="mult24" value="*" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1530" y="142" width="30" height="18" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

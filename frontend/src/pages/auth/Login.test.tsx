@@ -18,16 +18,21 @@ vi.mock('@/services/auth', () => ({
   resetPasswordUser: vi.fn(),
 }));
 
-const signInMock = vi.fn<(email: string, password: string) => Promise<{ error?: string }>>();
+const signInMock = vi.fn<
+  (email: string, password: string, selectedRole?: 'admin' | 'doctor') => Promise<{ error?: string }>
+>();
 
-function mockAuthContext(): void {
+function mockAuthContext(overrides: Partial<ReturnType<typeof useAuth>> = {}): void {
   vi.mocked(useAuth).mockReturnValue({
     user: null,
     session: null,
     loading: false,
+    role: null,
+    accountStatus: null,
     signIn: signInMock,
     signUp: vi.fn(),
     signOut: vi.fn(),
+    ...overrides,
   } as unknown as ReturnType<typeof useAuth>);
 }
 
@@ -38,6 +43,7 @@ function renderLogin(initialEntries: InitialEntry[] = ['/login']) {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<div>Dashboard Page</div>} />
         <Route path="/history" element={<div>History Page</div>} />
+        <Route path="/admin" element={<div>Admin Dashboard</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -75,7 +81,7 @@ describe('Login — locked two-panel copy & structure', () => {
     expect(screen.getByText('Sign in to your PIXEL-T account')).toBeTruthy();
     expect(screen.getByLabelText('Email address')).toBeTruthy();
     expect(screen.getByLabelText('Password')).toBeTruthy();
-    expect(screen.getByLabelText('Remember me')).toBeTruthy();
+    expect(screen.getByLabelText('Remember my email')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Forgot password?' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Sign In' })).toBeTruthy();
     expect(screen.getByText(/Don't have an account/)).toBeTruthy();
@@ -109,7 +115,7 @@ describe('Login — authentication flow (existing service contract)', () => {
     fillAndSubmit('dokter@rumah-sakit.id', 'rahasia123');
 
     expect(signInMock).toHaveBeenCalledTimes(1);
-    expect(signInMock).toHaveBeenCalledWith('dokter@rumah-sakit.id', 'rahasia123');
+    expect(signInMock).toHaveBeenCalledWith('dokter@rumah-sakit.id', 'rahasia123', 'doctor');
     expect(await screen.findByText('History Page')).toBeTruthy();
   });
 
@@ -206,11 +212,11 @@ describe('Login — password visibility toggle', () => {
   });
 });
 
-describe('Login — Remember me (e-mail only)', () => {
+describe('Login — Remember my email (e-mail only)', () => {
   it('menyimpan email, bukan password', () => {
     renderLogin();
 
-    fireEvent.click(screen.getByLabelText('Remember me'));
+    fireEvent.click(screen.getByLabelText('Remember my email'));
     fillAndSubmit('dokter@rumah-sakit.id', 'rahasia123');
 
     expect(window.localStorage.getItem(REMEMBERED_EMAIL_STORAGE_KEY)).toBe(
@@ -231,17 +237,17 @@ describe('Login — Remember me (e-mail only)', () => {
     expect((screen.getByLabelText('Email address') as HTMLInputElement).value).toBe(
       'ingat@rumah-sakit.id'
     );
-    expect((screen.getByLabelText('Remember me') as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText('Remember my email') as HTMLInputElement).checked).toBe(true);
   });
 
   it('checkbox tidak dicentang -> email tersimpan dibersihkan', () => {
     window.localStorage.setItem(REMEMBERED_EMAIL_STORAGE_KEY, 'lama@rumah-sakit.id');
 
     renderLogin();
-    expect((screen.getByLabelText('Remember me') as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText('Remember my email') as HTMLInputElement).checked).toBe(true);
 
-    fireEvent.click(screen.getByLabelText('Remember me'));
-    expect((screen.getByLabelText('Remember me') as HTMLInputElement).checked).toBe(false);
+    fireEvent.click(screen.getByLabelText('Remember my email'));
+    expect((screen.getByLabelText('Remember my email') as HTMLInputElement).checked).toBe(false);
 
     fillAndSubmit('dokter@rumah-sakit.id', 'rahasia123');
 
@@ -342,5 +348,158 @@ describe('Login — opening animation playback rules', () => {
     expect(document.querySelector('.pixel-t-intro')).toBeNull();
     const emailInput = screen.getByLabelText('Email address') as HTMLInputElement;
     expect(emailInput.disabled).toBe(false);
+  });
+});
+
+describe('Login — role selector dropdown', () => {
+  it('default role adalah doctor dan dropdown dapat dibuka', () => {
+    renderLogin();
+
+    // Default selected role should be Doctor
+    expect(screen.getByText('Dokter')).toBeTruthy();
+
+    // Dropdown button is present with label "Masuk sebagai"
+    expect(screen.getByText('Masuk sebagai')).toBeTruthy();
+  });
+
+  it('dropdown terbuka dan menampilkan pilihan Admin serta Dokter', () => {
+    renderLogin();
+
+    const dropdownButton = screen.getByRole('button', { expanded: false });
+    fireEvent.click(dropdownButton);
+
+    // Both options should be visible
+    expect(screen.getAllByRole('option').length).toBe(2);
+  });
+
+  it('pilihan Admin dapat dipilih dan dropdown menutup', () => {
+    renderLogin();
+
+    const dropdownButton = screen.getByRole('button', { expanded: false });
+    fireEvent.click(dropdownButton);
+
+    // Use getAllByRole and pick first option (Admin)
+    const options = screen.getAllByRole('option');
+    fireEvent.click(options[0]);
+
+    // Dropdown should close (button no longer expanded)
+    expect(screen.getByRole('button', { expanded: false })).toBeTruthy();
+    // Button should show "Admin"
+    expect(screen.getByText('Admin')).toBeTruthy();
+  });
+
+  it('pilihan Dokter dapat dipilih ulang', () => {
+    renderLogin();
+
+    // Switch to admin first
+    const dropdownButton = screen.getByRole('button', { expanded: false });
+    fireEvent.click(dropdownButton);
+    screen.getAllByRole('option')[0].click();
+    expect(screen.getByText('Admin')).toBeTruthy();
+
+    // Switch back to doctor — click button again
+    const buttonAfterAdmin = screen.getByRole('button', { expanded: true });
+    fireEvent.click(buttonAfterAdmin);
+    screen.getAllByRole('option')[1].click();
+    expect(screen.getByText('Dokter')).toBeTruthy();
+  });
+
+  it('signIn dipanggil dengan selectedRole yang benar saat submit', async () => {
+    renderLogin();
+
+    // Select Admin role
+    const dropdownButton = screen.getByRole('button', { expanded: false });
+    fireEvent.click(dropdownButton);
+    screen.getAllByRole('option')[0].click();
+    expect(screen.getByText('Admin')).toBeTruthy();
+
+    fillAndSubmit('admin@rumah-sakit.id', 'rahasia123');
+
+    expect(signInMock).toHaveBeenCalledTimes(1);
+    expect(signInMock).toHaveBeenCalledWith('admin@rumah-sakit.id', 'rahasia123', 'admin');
+  });
+
+  it('signIn dipanggil dengan selectedRole doctor oleh default', async () => {
+    renderLogin();
+
+    fillAndSubmit('dokter@rumah-sakit.id', 'rahasia123');
+
+    expect(signInMock).toHaveBeenCalledTimes(1);
+    expect(signInMock).toHaveBeenCalledWith('dokter@rumah-sakit.id', 'rahasia123', 'doctor');
+  });
+});
+
+describe('Login — role mismatch error handling', () => {
+  it('menolak login Admin ketika user sebenarnya adalah dokter', async () => {
+    // signIn returns a mismatch error
+    signInMock.mockResolvedValue({
+      error: 'Jenis akun tidak sesuai dengan hak akses akun Anda. Silakan pilih jenis akun yang benar.',
+    });
+    renderLogin();
+
+    // Select Admin role
+    const dropdownButton = screen.getByRole('button', { expanded: false });
+    fireEvent.click(dropdownButton);
+    screen.getAllByRole('option')[0].click();
+
+    fillAndSubmit('dokter@rumah-sakit.id', 'rahasia123');
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain(
+      'Jenis akun tidak sesuai dengan hak akses akun Anda. Silakan pilih jenis akun yang benar.'
+    );
+    expect(screen.getByRole('heading', { level: 1, name: 'Welcome Back' })).toBeTruthy();
+  });
+
+  it('menolak login Dokter ketika user sebenarnya adalah admin', async () => {
+    // signIn returns a mismatch error
+    signInMock.mockResolvedValue({
+      error: 'Jenis akun tidak sesuai dengan hak akses akun Anda. Silakan pilih jenis akun yang benar.',
+    });
+    renderLogin();
+
+    fillAndSubmit('admin@rumah-sakit.id', 'rahasia123');
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain(
+      'Jenis akun tidak sesuai dengan hak akses akun Anda. Silakan pilih jenis akun yang benar.'
+    );
+  });
+
+  it('admin yang memilih Admin berhasil login dan diarahkan ke /admin', async () => {
+    mockAuthContext({ role: 'admin', accountStatus: null });
+    signInMock.mockResolvedValue({});
+    renderLogin();
+
+    // Ensure Admin is selected
+    const dropdownButton = screen.getByRole('button', { expanded: false });
+    fireEvent.click(dropdownButton);
+    screen.getAllByRole('option')[0].click();
+
+    fillAndSubmit('admin@rumah-sakit.id', 'rahasia123');
+
+    expect(await screen.findByText('Admin Dashboard')).toBeTruthy();
+  });
+
+  it('dokter approved yang memilih Dokter berhasil login dan diarahkan ke /dashboard', async () => {
+    mockAuthContext({ role: 'doctor', accountStatus: 'approved' });
+    signInMock.mockResolvedValue({});
+    renderLogin();
+
+    fillAndSubmit('dokter@rumah-sakit.id', 'rahasia123');
+
+    expect(await screen.findByText('Dashboard Page')).toBeTruthy();
+  });
+
+  it('dokter pending tetap melihat pesan tunggu persetujuan', async () => {
+    mockAuthContext({ role: 'doctor', accountStatus: 'pending' });
+    signInMock.mockResolvedValue({});
+    renderLogin();
+
+    fillAndSubmit('dokter-pending@rumah-sakit.id', 'rahasia123');
+
+    // Should redirect back to login with pending state — look for the status box
+    const pendingStatus = await screen.findByRole('status');
+    expect(pendingStatus.textContent).toContain('sedang menunggu persetujuan dari administrator');
   });
 });

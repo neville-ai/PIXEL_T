@@ -1,0 +1,72 @@
+@startuml AD_03_Upload_Image
+' =====================================================================
+'  Activity Diagram Upload Image - PIXEL-T (Bab IV Skripsi)
+'  Diverifikasi dari:
+'    - frontend/src/pages/analysis/NewAnalysis.tsx (validateFile, handleSubmit, polling)
+'    - frontend/src/services/analysis.ts (createAnalysis → POST /api/analysis)
+'    - backend/app/services/analysis_service.py (create_analysis)
+'  Standar Desain Visual: #3DADFF, bold white, Corner 8, 2 swimlanes
+' =====================================================================
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultTextAlignment center
+skinparam shadowing false
+
+skinparam activity {
+  BackgroundColor #3DADFF
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #FFFFFF
+  FontSize 11
+  FontStyle bold
+  Corner 8
+  DiamondBackgroundColor #3DADFF
+  DiamondBorderColor #2D2D2D
+  DiamondFontColor #FFFFFF
+  DiamondFontSize 10
+  DiamondFontStyle bold
+  StartColor #3DADFF
+  EndColor #3DADFF
+}
+
+skinparam ArrowColor #2D2D2D
+skinparam ArrowFontColor #000000
+skinparam ArrowFontSize 10
+
+skinparam partition {
+  BackgroundColor transparent
+  BorderColor #2D2D2D
+  BorderThickness 1.2
+  FontColor #000000
+  FontSize 13
+  FontStyle bold
+}
+
+|User|
+start
+:Membuka halaman\nNew Analysis;
+:Memilih berkas\ngambar kolonoskopi;
+
+|System|
+:Memvalidasi berkas\n(format, MIME, ukuran, dimensi);
+
+if (Berkas valid?) then (Tidak)
+  :Menampilkan pesan\nkesalahan berkas;
+  |User|
+  :Menerima pesan\nkesalahan berkas;
+  stop
+else (Ya)
+  :Menampilkan pratinjau\ngambar;
+  |User|
+  :Menekan tombol\n"Start Analysis";
+  |System|
+  :Mengirim gambar ke backend\n(POST /api/analysis);
+  :Memvalidasi & menyimpan gambar,\nmembuat record & antrean AI;
+  :Mengembalikan analysis_id\n(HTTP 202 Accepted);
+  |User|
+  :Memantau progres analisis\nhingga status terminal;
+  :Dialihkan ke halaman\nhasil analisis;
+  stop
+endif
+@enduml

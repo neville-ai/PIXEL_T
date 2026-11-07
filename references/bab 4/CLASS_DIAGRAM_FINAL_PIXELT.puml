@@ -1,0 +1,378 @@
+@startuml
+' ============================================================
+' PIXEL-T — Class Diagram FINAL (Audit Berdasarkan Kode Aktual)
+' Sumber kebenaran: backend/app/**, ai/inference/**, ai/config/model_config.py,
+' database/migrations/001–004_*.sql, frontend/src/services/**, frontend/src/context/**
+' Gaya visual mengikuti class_diagram_contoh.png:
+'   - Monokrom hitam/putih, tanpa warna, tanpa ikon
+'   - Nama kelas tebal, di tengah, dipisah garis tipis
+'   - Visibilitas '+', '-', format 'nama: tipe', tipe pengembalian tercantum
+'   - Relasi sederhana dengan multiplisitas, jarak antarelemen luas
+'   - Tidak ada catatan dekoratif, tidak ada elemen warna
+' ============================================================
+
+skinparam monochrome true
+skinparam shadowing false
+!option handwritten false
+skinparam classAttributeIconSize 0
+skinparam classFontIconSize 0
+skinparam packageStyle rectangle
+skinparam class {
+    BorderColor #000000
+    BackgroundColor #FFFFFF
+    FontName "Segoe UI"
+    FontSize 13
+    FontStyle bold
+    AttributeFontName "Segoe UI"
+    AttributeFontSize 11
+    AttributeFontStyle normal
+    MethodFontName "Segoe UI"
+    MethodFontSize 11
+    MethodFontStyle normal
+}
+skinparam package {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    FontColor #000000
+    FontName "Segoe UI"
+    FontSize 12
+    FontStyle bold
+}
+skinparam arrow {
+    Color #000000
+    FontName "Segoe UI"
+    FontSize 10
+    FontStyle normal
+}
+hide empty members
+hide circle
+top to bottom direction
+
+' ============================================================
+' LAYER 1 — Backend (Flask): Kontrol & Layanan Bisnis
+' ============================================================
+package "Backend (Flask)" {
+  class AnalysisController <<controller>> {
+    + service: AnalysisService
+    + create_analysis(): Response
+    + get_analysis(analysis_id: String): Response
+    + list_history(): Response
+    + delete_analysis(analysis_id: String): Response
+  }
+
+  class AnalysisService <<service>> {
+    + repository: AnalysisRepository
+    + storage_service: StorageService
+    + pipeline_runner: Callable
+    + job_queue: AnalysisJobQueue
+    + validate_and_decode_image(file_storage): Tuple
+    + create_analysis(file_storage, user_id: String): Dict
+    + get_analysis(analysis_id: String, user_id: String): Dict
+    + list_user_analyses(user_id: String, limit: Integer, offset: Integer): List
+    + delete_analysis(analysis_id: String, user_id: String): Boolean
+    - _run_analysis_job(job: Dict): None
+    - _execute_pipeline(analysis_id: String, user_id: String, file_bytes: Bytes): None
+    - _last_progress_percent(analysis_id: String, user_id: String): Integer
+    + {static} run_segmentation(file_bytes: Bytes): SegmentationResult
+    + {static} run_gradcam(file_bytes: Bytes): GradCAMResult
+  }
+
+  class AnalysisRepository <<repository>> {
+    - _client
+    + create(user_id: String, data: Dict, use_service_role: Boolean): Dict
+    + get_by_id(analysis_id: String, user_id: String, use_service_role: Boolean): Optional[Dict]
+    + list_by_user(user_id: String, limit: Integer, offset: Integer, use_service_role: Boolean): List
+    + update(analysis_id: String, user_id: String, data: Dict, use_service_role: Boolean): Optional[Dict]
+    + delete(analysis_id: String, user_id: String, use_service_role: Boolean): Boolean
+    + validate_lifecycle_status(status: String): None
+    + validate_segmentation_status(status: String): None
+  }
+
+  class StorageService <<service>> {
+    - _client
+    + bucket_name: String
+    + generate_asset_path(user_id: String, analysis_id: String, category: String, filename: String): String
+    + generate_original_image_path(user_id: String, analysis_id: String, extension: String): String
+    + generate_binary_mask_path(user_id: String, analysis_id: String): String
+    + generate_segmentation_overlay_path(user_id: String, analysis_id: String): String
+    + generate_gradcam_heatmap_path(user_id: String, analysis_id: String): String
+    + generate_gradcam_overlay_path(user_id: String, analysis_id: String): String
+    + get_analysis_asset_paths(user_id: String, analysis_id: String, original_extension: String): Dict
+    + validate_path_ownership(path: String, user_id: String): Boolean
+    + upload_file(path: String, file_bytes: Bytes, content_type: String, user_id: String, use_service_role: Boolean): String
+    + download_file(path: String, user_id: String, use_service_role: Boolean): Bytes
+    + create_signed_url(path: String, expires_in: Integer, user_id: String, use_service_role: Boolean): String
+    + delete_file(path: String, user_id: String, use_service_role: Boolean): Boolean
+    + delete_analysis_files(paths: List, user_id: String, use_service_role: Boolean): Boolean
+    + {static} sanitize_id(identifier: String): String
+  }
+
+  class AnalysisJobQueue <<service>> {
+    - _runner: Callable
+    - _max_waiting: Integer
+    - _jobs: Deque
+    - _lock: Lock
+    - _not_empty: Condition
+    - _worker_started: Boolean
+    - _auto_start: Boolean
+    - _active_analysis_id: String
+    + {static} MAX_WAITING: Integer
+    + capacity: Integer
+    + try_enqueue(job: Dict): Boolean
+    + contains(analysis_id: String): Boolean
+    + pending_count(): Integer
+    + drain_one(): Boolean
+    - _ensure_worker(): None
+    - _work_loop(): None
+  }
+
+  class AnalysisProgressReporter <<service>> {
+    - _repository: AnalysisRepository
+    - _analysis_id: String
+    - _user_id: String
+    - _throttle: Integer
+    - _completed_units: Integer
+    - _passes_done: Integer
+    - _last_percent: Integer
+    - _last_step: String
+    + total_units: Integer
+    + failed_writes: Integer
+    + last_step: String
+    + completed_units: Integer
+    + percent: Integer
+    + on_phase(step: String): None
+    + on_pass(): None
+    - _write(step: String): None
+  }
+
+  class APIError <<exception>> {
+    + code: String
+    + message: String
+    + status_code: Integer
+    + to_dict(): Dict
+  }
+}
+
+' ============================================================
+' LAYER 2 — AI Pipeline (PyTorch)
+' ============================================================
+package "AI (PyTorch Inference)" {
+  class AIInferenceFunctions <<module>> {
+    + run_pipeline(original_bytes: Bytes, config: ModelConfig, on_phase: Callable, on_pass: Callable, analysis_id: String): PipelineResult
+    + predict(image: Image, model_service: ModelService, config: ModelConfig, on_pass: Callable): SegmentationResult
+    + postprocess_mask(mask: Array, config: ModelConfig): Array
+    + measure_mask(mask: Array): Dict
+    + generate_gradcam(image_tensor: Tensor, model_service: ModelService, target_mask: Array, original_image: Image, config: ModelConfig): GradCAMResult
+    + prepare_image(image: Image, config: ModelConfig): Tensor
+    + count_forward_passes(config: ModelConfig): Integer
+  }
+
+  class ModelService <<service>> {
+    + config: ModelConfig
+    - _model: Module
+    - _device: Device
+    - _lock: Lock
+    - _load_count: Integer
+    - _last_load_duration: Float
+    + load_count: Integer
+    + device: Device
+    + load(): Module
+    + metadata(): Dict
+    + predict_logits(tensor: Tensor): Tensor
+    + get_gradcam_target_layer(): Module
+    - _build_model(): Module
+    - {static} _select_device(): Device
+  }
+
+  class ModelConfig <<dataclass>> {
+    + architecture: String
+    + encoder: String
+    + decoder_attention: String
+    + gradcam_target_layer: String
+    + framework: String
+    + library: String
+    + model_version: String
+    + input_size: Integer
+    + input_channels: Integer
+    + threshold: Float
+    + tta_enabled: Boolean
+    + multiscale_enabled: Boolean
+    + tta_scales: Tuple
+    + postprocessing_enabled: Boolean
+    + postprocessing_min_area: Integer
+    + contour_smoothing: Boolean
+    + smoothing_epsilon: Float
+    + checkpoint_filename: String
+    + checkpoint_sha256: String
+    + checkpoint_path: Path
+    + validate(): None
+    + checkpoint_sha256_matches(path: Path): Boolean
+  }
+
+  class PipelineResult <<dataclass>> {
+    + binary_mask_png: Bytes
+    + segmentation_overlay_png: Bytes
+    + gradcam_heatmap_png: Bytes
+    + gradcam_overlay_png: Bytes
+    + measurements: Dict
+    + summary_text: String
+    + gradcam: GradCAMResult
+  }
+
+  class SegmentationResult <<dataclass>> {
+    + probability_map: Tensor
+    + binary_mask: Tensor
+    + threshold: Float
+  }
+
+  class GradCAMResult <<dataclass>> {
+    + heatmap: Array
+    + overlay: Array
+    + target_layer: String
+    + target_objective: String
+    + target_mask_empty: Boolean
+  }
+}
+
+' ============================================================
+' LAYER 3 — Persistensi Basis Data (Supabase / PostgreSQL)
+' ============================================================
+package "Database (Supabase/PostgreSQL)" {
+  class auth_users <<external>> {
+    + id: UUID
+  }
+
+  class doctor_profiles <<entity>> {
+    + id: UUID
+    + user_id: UUID
+    + full_name: String
+    + phone: String
+    + birth_date: Date
+    + city: String
+    + profession_category: String
+    + academic_title: String
+    + primary_specialty: String
+    + subspecialty: String
+    + clinical_focus: String
+    + hospital: String
+    + department: String
+    + clinical_role: String
+    + years_experience: String
+    + practice_address: String
+    + str_number: String
+    + is_verified: Boolean
+    + bio: String
+    + education: JSONB
+    + experience: JSONB
+    + created_at: Timestamp
+    + updated_at: Timestamp
+  }
+
+  class analyses <<entity>> {
+    + id: UUID
+    + user_id: UUID
+    + status: String
+    + current_step: String
+    + progress_percent: Integer
+    + original_image_path: String
+    + original_filename: String
+    + original_mime_type: String
+    + original_width: Integer
+    + original_height: Integer
+    + binary_mask_path: String
+    + segmentation_overlay_path: String
+    + segmentation_status: String
+    + area_pixels: Integer
+    + area_ratio: Float
+    + bounding_width_pixels: Integer
+    + bounding_height_pixels: Integer
+    + gradcam_heatmap_path: String
+    + gradcam_overlay_path: String
+    + gradcam_target_layer: String
+    + gradcam_method: String
+    + gradcam_config_version: String
+    + gradcam_status: String
+    + model_architecture: String
+    + model_version: String
+    + model_config_version: String
+    + model_checkpoint_sha256: String
+    + model_input_size: Integer
+    + model_threshold: Float
+    + tta_enabled: Boolean
+    + tta_scales: JSONB
+    + tta_orientations: JSONB
+    + postprocessing_enabled: Boolean
+    + summary_text: String
+    + error_code: String
+    + error_message: String
+    + created_at: Timestamp
+    + completed_at: Timestamp
+    + updated_at: Timestamp
+  }
+}
+
+' ============================================================
+' LAYER 4 — Presentasi (Frontend React/TypeScript)
+' ============================================================
+package "Frontend (React/TypeScript)" {
+  class AnalysisClient <<module>> {
+    + createAnalysis(file: File): Promise
+    + getAnalysis(id: String): Promise
+    + listHistory(): Promise
+    + deleteAnalysis(id: String): Promise
+  }
+
+  class AuthContext <<module>> {
+    + user: User
+    + session: Session
+    + loading: Boolean
+    + signIn(email: String, password: String): Promise
+    + signUp(email: String, password: String, fullName: String, hospitalName: String, doctorSpecialty: String): Promise
+    + signOut(): Promise
+  }
+
+  class DoctorProfileService <<module>> {
+    + fetchDoctorProfile(user: User): Promise
+    + saveDoctorProfile(user: User, data: DoctorProfileData): Promise
+    + calculateCompleteness(profile: DoctorProfileData): ProfileCompleteness
+    + validateProfileData(data: DoctorProfileData): Object
+  }
+}
+
+' ============================================================
+' RELASI
+' ============================================================
+
+' Kontrol
+AnalysisController "1" --> "1" AnalysisService : service
+AnalysisController ..> APIError : raises
+
+' Layanan bisnis (asosiasi karena referensi disimpan sebagai atribut; tidak composition karena DI memungkinkan injeksi eksternal)
+AnalysisService "1" --> "1" AnalysisRepository : repository
+AnalysisService "1" --> "1" StorageService : storageService
+AnalysisService "1" --> "1" AnalysisJobQueue : jobQueue
+AnalysisService ..> AnalysisProgressReporter : uses
+AnalysisProgressReporter "1" --> "1" AnalysisRepository : repository
+
+' Pipeline AI
+AnalysisService ..> AIInferenceFunctions : pipelineRunner
+AIInferenceFunctions ..> ModelService : modelService
+AIInferenceFunctions ..> PipelineResult : returns
+AIInferenceFunctions ..> SegmentationResult : returns
+AIInferenceFunctions ..> GradCAMResult : returns
+PipelineResult "1" --> "1" GradCAMResult : gradcam
+ModelService --> ModelConfig : config
+
+' Persistensi
+AnalysisRepository ..> analyses : CRUD
+
+' Entitas & autentikasi eksternal
+auth_users "1" -- "0..*" analyses : FK user_id
+auth_users "1" -- "0..1" doctor_profiles : FK user_id UNIQUE
+
+' Frontend -> Backend
+AnalysisClient ..> AnalysisController : HTTP/REST
+AuthContext ..> auth_users : Supabase Auth
+DoctorProfileService ..> doctor_profiles : CRUD profil
+
+@enduml

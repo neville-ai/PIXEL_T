@@ -1,0 +1,154 @@
+@startuml sequence-segmentation
+' Sequence Diagram Segmentation - PIXEL-T
+' Alur diverifikasi dari AnalysisJobQueue, AnalysisService, ai/inference/pipeline.py,
+' StorageService, AnalysisRepository, dan halaman analisis frontend.
+
+title Sequence Diagram Segmentation - PIXEL-T
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipant underline false
+skinparam roundcorner 5
+
+skinparam participant {
+  BackgroundColor #DCE9F7
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam database {
+  BackgroundColor #DCE9F7
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam sequence {
+  ArrowColor #2E5E9E
+  LifeLineBorderColor #2E5E9E
+  LifeLineBackgroundColor #EEF5FC
+  GroupBorderColor #2E5E9E
+  GroupBackgroundColor #EEF5FC
+  GroupHeaderFontColor #172B4D
+  DividerBackgroundColor #DCE9F7
+  DividerBorderColor #2E5E9E
+  DividerFontColor #172B4D
+}
+
+actor "Pengguna" as User
+participant "Frontend\n(NewAnalysis / AnalysisResult)" as Frontend
+participant "Supabase Auth" as SupabaseAuth
+participant "Flask API\n(/api/analysis/{id})" as Flask
+participant "AnalysisService" as AnalysisService
+participant "AnalysisJobQueue\n(background worker)" as JobQueue
+participant "AI Pipeline\n(run_pipeline)" as Pipeline
+participant "Supabase Storage\n(via StorageService)" as Storage
+database "Supabase Database\n(via AnalysisRepository)" as Database
+
+note over Frontend,JobQueue
+  Dimulai setelah upload diterima (HTTP 202) dan job
+  berisi analysis_id, user_id, serta bytes gambar
+  masuk ke antrean.
+end note
+
+par Pemrosesan AI di background
+  JobQueue -> AnalysisService: _run_analysis_job(job)
+  AnalysisService -> Pipeline: run_pipeline(file_bytes,\nconfig, progress callbacks)
+
+  alt Pipeline berhasil
+    Pipeline -> Pipeline: Decode gambar dan konversi ke RGB
+    Pipeline --> AnalysisService: on_phase(preprocessing)
+    AnalysisService -> Database: Simpan fase dan progres
+    Pipeline -> Pipeline: Siapkan input inferensi\n(resize dan normalisasi)
+
+    loop Forward pass inferensi TTA berhasil
+      Pipeline -> Pipeline: Inferensi U-Net + ResNet50\n(multi-scale / TTA)
+      Pipeline --> AnalysisService: on_pass()
+      opt Setiap 5 pass, jika progres berubah
+        AnalysisService -> Database: Simpan progres inferensi
+      end
+    end
+    Pipeline --> AnalysisService: on_phase(inference)
+    AnalysisService -> Database: Simpan fase dan progres
+
+    Pipeline -> Pipeline: Postprocessing mask dan pengukuran
+    Pipeline --> AnalysisService: on_phase(postprocessing)
+    AnalysisService -> Database: Simpan fase dan progres
+    Pipeline -> Pipeline: Generate Grad-CAM
+    Pipeline --> AnalysisService: on_phase(gradcam)
+    AnalysisService -> Database: Simpan fase dan progres
+    Pipeline -> Pipeline: Komposisi mask, overlay,\nheatmap, dan ringkasan
+    Pipeline --> AnalysisService: on_phase(artifact_composition)
+    AnalysisService -> Database: Simpan fase dan progres
+    Pipeline --> AnalysisService: PipelineResult
+
+    loop Simpan 4 artefak hasil secara berurutan
+      AnalysisService -> Storage: Upload artefak
+      Storage --> AnalysisService: Upload berhasil
+    end
+
+    alt Penyimpanan hasil lengkap
+      AnalysisService -> Database: Simpan path dan metadata;\nstatus = completed
+      Database --> AnalysisService: Record completed
+    else Upload artefak atau update record gagal
+      AnalysisService -> Storage: Hapus artefak yang sudah diunggah
+      AnalysisService -> Database: Coba simpan status = failed
+      Database --> AnalysisService: Hasil update status
+    end
+  else Pipeline gagal
+    Pipeline --> AnalysisService: Error pipeline
+    AnalysisService -> Database: Coba simpan status = failed
+    Database --> AnalysisService: Hasil update status
+  end
+
+else Frontend memantau status
+  loop Polling tiap 2 detik selama processing
+    Frontend -> Frontend: getSession() untuk access token
+    Frontend -> Flask: GET /api/analysis/{id}\nBearer token
+    Flask -> SupabaseAuth: get_user(access token)
+    SupabaseAuth --> Flask: User terautentikasi
+    Flask -> AnalysisService: get_analysis(id, user_id)
+    AnalysisService -> Database: Baca status dan progres
+    Database --> AnalysisService: Record analisis
+    AnalysisService --> Flask: Status dan progres terbaru
+    Flask --> Frontend: HTTP 200 + detail analisis
+  end
+end
+
+Frontend -> Frontend: Status terminal diterima;\nnavigasi ke halaman hasil
+Frontend -> Flask: GET /api/analysis/{id}\nBearer token
+Flask -> SupabaseAuth: get_user(access token)
+SupabaseAuth --> Flask: User terautentikasi
+Flask -> AnalysisService: get_analysis(id, user_id)
+AnalysisService -> Database: Baca record analisis
+Database --> AnalysisService: Record dan metadata
+
+alt Status completed
+  AnalysisService -> Storage: Buat signed URL hasil
+  Storage --> AnalysisService: Signed URL
+  AnalysisService --> Flask: Segmentasi, Grad-CAM,\npengukuran, dan ringkasan
+  Flask --> Frontend: HTTP 200 + detail hasil
+  Frontend --> User: Menampilkan hasil analisis
+else Status failed
+  AnalysisService --> Flask: Status failed dan pesan kegagalan
+  Flask --> Frontend: HTTP 200 + status failed
+  Frontend --> User: Menampilkan pesan analisis gagal
+end
+
+note right of Frontend
+  Jika request menerima HTTP 401,
+  API client refresh session dan
+  mencoba ulang satu kali.
+end note
+
+note over AnalysisService,Database
+  Update progres bersifat best-effort. Kegagalannya tidak menghentikan pipeline.
+  HTTP 202 berarti job diterima, bukan analisis selesai.
+end note
+
+@enduml

@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import io
+import logging
+import time
 from dataclasses import dataclass
+from typing import Callable, Optional
 
 import numpy as np
 from PIL import Image
@@ -12,7 +15,48 @@ from ai.config.model_config import MODEL_CONFIG, ModelConfig
 from ai.inference.gradcam import GradCAMResult, generate_gradcam
 from ai.inference.postprocessing import measure_mask, postprocess_mask, resize_binary_mask
 from ai.inference.preprocessing import prepare_image
-from ai.inference.segmentation import predict
+from ai.inference.segmentation import predict, _DEFAULT_MODEL_SERVICE
+
+# Pipeline phases reported, in execution order. Each completed phase counts as
+# one work unit alongside the individual inference forward passes.
+PHASE_PREPROCESSING = "preprocessing"
+PHASE_INFERENCE = "inference"
+PHASE_POSTPROCESSING = "postprocessing"
+PHASE_GRADCAM = "gradcam"
+PHASE_ARTIFACT_COMPOSITION = "artifact_composition"
+
+# Convenience reporter: forward a fixed phase name as a completed unit.
+PhaseCallback = Callable[[str], None]
+
+# Timing instrumentation logger
+_timing_logger = logging.getLogger("pixelt.timing")
+
+
+class _Timer:
+    """Context manager for timing code blocks."""
+    def __init__(self, analysis_id: str, stage: str, logger: logging.Logger, extra: dict | None = None):
+        self.analysis_id = analysis_id
+        self.stage = stage
+        self.logger = logger
+        self.extra = extra or {}
+        self.start = 0.0
+
+    def __enter__(self):
+        self.start = time.perf_counter()
+        return self
+
+    def __exit__(self, *exc):
+        dur = time.perf_counter() - self.start
+        self.logger.info(
+            "TIMING analysis_id=%s stage=%s duration_ms=%.1f %s",
+            self.analysis_id, self.stage, dur * 1000,
+            " ".join(f"{k}={v}" for k, v in self.extra.items()) if self.extra else ""
+        )
+
+
+def _phase(name: str, on_phase: Optional[PhaseCallback]) -> None:
+    if on_phase is not None:
+        on_phase(name)
 
 
 @dataclass(frozen=True)
@@ -57,37 +101,65 @@ def _heatmap_image(heatmap: np.ndarray) -> Image.Image:
 def run_pipeline(
     original_bytes: bytes,
     config: ModelConfig = MODEL_CONFIG,
+    on_phase: Optional[PhaseCallback] = None,
+    on_pass: Optional[Callable[[], None]] = None,
+    *,
+    analysis_id: str = "",
 ) -> PipelineResult:
-    """Run segmentation, final-mask measurements, overlays, and Grad-CAM."""
-    with Image.open(io.BytesIO(original_bytes)) as decoded:
-        original = decoded.convert("RGB")
-    original_width, original_height = original.size
-    segmentation = predict(original, config=config)
-    processed_512 = postprocess_mask(segmentation.binary_mask[0, 0].numpy(), config)
-    final_mask = resize_binary_mask(processed_512, original_width, original_height)
-    measurements = measure_mask(final_mask)
-    measurements["area_percentage"] = float(measurements["area_ratio"]) * 100.0
+    """Run segmentation, final-mask measurements, overlays, and Grad-CAM.
 
-    gradcam = generate_gradcam(
-        prepare_image(original, config),
-        original_image=original,
-        config=config,
-    )
-    overlay = _segmentation_overlay(original, final_mask)
-    mask_image = Image.fromarray((final_mask * 255).astype(np.uint8), mode="L")
-    heatmap_image = _heatmap_image(gradcam.heatmap)
-    summary = (
-        "Model menghasilkan area segmentasi pada citra dengan cakupan "
-        f"sekitar {measurements['area_percentage']:.2f}% dari area citra."
-        if measurements["segmentation_status"] == "detected"
-        else "Model tidak menghasilkan area segmentasi foreground pada citra."
-    )
-    return PipelineResult(
-        binary_mask_png=_png_bytes(mask_image),
-        segmentation_overlay_png=_png_bytes(overlay),
-        gradcam_heatmap_png=_png_bytes(heatmap_image),
-        gradcam_overlay_png=_png_bytes(Image.fromarray(gradcam.overlay, mode="RGB")),
-        measurements=measurements,
-        summary_text=summary,
-        gradcam=gradcam,
-    )
+    ``on_phase`` and ``on_pass`` are optional, purely observational progress
+    callbacks. ``on_phase`` fires once after each named phase completes;
+    ``on_pass`` fires once per successful inference forward pass (forwarded to
+    ``predict``). Neither callback receives tensors nor can alter results, and
+    neither fires for work that did not complete: on the first exception the
+    pipeline propagates without reporting further progress. Callbacks must not
+    raise — progress-write (database) failures are caught and recorded by the
+    callback owner (the analysis service reporter), so reporting can never turn
+    a successful inference into a failure.
+    """
+    pipeline_start = time.perf_counter()
+    with _Timer(analysis_id, "pipeline_total", _timing_logger):
+        with Image.open(io.BytesIO(original_bytes)) as decoded:
+            original = decoded.convert("RGB")
+        with _Timer(analysis_id, "preprocessing", _timing_logger):
+            _phase(PHASE_PREPROCESSING, on_phase)
+        original_width, original_height = original.size
+        with _Timer(analysis_id, "segmentation_inference", _timing_logger):
+            segmentation = predict(original, config=config, on_pass=on_pass)
+        _phase(PHASE_INFERENCE, on_phase)
+        with _Timer(analysis_id, "postprocessing", _timing_logger):
+            processed_512 = postprocess_mask(segmentation.binary_mask[0, 0].numpy(), config)
+            final_mask = resize_binary_mask(processed_512, original_width, original_height)
+            measurements = measure_mask(final_mask)
+            measurements["area_percentage"] = float(measurements["area_ratio"]) * 100.0
+        _phase(PHASE_POSTPROCESSING, on_phase)
+        with _Timer(analysis_id, "gradcam", _timing_logger):
+            gradcam = generate_gradcam(
+                prepare_image(original, config),
+                original_image=original,
+                config=config,
+                model_service=_DEFAULT_MODEL_SERVICE,
+            )
+        _phase(PHASE_GRADCAM, on_phase)
+        with _Timer(analysis_id, "artifact_composition", _timing_logger):
+            overlay = _segmentation_overlay(original, final_mask)
+            mask_image = Image.fromarray((final_mask * 255).astype(np.uint8), mode="L")
+            heatmap_image = _heatmap_image(gradcam.heatmap)
+            summary = (
+                "Model menghasilkan area segmentasi pada citra dengan cakupan "
+                f"sekitar {measurements['area_percentage']:.2f}% dari area citra."
+                if measurements["segmentation_status"] == "detected"
+                else "Model tidak menghasilkan area segmentasi foreground pada citra."
+            )
+            result = PipelineResult(
+                binary_mask_png=_png_bytes(mask_image),
+                segmentation_overlay_png=_png_bytes(overlay),
+                gradcam_heatmap_png=_png_bytes(heatmap_image),
+                gradcam_overlay_png=_png_bytes(Image.fromarray(gradcam.overlay, mode="RGB")),
+                measurements=measurements,
+                summary_text=summary,
+                gradcam=gradcam,
+            )
+        _phase(PHASE_ARTIFACT_COMPOSITION, on_phase)
+    return result

@@ -1,0 +1,59 @@
+@startuml
+
+' PIXEL-T Sequence Diagram - Sign In (Final Version v2)
+' Style: monokrom, background putih, konsisten dengan Sign Out v3
+' Content: akurat berdasarkan implementasi PIXEL-T aktual
+' Folder: references/bab 4/
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam lifelineStrategy solid
+skinparam roundCorner 10
+hide footbox
+
+actor Pengguna
+participant "Login.tsx\n(Frontend)" as Login
+participant "AuthContext" as Ctx
+participant "Auth Service\n(auth.ts)" as Svc
+participant "Supabase Auth" as Supa
+
+activate Pengguna
+
+Pengguna -> Login: Klik "Sign In"
+activate Login
+Login -> Login: Validasi email & password
+
+Login -> Ctx: signIn(email, password)
+activate Ctx
+Ctx -> Svc: loginUser(email, password)
+activate Svc
+Svc -> Supa: supabase.auth.signInWithPassword()
+activate Supa
+
+alt [Sukses]
+  Supa --> Svc: { user, session }
+  Svc --> Ctx: { user, session, error: null }
+  Ctx -> Ctx: setUser(user)\nsetSession(session)
+  Ctx --> Login: {}
+  Login -> Login: setPassword('')
+  Login --> Pengguna: navigate('/dashboard'\natau halaman asal)
+else [Gagal]
+  Supa --> Svc: { error }
+  Svc -> Svc: formatAuthError(error)
+  Svc --> Ctx: { error: string }
+  Ctx --> Login: { error: string }
+  Login -> Login: setErrorMessage(error)
+end
+
+deactivate Login
+deactivate Ctx
+deactivate Svc
+deactivate Supa
+deactivate Pengguna
+
+@enduml

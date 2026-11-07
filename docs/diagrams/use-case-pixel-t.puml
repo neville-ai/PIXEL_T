@@ -1,0 +1,81 @@
+@startuml pixel-t-use-case
+' =====================================================================
+'  Use Case Diagram - PIXEL-T  (versi final)
+'  Diverifikasi dari:
+'    Login.tsx, Register.tsx, AuthContext.tsx, NewAnalysis.tsx,
+'    services/analysis.ts, analysis_service.py, DoctorProfile.tsx
+' =====================================================================
+
+left to right direction
+skinparam shadowing false
+skinparam dpi 150
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 13
+skinparam nodesep 28
+skinparam ranksep 50
+skinparam packageStyle rectangle
+
+skinparam usecase {
+  BackgroundColor #DCE9F7
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam rectangle {
+  BackgroundColor #EEF5FC
+  BorderColor #2E5E9E
+  FontColor #172B4D
+}
+skinparam arrow {
+  Color #2E5E9E
+}
+
+title Use Case Diagram - PIXEL-T
+
+actor "Calon Pengguna\n(Belum memiliki akun)" as Calon
+actor "Pengguna Terdaftar\n(Dokter / Tenaga Medis)" as Pengguna
+
+rectangle "PIXEL-T Web Application" {
+
+  usecase "Registrasi Akun\n(Sign Up)"                 as UC_Registrasi
+  usecase "Sign In"                                    as UC_SignIn
+  usecase "Reset Password"                             as UC_Reset
+
+  usecase "Upload Image"                               as UC_Upload
+  usecase "Mulai Analisis"                             as UC_Mulai
+  usecase "Segmentasi"                                 as UC_Segmentasi
+  usecase "Generate Grad-CAM"                          as UC_Gradcam
+  usecase "Buat Overlay Visualisasi"                   as UC_Overlay
+
+  usecase "Melihat Riwayat\n(History)"                 as UC_History
+  usecase "Mengelola Profil Dokter\n(Doctor Profile)"  as UC_Profil
+  usecase "Sign Out"                                   as UC_SignOut
+}
+
+' ---------- Asosiasi aktor ----------
+Calon    -- UC_Registrasi
+Pengguna -- UC_SignIn
+Pengguna -- UC_Upload
+Pengguna -- UC_History
+Pengguna -- UC_Profil
+Pengguna -- UC_SignOut
+
+' ---------- Relasi antar use case ----------
+UC_Reset       .>  UC_SignIn      : <<extend>>
+UC_Upload      ..> UC_Mulai       : <<include>>
+UC_Mulai       ..> UC_Segmentasi  : <<include>>
+UC_Segmentasi  ..> UC_Gradcam     : <<include>>
+UC_Segmentasi  ..> UC_Overlay     : <<include>>
+
+legend right
+  Asosiasi aktor dan use case   : garis solid
+  <<include>>                   : wajib dijalankan
+  <<extend>>                    : opsional / memperluas
+  Kotak biru                    : batas sistem
+endlegend
+
+@enduml

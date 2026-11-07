@@ -1,4 +1,6 @@
 import io
+import time
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -122,6 +124,12 @@ def analysis_client(client, monkeypatch):
         user=SimpleNamespace(id=token.removesuffix("-token"), email=None, role="authenticated")
     )
     monkeypatch.setattr(auth_module, "get_supabase_client", lambda **kwargs: auth_client)
+    # Simulate approved doctor role for require_approved_doctor decorator
+    monkeypatch.setattr(
+        auth_module,
+        "_get_user_role_and_status",
+        lambda user_id: {"role": "doctor", "account_status": "approved"},
+    )
     return client
 
 
@@ -132,10 +140,13 @@ def analysis_dependencies(monkeypatch):
     service = AnalysisService(
         repository=repository,
         storage_service=storage,
-        pipeline_runner=lambda file_bytes, config: pipeline_result(),
+        pipeline_runner=lambda file_bytes, config, **kwargs: pipeline_result(),
+        # Deterministic: jobs only run when the test steps the queue via
+        # service.job_queue.drain_one(), never on a background thread.
+        auto_start_worker=False,
     )
     monkeypatch.setattr(analysis_routes.controller, "service", service)
-    return repository, storage
+    return repository, storage, service
 
 
 def auth_headers(user_id="user-a"):
@@ -222,7 +233,7 @@ def test_oversized_request_body_uses_standard_error_envelope(analysis_client):
 def test_valid_upload_persists_processing_record_and_metadata(
     analysis_client, analysis_dependencies, image_format, mime_type, extension
 ):
-    repository, storage = analysis_dependencies
+    repository, storage, _service = analysis_dependencies
     response = upload(
         analysis_client,
         image_bytes(image_format),
@@ -230,11 +241,11 @@ def test_valid_upload_persists_processing_record_and_metadata(
         mime_type,
     )
 
-    assert response.status_code == 201
+    assert response.status_code == 202
     data = response.get_json()
     assert data["success"] is True
     analysis_id = data["data"]["analysis_id"]
-    assert data["data"]["status"] == "completed"
+    assert data["data"]["status"] == "processing"
 
     user_id, record, service_role = repository.create_calls[0]
     assert user_id == "user-a"
@@ -266,7 +277,7 @@ def test_valid_upload_persists_processing_record_and_metadata(
 
 
 def test_cross_user_get_is_hidden_as_not_found(analysis_client, analysis_dependencies):
-    _, storage = analysis_dependencies
+    _, storage, _service = analysis_dependencies
     response = upload(analysis_client, image_bytes("JPEG"))
     analysis_id = response.get_json()["data"]["analysis_id"]
 
@@ -293,8 +304,11 @@ def test_nonexistent_analysis_returns_not_found(analysis_client, analysis_depend
 
 
 def test_get_returns_only_processing_metadata(analysis_client, analysis_dependencies):
+    _repository, _storage, service = analysis_dependencies
     response = upload(analysis_client, image_bytes("JPEG"))
     analysis_id = response.get_json()["data"]["analysis_id"]
+    # Step the background queue so the 'processing' record completes.
+    assert service.job_queue.drain_one() is True
 
     detail = analysis_client.get(
         f"/api/analysis/{analysis_id}", headers=auth_headers()
@@ -317,9 +331,11 @@ def test_get_returns_only_processing_metadata(analysis_client, analysis_dependen
 def test_completed_analysis_returns_only_persisted_assets_and_metadata(
     analysis_client, analysis_dependencies
 ):
-    repository, storage = analysis_dependencies
+    repository, storage, service = analysis_dependencies
     created = upload(analysis_client, image_bytes("JPEG"))
     analysis_id = created.get_json()["data"]["analysis_id"]
+    # Run the enqueued job so the generated asset paths are persisted.
+    assert service.job_queue.drain_one() is True
     record = repository.records[analysis_id]
     record.update(
         {
@@ -382,7 +398,7 @@ def test_completed_analysis_returns_only_persisted_assets_and_metadata(
 def test_failed_analysis_hides_raw_failure_details(
     analysis_client, analysis_dependencies
 ):
-    repository, _ = analysis_dependencies
+    repository, _, _service = analysis_dependencies
     created = upload(analysis_client, image_bytes("PNG"), "scope.png", "image/png")
     analysis_id = created.get_json()["data"]["analysis_id"]
     repository.records[analysis_id].update(
@@ -415,7 +431,7 @@ def test_storage_failure_cleans_attempted_object_without_creating_record(
         AnalysisService(
             repository=repository,
             storage_service=storage,
-            pipeline_runner=lambda file_bytes, config: pipeline_result(),
+            pipeline_runner=lambda file_bytes, config, **kwargs: pipeline_result(),
         ),
     )
 
@@ -489,3 +505,516 @@ def test_processing_rows_do_not_get_unavailable_model_defaults():
     assert "model_architecture VARCHAR(100)," in migration
     assert "tta_enabled BOOLEAN," in migration
     assert "postprocessing_enabled BOOLEAN," in migration
+
+
+def test_two_phase_accept_returns_id_then_completes_on_drain(
+    analysis_client, analysis_dependencies
+):
+    """POST returns 202 + stable id while the record is still 'processing',
+    GET reads 'processing' before the worker runs, and 'completed' after it."""
+    _repository, _storage, service = analysis_dependencies
+    created = upload(analysis_client, image_bytes("JPEG"))
+    assert created.status_code == 202
+    payload = created.get_json()
+    assert payload["success"] is True
+    analysis_id = payload["data"]["analysis_id"]
+    assert payload["data"]["status"] == "processing"
+
+    # Before the pipeline runs, GET reports processing (no progress fields yet).
+    detail = analysis_client.get(
+        f"/api/analysis/{analysis_id}", headers=auth_headers()
+    )
+    analysis = detail.get_json()["data"]["analysis"]
+    assert analysis["status"] == "processing"
+    assert "current_step" not in analysis
+    assert "progress_percent" not in analysis
+
+    # Deterministically step the queue: the job now completes.
+    assert service.job_queue.drain_one() is True
+
+    detail = analysis_client.get(
+        f"/api/analysis/{analysis_id}", headers=auth_headers()
+    )
+    analysis = detail.get_json()["data"]["analysis"]
+    assert analysis["status"] == "completed"
+    assert analysis["completed_at"] is not None
+
+
+def test_pipeline_failure_marks_record_failed_and_masks_details(
+    analysis_client, monkeypatch
+):
+    def _boom(file_bytes, config, **kwargs):
+        raise RuntimeError("private pipeline traceback")
+
+    repository = FakeRepository()
+    storage = FakeStorage()
+    service = AnalysisService(
+        repository=repository,
+        storage_service=storage,
+        pipeline_runner=_boom,
+        auto_start_worker=False,
+    )
+    monkeypatch.setattr(analysis_routes.controller, "service", service)
+
+    created = upload(analysis_client, image_bytes("JPEG"))
+    analysis_id = created.get_json()["data"]["analysis_id"]
+    assert service.job_queue.drain_one() is True
+
+    record = repository.records[analysis_id]
+    assert record["status"] == "failed"
+    assert record["error_code"] == "AI_PIPELINE_ERROR"
+    assert record["gradcam_status"] == "failed"
+    assert record["updated_at"] is not None
+
+    detail = analysis_client.get(
+        f"/api/analysis/{analysis_id}", headers=auth_headers()
+    )
+    analysis = detail.get_json()["data"]["analysis"]
+    assert analysis["status"] == "failed"
+    assert analysis["error_code"] == "ANALYSIS_FAILED"
+    assert "private" not in detail.get_data(as_text=True)
+
+
+def test_queue_full_returns_429_and_leaves_no_misleading_record(
+    analysis_client, analysis_dependencies
+):
+    repository, storage, service = analysis_dependencies
+    capacity = service.job_queue.capacity
+    accepted_ids = []
+    for _ in range(capacity):
+        response = upload(analysis_client, image_bytes("JPEG"))
+        assert response.status_code == 202
+        accepted_ids.append(response.get_json()["data"]["analysis_id"])
+    assert service.job_queue.pending_count() == capacity
+
+    rejected = upload(analysis_client, image_bytes("JPEG"))
+    assert rejected.status_code == 429
+    assert rejected.get_json()["error"]["code"] == "QUEUE_FULL"
+
+    # Enqueue-failure compensation: the rejected record must not linger as a
+    # misleading 'processing' row, and its uploaded original is cleaned up.
+    rejected_id = repository.create_calls[-1][1]["id"]
+    assert rejected_id not in repository.records
+    assert all(record_id in repository.records for record_id in accepted_ids)
+    rejected_original = repository.create_calls[-1][1]["original_image_path"]
+    assert (rejected_original, "user-a", True) in storage.deleted_paths
+
+
+def test_job_is_executed_exactly_once(analysis_client, analysis_dependencies):
+    _repository, _storage, service = analysis_dependencies
+    calls = []
+
+    def _counting_pipeline(file_bytes, config, **kwargs):
+        calls.append(1)
+        return pipeline_result()
+
+    service.pipeline_runner = _counting_pipeline
+    created = upload(analysis_client, image_bytes("JPEG"))
+    assert created.status_code == 202
+
+    assert service.job_queue.drain_one() is True
+    assert calls == [1]
+    # Draining again finds an empty queue and does not re-run the job.
+    assert service.job_queue.drain_one() is False
+    assert calls == [1]
+
+
+def test_background_job_preserves_owner_and_completes(analysis_client, analysis_dependencies):
+    repository, _storage, service = analysis_dependencies
+    created = upload(analysis_client, image_bytes("JPEG"), user_id="user-a")
+    analysis_id = created.get_json()["data"]["analysis_id"]
+
+    assert service.job_queue.drain_one() is True
+    record = repository.records[analysis_id]
+    assert record["user_id"] == "user-a"
+    assert record["status"] == "completed"
+    assert record["binary_mask_path"].startswith("analysis/user-a/")
+    # Cross-user reads remain hidden as 404 (isolation preserved).
+    detail = analysis_client.get(
+        f"/api/analysis/{analysis_id}", headers=auth_headers("user-b")
+    )
+    assert detail.status_code == 404
+
+
+def test_nullable_progress_fields_surface_when_set_and_absent_when_null(
+    analysis_client, analysis_dependencies
+):
+    repository, _storage, _service = analysis_dependencies
+    created = upload(analysis_client, image_bytes("JPEG"))
+    analysis_id = created.get_json()["data"]["analysis_id"]
+
+    # Old/uninstrumented record: progress keys are absent, not null.
+    detail = analysis_client.get(
+        f"/api/analysis/{analysis_id}", headers=auth_headers()
+    )
+    analysis = detail.get_json()["data"]["analysis"]
+    assert "current_step" not in analysis
+    assert "progress_percent" not in analysis
+
+    # Simulate P-03 instrumentation writing real progress values.
+    repository.records[analysis_id].update(
+        {"current_step": "inference", "progress_percent": 40}
+    )
+    detail = analysis_client.get(
+        f"/api/analysis/{analysis_id}", headers=auth_headers()
+    )
+    analysis = detail.get_json()["data"]["analysis"]
+    assert analysis["current_step"] == "inference"
+    assert analysis["progress_percent"] == 40
+
+
+def test_stale_flag_marks_untracked_old_processing_record_without_mutating(
+    analysis_client, analysis_dependencies
+):
+    repository, _storage, _service = analysis_dependencies
+    old = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
+    repository.records["orphan-1"] = {
+        "id": "orphan-1",
+        "user_id": "user-a",
+        "status": "processing",
+        "created_at": old,
+        "original_filename": "scope.jpg",
+    }
+
+    detail = analysis_client.get("/api/analysis/orphan-1", headers=auth_headers())
+    analysis = detail.get_json()["data"]["analysis"]
+    # Flagged for inspection, but status is NOT changed to failed.
+    assert analysis["status"] == "processing"
+    assert analysis["stale"] is True
+
+
+def test_queued_job_is_not_marked_stale_despite_age(analysis_client, analysis_dependencies):
+    repository, _storage, service = analysis_dependencies
+    created = upload(analysis_client, image_bytes("JPEG"))
+    analysis_id = created.get_json()["data"]["analysis_id"]
+    old = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
+    repository.records[analysis_id].update({"created_at": old})
+
+    # This process still holds the job in its queue: never stale, however old.
+    detail = analysis_client.get(
+        f"/api/analysis/{analysis_id}", headers=auth_headers()
+    )
+    analysis = detail.get_json()["data"]["analysis"]
+    assert analysis["status"] == "processing"
+    assert "stale" not in analysis
+    assert service.job_queue.contains(analysis_id) is True
+
+
+# ---------------------------------------------------------------------------
+# Batch P-03: service-level progress instrumentation contract.
+# ---------------------------------------------------------------------------
+
+
+def _install_progress_pipeline(service, phases=None, passes=0):
+    """Replace the service pipeline with one that drives real progress writes.
+
+    Emits ``passes`` successful forward passes plus the named phases (in order)
+    through the reporter the service injects, mimicking the real pipeline's
+    callback usage without running the model.
+    """
+    from ai.inference.pipeline import PHASE_PREPROCESSING
+
+    def _pipeline(file_bytes, config, on_phase=None, on_pass=None, **kwargs):
+        for _ in range(passes):
+            if on_pass is not None:
+                on_pass()
+        for name in (phases or [PHASE_PREPROCESSING]):
+            if on_phase is not None:
+                on_phase(name)
+        return pipeline_result()
+
+    service.pipeline_runner = _pipeline
+
+
+def test_progress_is_monotonic_and_100_percent_only_after_completion(
+    analysis_client, analysis_dependencies
+):
+    from ai.inference.pipeline import (
+        PHASE_ARTIFACT_COMPOSITION,
+        PHASE_GRADCAM,
+        PHASE_INFERENCE,
+    )
+
+    repository, storage, service = analysis_dependencies
+    _install_progress_pipeline(
+        service,
+        phases=[PHASE_INFERENCE, PHASE_GRADCAM, PHASE_ARTIFACT_COMPOSITION],
+        passes=5,
+    )
+    created = upload(analysis_client, image_bytes("JPEG"))
+    analysis_id = created.get_json()["data"]["analysis_id"]
+
+    # Record one unified timeline of artifact uploads and progress writes to
+    # prove monotonicity, that 100% appears only on the final persisted write,
+    # and that every required artifact was stored before that write.
+    timeline = []
+    original_update = repository.update
+    original_upload = storage.upload_file
+
+    def _spy_update(analysis_id, user_id, data, use_service_role=False):
+        record = original_update(analysis_id, user_id, data, use_service_role)
+        if record is not None and "progress_percent" in data:
+            timeline.append(("progress", data["progress_percent"]))
+        return record
+
+    def _spy_upload(path, file_bytes, content_type, user_id, use_service_role=False):
+        timeline.append(("upload", path))
+        return original_upload(
+            path, file_bytes, content_type, user_id, use_service_role
+        )
+
+    repository.update = _spy_update
+    storage.upload_file = _spy_upload
+    assert service.job_queue.drain_one() is True
+    repository.update = original_update
+    storage.upload_file = original_upload
+
+    record = repository.records[analysis_id]
+    assert record["status"] == "completed"
+    assert record["progress_percent"] == 100
+    assert record["current_step"] == "completed"
+
+    observed = [value for kind, value in timeline if kind == "progress"]
+    # Every reported percent is within 0-100 and never decreases.
+    assert all(0 <= p <= 100 for p in observed)
+    assert observed == sorted(observed)
+    # 100 is written only on the final (completed) update, never earlier.
+    assert observed.count(100) == 1
+    assert observed[-1] == 100
+    # Progress actually advanced (not a single jump straight to completion).
+    assert len(observed) > 1
+
+    # 100% may only be persisted after ALL 4 required artifacts were stored.
+    upload_indices = [
+        i for i, (kind, _value) in enumerate(timeline) if kind == "upload"
+    ]
+    hundred_index = next(
+        i
+        for i, (kind, value) in enumerate(timeline)
+        if kind == "progress" and value == 100
+    )
+    assert len(upload_indices) == 4
+    assert max(upload_indices) < hundred_index
+
+
+def test_progress_reporting_db_failure_does_not_fail_analysis(
+    analysis_client, analysis_dependencies
+):
+    from ai.inference.pipeline import PHASE_INFERENCE
+
+    repository, _storage, service = analysis_dependencies
+    _install_progress_pipeline(service, phases=[PHASE_INFERENCE], passes=0)
+    created = upload(analysis_client, image_bytes("JPEG"))
+    analysis_id = created.get_json()["data"]["analysis_id"]
+
+    # Make only progress (current_step) writes fail; the terminal completed
+    # update (which carries no current_step) still succeeds.
+    original_update = repository.update
+
+    def _flaky_update(analysis_id, user_id, data, use_service_role=False):
+        if "current_step" in data and data.get("current_step") != "completed":
+            raise RuntimeError("progress write failed")
+        return original_update(analysis_id, user_id, data, use_service_role)
+
+    repository.update = _flaky_update
+    assert service.job_queue.drain_one() is True
+    repository.update = original_update
+
+    record = repository.records[analysis_id]
+    # A reporting failure must never turn a successful analysis into a failure.
+    assert record["status"] == "completed"
+    assert record["progress_percent"] == 100
+    assert record["error_code"] is None
+
+
+def test_pipeline_failure_preserves_last_progress_and_failed_status(
+    analysis_client, analysis_dependencies
+):
+    from ai.inference.pipeline import PHASE_INFERENCE
+
+    repository, _storage, service = analysis_dependencies
+
+    def _partial_then_fail(file_bytes, config, on_phase=None, on_pass=None, **kwargs):
+        if on_phase is not None:
+            on_phase(PHASE_INFERENCE)  # one real completed phase
+        raise RuntimeError("private pipeline traceback")
+
+    service.pipeline_runner = _partial_then_fail
+    created = upload(analysis_client, image_bytes("JPEG"))
+    analysis_id = created.get_json()["data"]["analysis_id"]
+    assert service.job_queue.drain_one() is True
+
+    record = repository.records[analysis_id]
+    # status 'failed' is the source of truth; last real progress is retained.
+    assert record["status"] == "failed"
+    assert record["error_code"] == "AI_PIPELINE_ERROR"
+    assert record["current_step"] == PHASE_INFERENCE
+    assert 0 <= record["progress_percent"] < 100
+
+
+def test_execute_pipeline_early_failure_does_not_raise_unbound_local_error(
+    analysis_dependencies, monkeypatch
+):
+    import app.services.analysis_service as analysis_service_mod
+    from app.core.errors import APIError
+
+    repository, _storage, service = analysis_dependencies
+
+    # Simulate an exception on line 800 before pipeline execution starts
+    def _fail_count(*args, **kwargs):
+        raise ValueError("simulated early failure before pipeline")
+
+    monkeypatch.setattr(analysis_service_mod, "count_forward_passes", _fail_count)
+
+    with pytest.raises(APIError) as exc_info:
+        service._execute_pipeline(
+            analysis_id="test-early-fail",
+            user_id="user-a",
+            file_bytes=b"dummy_bytes",
+        )
+
+    assert exc_info.value.code == "AI_PIPELINE_ERROR"
+    assert isinstance(exc_info.value.__cause__, ValueError)
+    assert "simulated early failure before pipeline" in str(exc_info.value.__cause__)
+
+
+def test_execute_pipeline_failed_status_update_error_is_logged(
+    analysis_dependencies, caplog
+):
+    import logging
+    from app.core.errors import APIError
+
+    repository, _storage, service = analysis_dependencies
+
+    # Force pipeline to fail
+    def _failing_pipeline(*args, **kwargs):
+        raise RuntimeError("simulated pipeline execution error")
+
+    service.pipeline_runner = _failing_pipeline
+
+    # Make repository.update fail when updating to status='failed'
+    original_update = repository.update
+
+    def _fail_on_status_failed(analysis_id, user_id, data, use_service_role=False):
+        if data.get("status") == "failed":
+            raise RuntimeError("simulated database update failure")
+        return original_update(analysis_id, user_id, data, use_service_role)
+
+    repository.update = _fail_on_status_failed
+
+    with caplog.at_level(logging.ERROR):
+        with pytest.raises(APIError) as exc_info:
+            service._execute_pipeline(
+                analysis_id="test-update-fail-id",
+                user_id="user-a",
+                file_bytes=b"dummy_bytes",
+            )
+
+    # The original pipeline error must still be raised wrapped in APIError
+    assert exc_info.value.code == "AI_PIPELINE_ERROR"
+    assert isinstance(exc_info.value.__cause__, RuntimeError)
+    assert "simulated pipeline execution error" in str(exc_info.value.__cause__)
+
+    # The repository failure must be logged with traceback and analysis_id
+    error_logs = [record for record in caplog.records if record.levelno >= logging.ERROR]
+    assert any(
+        "Failed to update analysis status to failed for analysis_id=test-update-fail-id"
+        in record.getMessage()
+        for record in error_logs
+    )
+    assert any(
+        record.exc_info is not None and "simulated database update failure" in str(record.exc_info[1])
+        for record in error_logs
+    )
+
+
+def test_artifact_uploads_are_strictly_sequential(analysis_client, analysis_dependencies):
+    """Artifact uploads must be strictly sequential (concurrency == 1) to avoid HTTP/2 disconnects."""
+    from ai.inference.pipeline import (
+        PHASE_ARTIFACT_COMPOSITION,
+        PHASE_GRADCAM,
+        PHASE_INFERENCE,
+    )
+
+    repository, storage, service = analysis_dependencies
+    _install_progress_pipeline(
+        service,
+        phases=[PHASE_INFERENCE, PHASE_GRADCAM, PHASE_ARTIFACT_COMPOSITION],
+        passes=1,
+    )
+
+    created = upload(analysis_client, image_bytes("JPEG"))
+    analysis_id = created.get_json()["data"]["analysis_id"]
+
+    active_concurrent = 0
+    max_concurrent = 0
+    uploaded_artifact_paths = []
+    original_upload = storage.upload_file
+
+    def _instrumented_upload(path, file_bytes, content_type, user_id, use_service_role=False):
+        nonlocal active_concurrent, max_concurrent
+        active_concurrent += 1
+        if active_concurrent > max_concurrent:
+            max_concurrent = active_concurrent
+        time.sleep(0.005)
+        try:
+            res = original_upload(path, file_bytes, content_type, user_id, use_service_role)
+            uploaded_artifact_paths.append(path)
+            return res
+        finally:
+            active_concurrent -= 1
+
+    storage.upload_file = _instrumented_upload
+    assert service.job_queue.drain_one() is True
+    storage.upload_file = original_upload
+
+    record = repository.records[analysis_id]
+    assert record["status"] == "completed"
+    assert record["progress_percent"] == 100
+    assert len(uploaded_artifact_paths) == 4
+    assert max_concurrent == 1
+
+
+def test_artifact_upload_failure_triggers_cleanup_and_status_failed(analysis_client, analysis_dependencies):
+    """When an artifact upload fails, partial artifacts are deleted and status is set to failed."""
+    from ai.inference.pipeline import (
+        PHASE_ARTIFACT_COMPOSITION,
+        PHASE_GRADCAM,
+        PHASE_INFERENCE,
+    )
+
+    repository, storage, service = analysis_dependencies
+    _install_progress_pipeline(
+        service,
+        phases=[PHASE_INFERENCE, PHASE_GRADCAM, PHASE_ARTIFACT_COMPOSITION],
+        passes=1,
+    )
+
+    created = upload(analysis_client, image_bytes("JPEG"))
+    analysis_id = created.get_json()["data"]["analysis_id"]
+
+    call_count = 0
+    original_upload = storage.upload_file
+    uploaded_before_failure = []
+
+    def _failing_upload(path, file_bytes, content_type, user_id, use_service_role=False):
+        nonlocal call_count
+        call_count += 1
+        if call_count >= 3:
+            raise RuntimeError("simulated storage network disconnect")
+        uploaded_before_failure.append(path)
+        return original_upload(path, file_bytes, content_type, user_id, use_service_role)
+
+    storage.upload_file = _failing_upload
+    # Background worker catches exception and marks record failed
+    assert service.job_queue.drain_one() is True
+    storage.upload_file = original_upload
+
+    record = repository.records[analysis_id]
+    assert record["status"] == "failed"
+    assert record["error_code"] == "AI_PIPELINE_ERROR"
+
+    # Any artifacts uploaded before failure must have been deleted
+    deleted_paths = [path for path, _user, _role in storage.deleted_paths]
+    for partial_path in uploaded_before_failure:
+        assert partial_path in deleted_paths

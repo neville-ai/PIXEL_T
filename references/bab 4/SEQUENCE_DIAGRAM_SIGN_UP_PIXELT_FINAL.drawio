@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="OpenCode" version="24.0.0" type="device">
+  <diagram name="PIXEL-T Sign Up Final" id="pixelt-su-final">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1800" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="t1" value="Sequence Diagram Sign Up - PIXEL-T" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="10" width="400" height="30" as="geometry"/>
+        </mxCell>
+        <!-- Frame -->
+        <mxCell id="f1" value="Sign Up" style="swimlane;html=1;startSize=20;horizontal=0;container=1;collapsible=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=10;fontStyle=1;rounded=0;arcSize=0;" vertex="1" parent="1">
+          <mxGeometry x="20" y="50" width="960" height="940" as="geometry"/>
+        </mxCell>
+        <!-- Lifelines -->
+        <mxCell id="u1" value="User" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=center;" vertex="1" parent="f1">
+          <mxGeometry x="0" y="0" width="120" height="900" as="geometry"/>
+        </mxCell>
+        <mxCell id="rp1" value="Register Page" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=center;" vertex="1" parent="f1">
+          <mxGeometry x="120" y="0" width="140" height="900" as="geometry"/>
+        </mxCell>
+        <mxCell id="ac1" value="AuthContext" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=center;" vertex="1" parent="f1">
+          <mxGeometry x="260" y="0" width="140" height="900" as="geometry"/>
+        </mxCell>
+        <mxCell id="as1" value="AuthService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=center;" vertex="1" parent="f1">
+          <mxGeometry x="400" y="0" width="140" height="900" as="geometry"/>
+        </mxCell>
+        <mxCell id="sa1" value="Supabase Auth" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=center;" vertex="1" parent="f1">
+          <mxGeometry x="540" y="0" width="140" height="900" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== MESSAGES ===== -->
+        <!-- 1: User -> Register Page -->
+        <mxCell id="m1" value="buka /register" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="38" as="sourcePoint"/>
+            <mxPoint x="190" y="38" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 2: Register Page -> User (return) -->
+        <mxCell id="m2" value="tampilkan formulir" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endFill=0;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="190" y="56" as="sourcePoint"/>
+            <mxPoint x="60" y="56" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 3: User -> Register Page -->
+        <mxCell id="m3" value="submit(form data)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="84" as="sourcePoint"/>
+            <mxPoint x="190" y="84" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 4: Register Page self: validasi input -->
+        <mxCell id="m4" value="validasi input" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="246" y="106"/>
+              <mxPoint x="246" y="124"/>
+            </Array>
+            <mxPoint x="214" y="106" as="sourcePoint"/>
+            <mxPoint x="214" y="106" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 5: Register Page -> AuthContext -->
+        <mxCell id="m5" value="signUp(email, password,&#xa;fullName, hospitalName,&#xa;doctorSpecialty)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="210" y="138" as="sourcePoint"/>
+            <mxPoint x="330" y="138" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 6: AuthContext -> AuthService -->
+        <mxCell id="m6" value="registerUser(email, password,&#xa;fullName, hospitalName,&#xa;doctorSpecialty)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="350" y="164" as="sourcePoint"/>
+            <mxPoint x="470" y="164" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 7: AuthService -> Supabase Auth -->
+        <mxCell id="m7" value="auth.signUp(email, password,&#xa;options.data)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490" y="190" as="sourcePoint"/>
+            <mxPoint x="610" y="190" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 8: Supabase Auth self: buat auth.users + trigger -->
+        <mxCell id="m8" value="buat auth.users&#xa;→ AFTER INSERT trigger" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="660" y="220"/>
+              <mxPoint x="660" y="244"/>
+            </Array>
+            <mxPoint x="610" y="220" as="sourcePoint"/>
+            <mxPoint x="610" y="220" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 9: Supabase Auth -> AuthService (return) -->
+        <mxCell id="m9" value="{ user, session }" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endFill=0;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="610" y="270" as="sourcePoint"/>
+            <mxPoint x="490" y="270" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 10: AuthService -> AuthContext (return) -->
+        <mxCell id="m10" value="{ data, error: null }" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endFill=0;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="470" y="296" as="sourcePoint"/>
+            <mxPoint x="350" y="296" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 11: AuthContext self: set session (hanya jika session tersedia) -->
+        <mxCell id="m11" value="set session" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;fontSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="322"/>
+              <mxPoint x="400" y="340"/>
+            </Array>
+            <mxPoint x="370" y="322" as="sourcePoint"/>
+            <mxPoint x="370" y="322" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 12: AuthContext -> Register Page (return) -->
+        <mxCell id="m12" value="{ message, requiresEmailConfirmation }" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endFill=0;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="330" y="348" as="sourcePoint"/>
+            <mxPoint x="210" y="348" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <!-- 13: Register Page -> User (return) -->
+        <mxCell id="m13" value="tampilkan status berhasil" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endFill=0;rounded=0;fontSize=8;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="190" y="374" as="sourcePoint"/>
+            <mxPoint x="60" y="374" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ===== ALT1: session tersedia / email belum dikonfirmasi ===== -->
+        <mxCell id="alt1frame" value="" style="shape=umlFrame;whiteSpace=wrap;html=1;rounded=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="f1">
+          <mxGeometry x="10" y="398" width="940" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="alt1title" value="[alt] session && user tersedia" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=9;fontStyle=1;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="400" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="alt1div" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#000000;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="18" y="424" as="sourcePoint"/>
+            <mxPoint x="942" y="424" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a1s1" value="[else] session null" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="406" width="140" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="a1s2" value="email belum dikonfirmasi" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="428" width="180" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== ALT2: registrasi berhasil / gagal ===== -->
+        <mxCell id="alt2frame" value="" style="shape=umlFrame;whiteSpace=wrap;html=1;rounded=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="f1">
+          <mxGeometry x="20" y="460" width="920" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="alt2title" value="[alt] registrasi berhasil" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=9;fontStyle=1;" vertex="1" parent="f1">
+          <mxGeometry x="28" y="462" width="170" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="alt2div" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="28" y="490" as="sourcePoint"/>
+            <mxPoint x="922" y="490" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a2s1" value="tampilkan status berhasil" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="28" y="467" width="190" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2s2" value="[else] registrasi gagal" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="28" y="494" width="170" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2s3" value="tampilkan pesan error" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="28" y="512" width="170" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== ALT3: navigasi setelah berhasil ===== -->
+        <mxCell id="alt3frame" value="" style="shape=umlFrame;whiteSpace=wrap;html=1;rounded=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=9;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="f1">
+          <mxGeometry x="30" y="530" width="900" height="64" as="geometry"/>
+        </mxCell>
+        <mxCell id="alt3title" value="[alt] navigasi" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=9;fontStyle=1;" vertex="1" parent="f1">
+          <mxGeometry x="38" y="532" width="90" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="alt3div" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#000000;" edge="1" parent="f1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="38" y="556" as="sourcePoint"/>
+            <mxPoint x="914" y="556" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a3s1" value="session tersedia → login otomatis, tetap di halaman register" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="38" y="541" width="360" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="a3s2" value="session null → tampilkan pesan cek email, pengguna klik &quot;Masuk ke PIXEL-T&quot; ke /login" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="38" y="560" width="500" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== NOTE BOX ===== -->
+        <mxCell id="note" value="" style="shape=note;whiteSpace=wrap;html=1;rounded=0;strokeColor=#000000;fillColor=#FFFFFF;fontSize=8;size=20;" vertex="1" parent="f1">
+          <mxGeometry x="10" y="610" width="940" height="170" as="geometry"/>
+        </mxCell>
+        <mxCell id="noteT" value="Catatan:" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=9;fontStyle=1;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="612" width="60" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="note1" value="• Profil dokter dibuat otomatis oleh trigger database (AFTER INSERT pada auth.users), bukan oleh frontend" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="628" width="700" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="note2" value="• Trigger handle_new_doctor_signup() membuat baris doctor_profiles dengan role=doctor, status=pending" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="642" width="650" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="note3" value="• Akun Admin dibuat manual via Supabase Admin API (bukan melalui sign-up publik)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="656" width="500" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="note4" value="• Trigger hanya aktif untuk akun dengan raw_user_meta_data.full_name; Akun Admin dikecualikan" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="670" width="530" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="note5" value="• Gagalnya trigger tidak memblokir proses registrasi (di-log sebagai Postgres WARNING)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="684" width="500" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="note5b" value="• AuthContext hanya memanggil fetchUserProfileStatus() ketika session tersedia (bukan saat email belum dikonfirmasi)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="698" width="780" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="note6" value="• Setelah registrasi berhasil, tidak ada auto-redirect ke /login; pengguna harus klik &quot;Masuk ke PIXEL-T&quot; secara manual dari halaman register" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=8;" vertex="1" parent="f1">
+          <mxGeometry x="18" y="712" width="750" height="14" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

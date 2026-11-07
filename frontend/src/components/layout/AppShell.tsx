@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Modal } from '@/components/ui/Modal';
@@ -9,8 +9,6 @@ import {
   PlusCircle,
   History as HistoryIcon,
   LayoutDashboard,
-  LogIn,
-  UserPlus,
   LogOut,
   User as UserIcon,
   Menu,
@@ -62,8 +60,9 @@ const MOBILE_NAV_LINK_CLASS = ({ isActive }: { isActive: boolean }) =>
   }`;
 
 export const AppShell: React.FC<AppShellProps> = ({ children }) => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, role } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const isDark = useDocumentDarkClass();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -72,6 +71,22 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const userMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // Active navigation rules:
+  // - Dashboard: /dashboard
+  // - History: /history or /analysis/:id with location.state.from === 'history'
+  // - New Analysis: /analysis/new or /analysis/:id with new analysis flow (no from: history)
+  const isDashboardActive = location.pathname === '/dashboard';
+  const isHistoryFromAnalysis =
+    location.pathname.startsWith('/analysis/') &&
+    location.pathname !== '/analysis/new' &&
+    (location.state as { from?: string } | null)?.from === 'history';
+  const isHistoryActive = location.pathname === '/history' || isHistoryFromAnalysis;
+  const isNewAnalysisActive =
+    location.pathname === '/analysis/new' ||
+    (location.pathname.startsWith('/analysis/') &&
+      location.pathname !== '/analysis/new' &&
+      !isHistoryFromAnalysis);
 
   // Tutup dropdown user saat klik di area lain atau menekan Escape.
   useEffect(() => {
@@ -123,6 +138,14 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const displayName = getDisplayName(user);
   const initials = getUserInitials(displayName);
 
+  // Deskripsi dialog sign-out dibedakan berdasarkan role:
+  // Admin mengelola akun dokter (tidak memiliki Analysis History),
+  // sedangkan Dokter memiliki riwayat analisis sendiri.
+  const signOutDescription =
+    role === 'admin'
+      ? 'You will need to sign in again to access your admin account.'
+      : 'You will need to sign in again to access your account and analysis history.';
+
   return (
     <div className="min-h-screen flex flex-col bg-neutral-50 dark:bg-dark-bg text-neutral-900 dark:text-dark-text transition-colors">
       {/* Header / Top Navigation */}
@@ -143,15 +166,23 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           {/* Desktop Primary Navigation (center group) */}
           {user && (
             <nav className="hidden md:flex items-center gap-8" aria-label="Primary">
-              <NavLink to="/dashboard" className={NAV_LINK_CLASS}>
-                Dashboard
-              </NavLink>
-              <NavLink to="/analysis/new" className={NAV_LINK_CLASS}>
-                New Analysis
-              </NavLink>
-              <NavLink to="/history" className={NAV_LINK_CLASS}>
-                History
-              </NavLink>
+              {role === 'admin' ? (
+                <NavLink to="/admin" className={NAV_LINK_CLASS({ isActive: location.pathname === '/admin' })}>
+                  Admin Dashboard
+                </NavLink>
+              ) : (
+                <>
+                  <NavLink to="/dashboard" className={NAV_LINK_CLASS({ isActive: isDashboardActive })}>
+                    Dashboard
+                  </NavLink>
+                  <NavLink to="/analysis/new" className={NAV_LINK_CLASS({ isActive: isNewAnalysisActive })}>
+                    New Analysis
+                  </NavLink>
+                  <NavLink to="/history" className={NAV_LINK_CLASS({ isActive: isHistoryActive })}>
+                    History
+                  </NavLink>
+                </>
+              )}
             </nav>
           )}
 
@@ -200,9 +231,9 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
                     <div
                       role="menu"
                       aria-label="Menu pengguna"
-                      className="absolute right-0 top-full mt-2 w-72 origin-top-right rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-[#1E3749] dark:bg-[#10222E] dark:shadow-black/40 overflow-hidden"
+                      className="absolute right-0 top-full mt-2 w-72 origin-top-right rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-dark-border dark:bg-dark-surface dark:shadow-black/40 overflow-hidden"
                     >
-                      <div className="px-4 py-3.5 border-b border-neutral-100 dark:border-[#1E3645]">
+                      <div className="px-4 py-3.5 border-b border-neutral-100 dark:border-dark-border">
                         <p className="text-sm font-semibold text-neutral-900 dark:text-dark-text truncate">
                           {displayName || 'Pengguna'}
                         </p>
@@ -213,25 +244,25 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
                         )}
                       </div>
 
-                      {/* Account Information — inert in this phase: no profile
-                          route is added until that design is implemented. */}
-                      <div
-                        role="menuitem"
-                        aria-disabled="true"
-                        title="Halaman Account Information belum tersedia"
-                        className="flex items-start gap-3 px-4 py-2.5 dark:items-center dark:py-3.5 text-neutral-400 dark:text-neutral-500 cursor-not-allowed select-none"
-                      >
-                        <span
-                          aria-hidden="true"
-                          className="inline-flex shrink-0 items-center justify-center dark:h-8 dark:w-8 dark:rounded-[10px] dark:bg-[#102D3E]"
+                      {(role !== 'admin') && (
+                        <Link
+                          to="/profile"
+                          role="menuitem"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-start gap-3 px-4 py-2.5 dark:items-center dark:py-3.5 text-neutral-700 hover:bg-neutral-50 dark:text-dark-text dark:hover:bg-dark-elevated transition-colors"
                         >
-                          <UserIcon className="w-4 h-4 mt-0.5 dark:mt-0 dark:text-[#18A6A6]" />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block text-xs font-semibold">Account Information</span>
-                          <span className="block text-[11px]">View your account information</span>
-                        </span>
-                      </div>
+                          <span
+                            aria-hidden="true"
+                            className="inline-flex shrink-0 items-center justify-center dark:h-8 dark:w-8 dark:rounded-[10px] dark:bg-dark-elevated"
+                          >
+                            <UserIcon className="w-4 h-4 mt-0.5 dark:mt-0 dark:text-accent-500" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-xs font-semibold">Account Information</span>
+                            <span className="block text-[11px] text-neutral-500 dark:text-dark-textMuted">View your account information</span>
+                          </span>
+                        </Link>
+                      )}
 
                       <div>
                         <button
@@ -242,9 +273,9 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
                         >
                           <span
                             aria-hidden="true"
-                            className="inline-flex shrink-0 items-center justify-center dark:h-8 dark:w-8 dark:rounded-[10px] dark:bg-[#102D3E]"
+                            className="inline-flex shrink-0 items-center justify-center dark:h-8 dark:w-8 dark:rounded-[10px] dark:bg-dark-elevated"
                           >
-                            <LogOut className="w-4 h-4 mt-0.5 dark:mt-0 dark:text-[#18A6A6]" />
+                            <LogOut className="w-4 h-4 mt-0.5 dark:mt-0 dark:text-accent-500" />
                           </span>
                           <span className="min-w-0">
                             <span className="block text-xs font-semibold">Sign Out</span>
@@ -258,93 +289,77 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
                   )}
                 </div>
               </>
-            ) : (
-              /* Unauthenticated Auth Links */
-              <div className="hidden lg:flex items-center gap-1.5">
-                <NavLink to="/login" className={NAV_LINK_CLASS}>
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span>Login</span>
-                </NavLink>
-                <NavLink to="/register" className={NAV_LINK_CLASS}>
-                  <UserPlus className="w-3.5 h-3.5" />
-                  <span>Register</span>
-                </NavLink>
-              </div>
-            )}
+            ) : null}
 
             {/* Mobile Hamburger Button */}
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-md text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-dark-elevated transition-colors"
-              aria-label="Toggle navigation menu"
-              aria-expanded={isMobileMenuOpen}
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
-            </button>
+            {user ? (
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-2 rounded-md text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-dark-elevated transition-colors"
+                aria-label="Toggle navigation menu"
+                aria-expanded={isMobileMenuOpen}
+              >
+                {isMobileMenuOpen ? (
+                  <X className="w-5 h-5" />
+                ) : (
+                  <Menu className="w-5 h-5" />
+                )}
+              </button>
+            ) : null}
           </div>
         </div>
 
         {/* Mobile Navigation Dropdown Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-neutral-200 bg-white px-4 py-3 space-y-1 shadow-lg dark:border-dark-border dark:bg-[#001620]">
-            {user ? (
-              <>
-                <div className="px-3 py-2 mb-2 rounded-md bg-neutral-100 text-xs text-neutral-700 flex items-center gap-2 dark:bg-dark-elevated dark:text-neutral-300">
-                  <UserIcon className="w-4 h-4 text-accent-600 dark:text-accent-500" />
-                  <span className="truncate font-medium">{displayName}</span>
-                </div>
+        {user && isMobileMenuOpen && (
+          <div className="md:hidden border-t border-neutral-200 bg-white px-4 py-3 space-y-1 shadow-lg dark:border-dark-border dark:bg-dark-bg">
+            <div className="px-3 py-2 mb-2 rounded-md bg-neutral-100 text-xs text-neutral-700 flex items-center gap-2 dark:bg-dark-elevated dark:text-neutral-300">
+              <UserIcon className="w-4 h-4 text-accent-600 dark:text-accent-500" />
+              <span className="truncate font-medium">{displayName}</span>
+            </div>
 
-                <NavLink to="/dashboard" onClick={closeMobileMenu} className={MOBILE_NAV_LINK_CLASS}>
-                  <LayoutDashboard className="w-4 h-4 text-accent-600 dark:text-accent-500" />
-                  <span>Dashboard</span>
-                </NavLink>
+            <NavLink to="/dashboard" onClick={closeMobileMenu} className={MOBILE_NAV_LINK_CLASS({ isActive: isDashboardActive })}>
+              <LayoutDashboard className="w-4 h-4 text-accent-600 dark:text-accent-500" />
+              <span>Dashboard</span>
+            </NavLink>
 
-                <NavLink to="/analysis/new" onClick={closeMobileMenu} className={MOBILE_NAV_LINK_CLASS}>
-                  <PlusCircle className="w-4 h-4 text-accent-600 dark:text-accent-500" />
-                  <span>New Analysis</span>
-                </NavLink>
+            <NavLink to="/analysis/new" onClick={closeMobileMenu} className={MOBILE_NAV_LINK_CLASS({ isActive: isNewAnalysisActive })}>
+              <PlusCircle className="w-4 h-4 text-accent-600 dark:text-accent-500" />
+              <span>New Analysis</span>
+            </NavLink>
 
-                <NavLink to="/history" onClick={closeMobileMenu} className={MOBILE_NAV_LINK_CLASS}>
-                  <HistoryIcon className="w-4 h-4 text-accent-600 dark:text-accent-500" />
-                  <span>History</span>
-                </NavLink>
+            <NavLink to="/history" onClick={closeMobileMenu} className={MOBILE_NAV_LINK_CLASS({ isActive: isHistoryActive })}>
+              <HistoryIcon className="w-4 h-4 text-accent-600 dark:text-accent-500" />
+              <span>History</span>
+            </NavLink>
 
-                <div className="pt-2 mt-2 border-t border-neutral-100 dark:border-dark-border">
-                  <div
-                    className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-neutral-400 dark:text-neutral-500 cursor-not-allowed select-none"
-                    aria-disabled="true"
-                    title="Halaman Account Information belum tersedia"
-                  >
-                    <Settings2 className="w-4 h-4" />
-                    <span>Account Information</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={requestSignOut}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-medium text-badgeText-error dark:text-badgeText-error-dark hover:bg-semantic-error/10 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col gap-1">
-                <NavLink to="/login" onClick={closeMobileMenu} className={MOBILE_NAV_LINK_CLASS}>
-                  <LogIn className="w-4 h-4" />
-                  <span>Login</span>
-                </NavLink>
-                <NavLink to="/register" onClick={closeMobileMenu} className={MOBILE_NAV_LINK_CLASS}>
-                  <UserPlus className="w-4 h-4" />
-                  <span>Register</span>
-                </NavLink>
-              </div>
+            {role === 'admin' && (
+              <NavLink to="/admin" onClick={closeMobileMenu} className={MOBILE_NAV_LINK_CLASS({ isActive: location.pathname === '/admin' })}>
+                <Settings2 className="w-4 h-4 text-accent-600 dark:text-accent-500" />
+                <span>Admin Dashboard</span>
+              </NavLink>
             )}
+
+            <div className="pt-2 mt-2 border-t border-neutral-100 dark:border-dark-border">
+              {(role !== 'admin') && (
+              <NavLink
+                to="/profile"
+                onClick={closeMobileMenu}
+                className={MOBILE_NAV_LINK_CLASS({ isActive: false })}
+              >
+                <Settings2 className="w-4 h-4 text-accent-600 dark:text-accent-500" />
+                <span>Account Information</span>
+              </NavLink>
+            )}
+              <button
+                type="button"
+                onClick={requestSignOut}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-medium text-badgeText-error dark:text-badgeText-error-dark hover:bg-semantic-error/10 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </button>
+            </div>
           </div>
         )}
       </header>
@@ -382,7 +397,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         hideHeaderDivider
         maxWidthClass="max-w-[420px]"
         title="Are you sure you want to sign out?"
-        description="You will need to sign in again to access your account and analysis history."
+        description={signOutDescription}
       >
         <div className="flex items-center justify-end gap-3">
           <button
