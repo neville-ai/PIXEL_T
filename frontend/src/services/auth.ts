@@ -334,6 +334,19 @@ export function getAdminRoleFromAppMetadata(user: User): string | null {
 }
 
 /**
+ * Verifies strict equality between the selected role in the UI dropdown and the actual role resolved from auth metadata.
+ * Both directions are strictly enforced:
+ * - selected 'doctor' requires actual 'doctor'
+ * - selected 'admin' requires actual 'admin'
+ */
+export function isRoleMatch(
+  selected: 'admin' | 'doctor',
+  actual: string | null
+): boolean {
+  return selected === actual;
+}
+
+/**
  * Retrieves the current active session from Supabase client.
  */
 export async function getCurrentSession(): Promise<Session | null> {

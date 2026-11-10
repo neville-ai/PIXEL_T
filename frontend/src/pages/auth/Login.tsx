@@ -123,11 +123,13 @@ export const Login: React.FC = () => {
         // - Admin → /admin
         // - Approved doctor → /dashboard
         // - Pending / rejected doctor → back to /login with status flag
-        if (role === 'admin') {
+        const resolvedRole = result.role ?? role;
+        const resolvedStatus = result.accountStatus ?? accountStatus;
+        if (resolvedRole === 'admin') {
           navigate('/admin', { replace: true });
-        } else if (accountStatus === 'pending') {
+        } else if (resolvedStatus === 'pending') {
           navigate('/login', { replace: true, state: { from: location, pending: true } });
-        } else if (accountStatus === 'rejected') {
+        } else if (resolvedStatus === 'rejected') {
           navigate('/login', { replace: true, state: { from: location, rejected: true } });
         } else {
           navigate(from, { replace: true });

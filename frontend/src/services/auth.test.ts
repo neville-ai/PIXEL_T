@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { formatAuthError, registerUser } from './auth';
+import { formatAuthError, registerUser, isRoleMatch } from './auth';
 
 const { signUpMock } = vi.hoisted(() => ({ signUpMock: vi.fn() }));
 
@@ -148,5 +148,23 @@ describe('formatAuthError', () => {
       'Autentikasi gagal. Silakan periksa kembali data yang Anda masukkan.'
     );
     expect(message).not.toContain('internal database');
+  });
+});
+
+describe('isRoleMatch', () => {
+  it('returns true when selected and actual role match strictly', () => {
+    expect(isRoleMatch('admin', 'admin')).toBe(true);
+    expect(isRoleMatch('doctor', 'doctor')).toBe(true);
+  });
+
+  it('returns false when selected role does not match actual role (two-way enforcement)', () => {
+    expect(isRoleMatch('admin', 'doctor')).toBe(false);
+    expect(isRoleMatch('doctor', 'admin')).toBe(false);
+  });
+
+  it('returns false when actual role is null or unknown', () => {
+    expect(isRoleMatch('admin', null)).toBe(false);
+    expect(isRoleMatch('doctor', null)).toBe(false);
+    expect(isRoleMatch('doctor', 'patient')).toBe(false);
   });
 });

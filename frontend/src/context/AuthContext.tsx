@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useRef } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import {
   loginUser,
@@ -8,6 +8,7 @@ import {
   onAuthStateChange,
   fetchUserProfileStatus,
   getAdminRoleFromAppMetadata,
+  isRoleMatch,
 } from '@/services/auth';
 
 /** Versioned sessionStorage key for one-time startup session reset per tab session. */
@@ -21,7 +22,11 @@ export interface AuthContextType {
   role: string | null;
   /** 'pending' | 'approved' | 'rejected' | null */
   accountStatus: string | null;
-  signIn: (email: string, password: string, selectedRole?: 'admin' | 'doctor') => Promise<{ error?: string }>;
+  signIn: (
+    email: string,
+    password: string,
+    selectedRole?: 'admin' | 'doctor'
+  ) => Promise<{ error?: string; role?: string | null; accountStatus?: string | null }>;
   signUp: (
     email: string,
     password: string,
@@ -48,6 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
   const [role, setRole] = useState<string | null>(null);
   const [accountStatus, setAccountStatus] = useState<string | null>(null);
+  const isVerifyingRoleRef = useRef<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -98,6 +104,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const { unsubscribe } = onAuthStateChange((_event, currentSession) => {
         if (!isMounted) return;
+        if (isVerifyingRoleRef.current) {
+          // Explicit signIn with role verification is actively in progress.
+          // Do not update auth context state until role match is validated.
+          return;
+        }
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         // Fetch role/status on auth state change.
@@ -133,43 +144,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string,
     password: string,
     selectedRole?: 'admin' | 'doctor'
-  ): Promise<{ error?: string }> => {
-    const result = await loginUser(email, password, selectedRole);
-    if (result.error) {
-      return { error: result.error };
-    }
-    if (result.data) {
-      setUser(result.data.user);
-      setSession(result.data.session);
-
-      // Resolve the actual role and status from trusted sources:
-      // - Admin: app_metadata.role (server-write-only)
-      // - Doctor: doctor_profiles.role / account_status
-      const appMetaRole = getAdminRoleFromAppMetadata(result.data.user);
-      const profileInfo = await fetchUserProfileStatus(result.data.user);
-
-      const actualRole = appMetaRole === 'admin' ? 'admin' : profileInfo?.role ?? null;
-      const actualStatus = profileInfo?.accountStatus ?? null;
-
-      setRole(actualRole);
-      setAccountStatus(actualStatus);
-
-      // Role mismatch: user selected a context that doesn't match their actual role.
-      // This prevents a doctor from impersonating an admin via the dropdown.
-      if (selectedRole === 'admin' && actualRole !== 'admin') {
-        return {
-          error:
-            'Jenis akun tidak sesuai dengan hak akses akun Anda. Silakan pilih jenis akun yang benar.',
-        };
+  ): Promise<{ error?: string; role?: string | null; accountStatus?: string | null }> => {
+    isVerifyingRoleRef.current = true;
+    try {
+      const result = await loginUser(email, password, selectedRole);
+      if (result.error) {
+        isVerifyingRoleRef.current = false;
+        return { error: result.error };
       }
-      if (selectedRole === 'doctor' && actualRole === 'admin') {
-        return {
-          error:
-            'Jenis akun tidak sesuai dengan hak akses akun Anda. Silakan pilih jenis akun yang benar.',
-        };
+      if (result.data) {
+        // Resolve the actual role and status from trusted sources:
+        // - Admin: app_metadata.role (server-write-only)
+        // - Doctor: doctor_profiles.role / account_status
+        const appMetaRole = getAdminRoleFromAppMetadata(result.data.user);
+        let actualRole: string | null = null;
+        let actualStatus: string | null = null;
+
+        if (appMetaRole === 'admin') {
+          actualRole = 'admin';
+        } else {
+          const profileInfo = await fetchUserProfileStatus(result.data.user);
+          actualRole = profileInfo?.role ?? 'doctor';
+          actualStatus = profileInfo?.accountStatus ?? null;
+        }
+
+        // Two-way strict equality check
+        const targetSelectedRole = selectedRole ?? 'doctor';
+        if (!isRoleMatch(targetSelectedRole, actualRole)) {
+          // Immediately purge Supabase session and reset context state
+          await logoutUser();
+          setUser(null);
+          setSession(null);
+          setRole(null);
+          setAccountStatus(null);
+          isVerifyingRoleRef.current = false;
+          return {
+            error:
+              'Jenis akun yang dipilih tidak sesuai dengan akun ini. Silakan pilih jenis akun yang benar.',
+          };
+        }
+
+        // Role matches: commit authenticated user and session
+        setUser(result.data.user);
+        setSession(result.data.session);
+        setRole(actualRole);
+        setAccountStatus(actualStatus);
+        isVerifyingRoleRef.current = false;
+
+        return { role: actualRole, accountStatus: actualStatus };
       }
+      isVerifyingRoleRef.current = false;
+      return {};
+    } catch {
+      await logoutUser();
+      setUser(null);
+      setSession(null);
+      setRole(null);
+      setAccountStatus(null);
+      isVerifyingRoleRef.current = false;
+      return { error: 'Terjadi kesalahan yang tidak terduga saat mencoba masuk.' };
     }
-    return {};
   };
 
   const signUp = async (

@@ -433,7 +433,7 @@ describe('Login — role mismatch error handling', () => {
   it('menolak login Admin ketika user sebenarnya adalah dokter', async () => {
     // signIn returns a mismatch error
     signInMock.mockResolvedValue({
-      error: 'Jenis akun tidak sesuai dengan hak akses akun Anda. Silakan pilih jenis akun yang benar.',
+      error: 'Jenis akun yang dipilih tidak sesuai dengan akun ini. Silakan pilih jenis akun yang benar.',
     });
     renderLogin();
 
@@ -446,15 +446,17 @@ describe('Login — role mismatch error handling', () => {
 
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain(
-      'Jenis akun tidak sesuai dengan hak akses akun Anda. Silakan pilih jenis akun yang benar.'
+      'Jenis akun yang dipilih tidak sesuai dengan akun ini. Silakan pilih jenis akun yang benar.'
     );
     expect(screen.getByRole('heading', { level: 1, name: 'Welcome Back' })).toBeTruthy();
+    expect(screen.queryByText('Admin Dashboard')).toBeNull();
+    expect(screen.queryByText('Dashboard Page')).toBeNull();
   });
 
   it('menolak login Dokter ketika user sebenarnya adalah admin', async () => {
     // signIn returns a mismatch error
     signInMock.mockResolvedValue({
-      error: 'Jenis akun tidak sesuai dengan hak akses akun Anda. Silakan pilih jenis akun yang benar.',
+      error: 'Jenis akun yang dipilih tidak sesuai dengan akun ini. Silakan pilih jenis akun yang benar.',
     });
     renderLogin();
 
@@ -462,8 +464,11 @@ describe('Login — role mismatch error handling', () => {
 
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain(
-      'Jenis akun tidak sesuai dengan hak akses akun Anda. Silakan pilih jenis akun yang benar.'
+      'Jenis akun yang dipilih tidak sesuai dengan akun ini. Silakan pilih jenis akun yang benar.'
     );
+    expect(screen.getByRole('heading', { level: 1, name: 'Welcome Back' })).toBeTruthy();
+    expect(screen.queryByText('Admin Dashboard')).toBeNull();
+    expect(screen.queryByText('Dashboard Page')).toBeNull();
   });
 
   it('admin yang memilih Admin berhasil login dan diarahkan ke /admin', async () => {
