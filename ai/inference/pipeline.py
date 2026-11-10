@@ -12,6 +12,7 @@ import numpy as np
 from PIL import Image
 
 from ai.config.model_config import MODEL_CONFIG, ModelConfig
+from ai.inference.domain_validator import ColonoscopyDomainValidator, DomainDecision
 from ai.inference.gradcam import GradCAMResult, generate_gradcam
 from ai.inference.postprocessing import measure_mask, postprocess_mask, resize_binary_mask
 from ai.inference.preprocessing import prepare_image
@@ -105,8 +106,16 @@ def run_pipeline(
     on_pass: Optional[Callable[[], None]] = None,
     *,
     analysis_id: str = "",
+    validate_domain: bool = True,
 ) -> PipelineResult:
     """Run segmentation, final-mask measurements, overlays, and Grad-CAM.
+
+    Medical domain validation is enforced on every call: the input must be
+    classified ``ACCEPT`` by :class:`ColonoscopyDomainValidator` before any
+    preprocessing, U-Net/TTA inference, or Grad-CAM work begins. ``REJECT`` and
+    ``UNCERTAIN`` raise immediately, so this boundary cannot be bypassed even by
+    a direct caller (the ``validate_domain`` parameter is retained for signature
+    compatibility but no longer disables the gate).
 
     ``on_phase`` and ``on_pass`` are optional, purely observational progress
     callbacks. ``on_phase`` fires once after each named phase completes;
@@ -122,6 +131,11 @@ def run_pipeline(
     with _Timer(analysis_id, "pipeline_total", _timing_logger):
         with Image.open(io.BytesIO(original_bytes)) as decoded:
             original = decoded.convert("RGB")
+        val_result = ColonoscopyDomainValidator().validate_image(original)
+        if val_result.decision != DomainDecision.ACCEPT:
+            raise ValueError(
+                f"Domain validation failed ({val_result.decision.value}): {val_result.message}"
+            )
         with _Timer(analysis_id, "preprocessing", _timing_logger):
             _phase(PHASE_PREPROCESSING, on_phase)
         original_width, original_height = original.size
@@ -131,7 +145,8 @@ def run_pipeline(
         with _Timer(analysis_id, "postprocessing", _timing_logger):
             processed_512 = postprocess_mask(segmentation.binary_mask[0, 0].numpy(), config)
             final_mask = resize_binary_mask(processed_512, original_width, original_height)
-            measurements = measure_mask(final_mask)
+            prob_map = segmentation.probability_map[0, 0].numpy() if segmentation.probability_map is not None else None
+            measurements = measure_mask(final_mask, probability_map=prob_map)
             measurements["area_percentage"] = float(measurements["area_ratio"]) * 100.0
         _phase(PHASE_POSTPROCESSING, on_phase)
         with _Timer(analysis_id, "gradcam", _timing_logger):
@@ -146,12 +161,12 @@ def run_pipeline(
             overlay = _segmentation_overlay(original, final_mask)
             mask_image = Image.fromarray((final_mask * 255).astype(np.uint8), mode="L")
             heatmap_image = _heatmap_image(gradcam.heatmap)
-            summary = (
+            summary = str(measurements.get("summary_text") or (
                 "Model menghasilkan area segmentasi pada citra dengan cakupan "
                 f"sekitar {measurements['area_percentage']:.2f}% dari area citra."
                 if measurements["segmentation_status"] == "detected"
                 else "Model tidak menghasilkan area segmentasi foreground pada citra."
-            )
+            ))
             result = PipelineResult(
                 binary_mask_png=_png_bytes(mask_image),
                 segmentation_overlay_png=_png_bytes(overlay),

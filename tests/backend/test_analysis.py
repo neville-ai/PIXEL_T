@@ -377,6 +377,7 @@ def test_completed_analysis_returns_only_persisted_assets_and_metadata(
         "area_ratio": 42 / (23 * 17),
         "bounding_width_pixels": 7,
         "bounding_height_pixels": 6,
+        "detection_category": "POLYP_DETECTED",
     }
     assert data["model"]["version"] == "runtime-version-1"
     assert data["model"]["architecture"] == "UNet"

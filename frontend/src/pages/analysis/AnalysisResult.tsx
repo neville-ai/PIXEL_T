@@ -135,6 +135,9 @@ export const AnalysisResult: React.FC = () => {
     detail?.model_analysis?.segmentation_status
       ? ['Segmentation status', detail.model_analysis.segmentation_status]
       : null,
+    detail?.model_analysis?.detection_category
+      ? ['Detection category', detail.model_analysis.detection_category.replace(/_/g, ' ')]
+      : null,
     detail?.model_analysis?.area_pixels != null
       ? ['Area', `${detail.model_analysis.area_pixels} px`] : null,
     detail?.model_analysis?.area_ratio != null
@@ -244,7 +247,35 @@ export const AnalysisResult: React.FC = () => {
           </section>
 
           <section aria-labelledby="segmentation-title" className="space-y-3">
-            <h2 id="segmentation-title" className="text-lg font-semibold text-neutral-900 dark:text-dark-text">Segmentation Result</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id="segmentation-title" className="text-lg font-semibold text-neutral-900 dark:text-dark-text">Segmentation Result</h2>
+              {detail.model_analysis?.detection_category === 'POLYP_DETECTED' && (
+                <Badge variant="success">Polyp Detected</Badge>
+              )}
+              {detail.model_analysis?.detection_category === 'NO_POLYP_DETECTED' && (
+                <Badge variant="info">No Polyp Detected</Badge>
+              )}
+              {detail.model_analysis?.detection_category === 'LOW_CONFIDENCE' && (
+                <Badge variant="warning">Low Confidence</Badge>
+              )}
+            </div>
+
+            {detail.model_analysis?.detection_category === 'LOW_CONFIDENCE' && (
+              <div role="status" className="flex items-start gap-3 rounded-md border border-semantic-warning/30 bg-semantic-warning/10 p-3 text-xs text-badgeText-warning dark:text-semantic-warning">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <p>
+                  <strong>Perhatian:</strong> Model mendeteksi area polip dengan tingkat keyakinan rendah atau marjinal. Hasil segmentasi kurang meyakinkan dan memerlukan verifikasi serta peninjauan visual langsung oleh dokter spesialis.
+                </p>
+              </div>
+            )}
+
+            {detail.model_analysis?.detection_category === 'NO_POLYP_DETECTED' && (
+              <div role="status" className="flex items-start gap-3 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600 dark:border-dark-border dark:bg-dark-elevated dark:text-dark-textMuted">
+                <p>
+                  <strong>Catatan Klinis:</strong> Tidak ada area polip yang terdeteksi oleh model pada citra ini. Ketiadaan deteksi oleh AI bukan merupakan diagnosis medis normal atau jaminan ketiadaan lesi.
+                </p>
+              </div>
+            )}
             <div className="grid gap-4 sm:grid-cols-2">
               <ImagePanel
                 title="Segmentation Mask"

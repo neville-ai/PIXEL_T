@@ -6,9 +6,38 @@ import torch
 from PIL import Image
 
 from ai.config.model_config import MODEL_CONFIG, ModelConfig, ModelConfigurationError
+from ai.inference.domain_validator import DomainDecision, DomainValidationResult
 from ai.inference.model_service import ModelService
 from ai.inference.preprocessing import IMAGENET_MEAN, IMAGENET_STD, prepare_image
 from ai.inference.segmentation import predict
+
+
+def _stub_domain_accept(monkeypatch, pipeline_mod):
+    """Accept the synthetic fixture for pipeline-mechanics tests only.
+
+    ``test_pipeline_reports_phases_then_inference_order`` and
+    ``test_pipeline_callback_does_not_change_artifacts`` exercise phase
+    ordering and callback observability with a 64x64 solid-color image that is
+    intentionally *not* a colonoscopy frame. The pipeline now enforces domain
+    validation on every call, and that gate has dedicated coverage in
+    ``test_domain_validator.py`` and ``test_domain_validation_api.py``. Stub the
+    validator to ACCEPT here so these tests reach the pipeline phases they
+    actually target, without weakening the production gate.
+    """
+
+    class _AcceptAllValidator:
+        def validate_image(self, image):
+            return DomainValidationResult(
+                decision=DomainDecision.ACCEPT,
+                confidence=1.0,
+                reasons=["test stub: pipeline mechanics"],
+                metrics={},
+                message="",
+            )
+
+    monkeypatch.setattr(
+        pipeline_mod, "ColonoscopyDomainValidator", _AcceptAllValidator
+    )
 
 
 def test_verified_model_checkpoint_hash_and_strict_load_cpu(monkeypatch):
@@ -175,6 +204,7 @@ def test_pipeline_reports_phases_then_inference_order(monkeypatch):
             image, model_service=service, config=config, on_pass=on_pass
         ),
     )
+    _stub_domain_accept(monkeypatch, pipeline_mod)
 
     stream = _io.BytesIO()
     Image.new("RGB", (64, 64), color=(20, 80, 120)).save(stream, format="PNG")
@@ -214,6 +244,7 @@ def test_pipeline_callback_does_not_change_artifacts(monkeypatch):
             image, model_service=service, config=config, on_pass=on_pass
         ),
     )
+    _stub_domain_accept(monkeypatch, pipeline_mod)
 
     stream = _io.BytesIO()
     Image.new("RGB", (64, 64), color=(20, 80, 120)).save(stream, format="PNG")

@@ -19,6 +19,7 @@ from app.services.storage_service import StorageService
 
 from ai.inference.gradcam import GradCAMResult, generate_gradcam
 from ai.config.model_config import MODEL_CONFIG
+from ai.inference.domain_validator import ColonoscopyDomainValidator, DomainDecision
 from ai.inference.pipeline import PHASE_INFERENCE, PipelineResult, run_pipeline
 from ai.inference.segmentation import SegmentationResult, count_forward_passes, predict
 from ai.inference.preprocessing import prepare_image
@@ -286,17 +287,47 @@ class AnalysisService:
         storage_service: Optional[StorageService] = None,
         pipeline_runner: Optional[Callable[..., PipelineResult]] = None,
         job_queue: Optional[AnalysisJobQueue] = None,
+        domain_validator: Optional[ColonoscopyDomainValidator] = None,
         auto_start_worker: bool = True,
+        enforce_domain_validation: Optional[bool] = None,
+        llm_validator: Optional[Callable[..., Any]] = None,
+        enforce_llm_validation: Optional[bool] = None,
+        llm_client: Optional[Any] = None,
     ):
         self.repository = repository or AnalysisRepository()
         self.storage_service = storage_service or StorageService()
         self.pipeline_runner = pipeline_runner or run_pipeline
+        self.domain_validator = domain_validator or ColonoscopyDomainValidator()
         # The queue runner defers to the bound method so tests can inject a
         # synchronous pipeline_runner and step the queue deterministically.
         self.job_queue = job_queue or AnalysisJobQueue(
             runner=lambda job: self._run_analysis_job(job),
             auto_start=auto_start_worker,
         )
+        self._enforce_domain_validation = enforce_domain_validation
+        self._llm_validator = llm_validator
+        self._enforce_llm_validation = enforce_llm_validation
+        self._llm_client = llm_client
+
+    @property
+    def is_domain_validation_enabled(self) -> bool:
+        if self._enforce_domain_validation is not None:
+            return self._enforce_domain_validation
+        try:
+            from flask import current_app
+            return bool(current_app.config.get("DOMAIN_VALIDATION_ENABLED", True))
+        except (ImportError, RuntimeError):
+            return True
+
+    @property
+    def is_llm_validation_enabled(self) -> bool:
+        if self._enforce_llm_validation is not None:
+            return self._enforce_llm_validation
+        try:
+            from flask import current_app
+            return bool(current_app.config.get("LLM_VALIDATION_ENABLED", True))
+        except (ImportError, RuntimeError):
+            return True
 
     def validate_and_decode_image(self, file_storage) -> tuple[bytes, str, str, int, int]:
         """Validate uploaded file for size, format, integrity, and dimensions.
@@ -389,6 +420,80 @@ class AnalysisService:
 
         analysis_id = str(uuid.uuid4())
         safe_original_filename = file_storage.filename.strip()[:255]
+
+        # 2. Medical domain validation (Colonoscopy vs Non-colonoscopy).
+        # Runs before any storage upload, DB insert, or job enqueue so a REJECT
+        # or UNCERTAIN leaves no file, no record, and no queued job.
+        if self.is_domain_validation_enabled:
+            domain_result = self.domain_validator.validate_bytes(file_bytes)
+            feature_summary = ", ".join(
+                f"{k}={v:.4f}" for k, v in sorted(domain_result.metrics.items())
+            )
+            print(
+                f"[DOMAIN] analysis_id={analysis_id} user_id={user_id} "
+                f"decision={domain_result.decision.value} "
+                f"confidence={domain_result.confidence:.4f} "
+                f"reasons={'; '.join(domain_result.reasons)} "
+                f"features={{{feature_summary}}}"
+            )
+            if domain_result.decision == DomainDecision.REJECT:
+                raise APIError(
+                    "NOT_COLONOSCOPY_IMAGE",
+                    domain_result.message or "Citra tidak sesuai dengan karakteristik citra kolonoskopi. Silakan unggah citra kolonoskopi yang valid.",
+                    400,
+                )
+            if domain_result.decision == DomainDecision.UNCERTAIN:
+                raise APIError(
+                    "UNCERTAIN_COLONOSCOPY_IMAGE",
+                    domain_result.message or "Sistem tidak dapat memastikan bahwa citra ini adalah kolonoskopi. Silakan unggah citra yang lebih jelas.",
+                    400,
+                )
+
+        # 2b. Secondary LLM domain verification (Gemini Gate).
+        # Only runs if heuristic validation produced ACCEPT.
+        # Fail-closed: REJECT raises NOT_COLONOSCOPY_IMAGE, ERROR/failure raises UNCERTAIN_COLONOSCOPY_IMAGE.
+        if self.is_llm_validation_enabled:
+            from app.services.llm_image_validator import validate_with_llm, MSG_LLM_SERVICE_ERROR
+
+            validator_fn = self._llm_validator or validate_with_llm
+            model_name = "gemini-3.8-flash"
+            min_conf = 0.80
+            timeout_s = 15.0
+            try:
+                from flask import current_app
+                model_name = current_app.config.get("LLM_VALIDATION_MODEL", model_name)
+                min_conf = float(current_app.config.get("LLM_VALIDATION_MIN_CONF", min_conf))
+                timeout_s = float(current_app.config.get("LLM_VALIDATION_TIMEOUT_S", timeout_s))
+            except (ImportError, RuntimeError):
+                pass
+
+            llm_result = validator_fn(
+                image_bytes=file_bytes,
+                mime_type=mime_type,
+                client=self._llm_client,
+                model_name=model_name,
+                min_confidence=min_conf,
+                timeout_s=timeout_s,
+            )
+
+            print(
+                f"[LLM_DOMAIN] analysis_id={analysis_id} user_id={user_id} "
+                f"status={llm_result.status} image_type={llm_result.image_type} "
+                f"confidence={llm_result.confidence:.4f} ok={llm_result.ok}"
+            )
+
+            if llm_result.status == "REJECT":
+                raise APIError(
+                    "NOT_COLONOSCOPY_IMAGE",
+                    "Citra tidak sesuai dengan karakteristik citra kolonoskopi. Silakan unggah citra kolonoskopi yang valid.",
+                    400,
+                )
+            if not llm_result.ok or llm_result.status == "ERROR":
+                raise APIError(
+                    "UNCERTAIN_COLONOSCOPY_IMAGE",
+                    MSG_LLM_SERVICE_ERROR,  # B5: konstanta terpusat di llm_image_validator.py
+                    400,
+                )
 
         print(f"[CORRELATION] analysis_id={analysis_id} user_id={user_id} stage=create_analysis_service validation_done")
 
@@ -590,6 +695,24 @@ class AnalysisService:
             for response_key, record_key in model_analysis_fields.items()
             if record.get(record_key) is not None
         }
+
+        # Derive post-segmentation validation category from persisted summary
+        summary_raw = record.get("summary_text") or ""
+        detection_category = None
+        if summary_raw.startswith("[POLYP_DETECTED]"):
+            detection_category = "POLYP_DETECTED"
+        elif summary_raw.startswith("[NO_POLYP_DETECTED]"):
+            detection_category = "NO_POLYP_DETECTED"
+        elif summary_raw.startswith("[LOW_CONFIDENCE]"):
+            detection_category = "LOW_CONFIDENCE"
+        elif record.get("segmentation_status") == "detected":
+            detection_category = "POLYP_DETECTED"
+        elif record.get("segmentation_status") == "not_detected":
+            detection_category = "NO_POLYP_DETECTED"
+
+        if detection_category:
+            model_analysis["detection_category"] = detection_category
+
         if any(value is not None for value in segmentation.values()):
             data["segmentation"] = segmentation
         if model_analysis:
@@ -625,7 +748,9 @@ class AnalysisService:
             data["model"] = model
 
         if record.get("summary_text"):
-            data["summary"] = {"text": record["summary_text"]}
+            raw_text = record["summary_text"]
+            clean_text = raw_text.split("] ", 1)[-1] if raw_text.startswith("[") and "] " in raw_text else raw_text
+            data["summary"] = {"text": clean_text}
 
         duration_ms = (time.perf_counter() - start_time) * 1000
         print(f"[CORRELATION] analysis_id={analysis_id} user_id={user_id} stage=get_analysis_service end duration_ms={duration_ms:.1f}")
@@ -967,12 +1092,37 @@ class AnalysisService:
             return 0
 
     @staticmethod
+    def _require_domain_accept(file_bytes: bytes) -> None:
+        """Gate direct model-boundary calls on the domain ACCEPT requirement.
+
+        ``run_segmentation`` and ``run_gradcam`` are callable outside the
+        upload path, so they must enforce the same ACCEPT gate as
+        ``create_analysis``. A ``REJECT`` or ``UNCERTAIN`` input stops here
+        before any U-Net/TTA/Grad-CAM work, mirroring the upload boundary.
+        """
+        result = ColonoscopyDomainValidator().validate_bytes(file_bytes)
+        if result.decision == DomainDecision.REJECT:
+            raise APIError(
+                "NOT_COLONOSCOPY_IMAGE",
+                result.message or "Citra yang diunggah teridentifikasi bukan merupakan citra kolonoskopi saluran cerna.",
+                400,
+            )
+        if result.decision == DomainDecision.UNCERTAIN:
+            raise APIError(
+                "UNCERTAIN_COLONOSCOPY_IMAGE",
+                result.message or "Sistem tidak dapat memastikan citra yang diunggah merupakan citra kolonoskopi yang valid.",
+                400,
+            )
+
+    @staticmethod
     def run_segmentation(file_bytes: bytes) -> SegmentationResult:
         """Expose the verified raw model boundary for the later AI lifecycle.
 
         TASK 10 intentionally does not persist AI assets or alter the API
         response; this hook keeps model execution out of Flask routes.
+        Direct callers must pass a validated colonoscopy image (ACCEPT).
         """
+        AnalysisService._require_domain_accept(file_bytes)
         try:
             with Image.open(io.BytesIO(file_bytes)) as image:
                 return predict(image)
@@ -981,7 +1131,11 @@ class AnalysisService:
 
     @staticmethod
     def run_gradcam(file_bytes: bytes) -> GradCAMResult:
-        """Expose the verified Grad-CAM boundary for later result integration."""
+        """Expose the verified Grad-CAM boundary for later result integration.
+
+        Direct callers must pass a validated colonoscopy image (ACCEPT).
+        """
+        AnalysisService._require_domain_accept(file_bytes)
         try:
             with Image.open(io.BytesIO(file_bytes)) as image:
                 original = image.convert("RGB")

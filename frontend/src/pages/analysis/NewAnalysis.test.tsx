@@ -359,6 +359,73 @@ describe('NewAnalysis — loading, kegagalan API, dan navigasi', () => {
     expect(mockedCreateAnalysis).toHaveBeenCalledTimes(1);
   });
 
+  it('B4: penolakan NOT_COLONOSCOPY_IMAGE memprioritaskan pesan dari server', async () => {
+    const serverMsg =
+      'Citra tidak sesuai dengan karakteristik citra kolonoskopi. Silakan unggah citra kolonoskopi yang valid.';
+    mockedCreateAnalysis.mockRejectedValueOnce(
+      Object.assign(new Error(serverMsg), { code: 'NOT_COLONOSCOPY_IMAGE' }),
+    );
+    renderPage();
+
+    selectViaInput(makeFile());
+    await screen.findByText('colonoscopy_frame_001.png');
+
+    fireEvent.click(submitButton());
+
+    expect(await screen.findByText(serverMsg)).toBeTruthy();
+    expect(screen.queryByText('Analysis Result Page')).toBeNull();
+    expect(screen.getByText('colonoscopy_frame_001.png')).toBeTruthy();
+    expect(submitButton().disabled).toBe(false);
+  });
+
+  it('B4: penolakan NOT_COLONOSCOPY_IMAGE dengan error non-Error menggunakan fallback baku', async () => {
+    const fallbackMsg =
+      'Citra tidak sesuai dengan karakteristik citra kolonoskopi. Silakan unggah citra kolonoskopi yang valid.';
+    mockedCreateAnalysis.mockRejectedValueOnce({ code: 'NOT_COLONOSCOPY_IMAGE' });
+    renderPage();
+
+    selectViaInput(makeFile());
+    await screen.findByText('colonoscopy_frame_001.png');
+
+    fireEvent.click(submitButton());
+
+    expect(await screen.findByText(fallbackMsg)).toBeTruthy();
+  });
+
+  it('B4: penolakan UNCERTAIN_COLONOSCOPY_IMAGE memprioritaskan pesan dari server', async () => {
+    const serverMsg =
+      'Validasi citra belum dapat diselesaikan. Silakan coba lagi beberapa saat.';
+    mockedCreateAnalysis.mockRejectedValueOnce(
+      Object.assign(new Error(serverMsg), { code: 'UNCERTAIN_COLONOSCOPY_IMAGE' }),
+    );
+    renderPage();
+
+    selectViaInput(makeFile());
+    await screen.findByText('colonoscopy_frame_001.png');
+
+    fireEvent.click(submitButton());
+
+    expect(await screen.findByText(serverMsg)).toBeTruthy();
+    expect(screen.queryByText('Sistem tidak dapat memastikan')).toBeNull();
+    expect(screen.getByText('colonoscopy_frame_001.png')).toBeTruthy();
+    expect(submitButton().disabled).toBe(false);
+  });
+
+  it('B4: penolakan UNCERTAIN_COLONOSCOPY_IMAGE dengan error non-Error menggunakan fallback baku konsisten', async () => {
+    const fallbackMsg =
+      'Validasi citra belum dapat diselesaikan. Silakan coba lagi beberapa saat.';
+    mockedCreateAnalysis.mockRejectedValueOnce({ code: 'UNCERTAIN_COLONOSCOPY_IMAGE' });
+    renderPage();
+
+    selectViaInput(makeFile());
+    await screen.findByText('colonoscopy_frame_001.png');
+
+    fireEvent.click(submitButton());
+
+    expect(await screen.findByText(fallbackMsg)).toBeTruthy();
+    expect(screen.queryByText('Sistem tidak dapat memastikan')).toBeNull();
+  });
+
   it('berhasil memanggil createAnalysis dan menavigasi setelah backend mengonfirmasi terminal', async () => {
     // P-04: POST menjawab 202 (diterima, belum selesai) — navigasi ke halaman
     // hasil hanya terjadi setelah GET mengembalikan status terminal backend.

@@ -1,0 +1,5 @@
+58e20b99215bec279d3c2a50d12b0912974b7974b4199bdbcb9e86df5ba589f3  frontend/src/services/auth.ts
+6f886e5f01f27270e6f7525a6d307493c71757d05859587d5db2933d4ee56572  frontend/src/context/AuthContext.tsx
+46d5aee154c0889681b01964cbea71812e0eb9f02678cb895a02bf1be9066921  frontend/src/pages/auth/Login.tsx
+e1e95559f342ca16d5986a9a86c59d16ec0a8075cceee617d8ccfa8ea7b52fb9  frontend/src/services/auth.test.ts
+b663791534c23e82e89bf54d3e7866a9d472f596ac8e80b9f2242e3588b4987c  frontend/src/pages/auth/Login.test.tsx

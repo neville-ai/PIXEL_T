@@ -77,6 +77,7 @@ export interface AnalysisDetail {
   };
   model_analysis?: {
     segmentation_status?: 'detected' | 'not_detected' | null;
+    detection_category?: 'POLYP_DETECTED' | 'NO_POLYP_DETECTED' | 'LOW_CONFIDENCE' | null;
     area_pixels?: number | null;
     area_ratio?: number | null;
     bounding_width_pixels?: number | null;

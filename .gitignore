@@ -47,3 +47,11 @@ ai/models/*
 tmp/
 temp/
 scratch/
+
+calibration_data/
+references/
+scripts/output/
+LUCIT-master/
+*.log
+.freebuff/
+.env

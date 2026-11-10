@@ -258,11 +258,25 @@ export const NewAnalysis: React.FC = () => {
       setAcceptedId(created.analysis_id);
     } catch (error) {
       const code = (error as { code?: unknown } | null)?.code;
-      setServerError(
-        code === 'QUEUE_FULL'
-          ? QUEUE_FULL_MESSAGE
-          : error instanceof Error ? error.message : 'Image upload failed. Please try again.',
-      );
+      if (code === 'NOT_COLONOSCOPY_IMAGE') {
+        setServerError(
+          error instanceof Error
+            ? error.message
+            : 'Citra tidak sesuai dengan karakteristik citra kolonoskopi. Silakan unggah citra kolonoskopi yang valid.'
+        );
+      } else if (code === 'UNCERTAIN_COLONOSCOPY_IMAGE') {
+        setServerError(
+          error instanceof Error
+            ? error.message
+            : 'Validasi citra belum dapat diselesaikan. Silakan coba lagi beberapa saat.'
+        );
+      } else if (code === 'QUEUE_FULL') {
+        setServerError(QUEUE_FULL_MESSAGE);
+      } else {
+        setServerError(
+          error instanceof Error ? error.message : 'Image upload failed. Please try again.'
+        );
+      }
     } finally {
       setIsUploading(false);
     }

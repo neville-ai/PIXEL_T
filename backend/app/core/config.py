@@ -26,12 +26,24 @@ class Config:
     MODEL_CHECKPOINT_PATH = os.getenv('MODEL_CHECKPOINT_PATH', '')
     MODEL_DEVICE = os.getenv('MODEL_DEVICE', 'auto')
     MODEL_INFERENCE_ENABLED = os.getenv('MODEL_INFERENCE_ENABLED', 'false').lower() == 'true'
+    DOMAIN_VALIDATION_ENABLED = os.getenv('DOMAIN_VALIDATION_ENABLED', 'true').lower() == 'true'
+
+    # LLM Domain Validation Configuration (Gemini Gate)
+    LLM_VALIDATION_ENABLED = os.getenv('LLM_VALIDATION_ENABLED', 'true').lower() == 'true'
+    LLM_VALIDATION_MODEL = os.getenv(
+        'LLM_VALIDATION_MODEL',
+        os.getenv('GEMINI_MODEL', 'gemini-3.8-flash')
+    )
+    LLM_VALIDATION_MIN_CONF = float(os.getenv('LLM_VALIDATION_MIN_CONF', '0.80'))
+    LLM_VALIDATION_TIMEOUT_S = float(os.getenv('LLM_VALIDATION_TIMEOUT_S', '15.0'))
 
 
 class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG = True
     TESTING = False
+    DOMAIN_VALIDATION_ENABLED = True
+    LLM_VALIDATION_ENABLED = os.getenv('LLM_VALIDATION_ENABLED', 'true').lower() == 'true'
 
 
 class TestingConfig(Config):
@@ -39,12 +51,16 @@ class TestingConfig(Config):
     DEBUG = False
     TESTING = True
     APP_ENV = 'testing'
+    DOMAIN_VALIDATION_ENABLED = os.getenv('DOMAIN_VALIDATION_ENABLED', 'false').lower() == 'true'
+    LLM_VALIDATION_ENABLED = os.getenv('LLM_VALIDATION_ENABLED', 'false').lower() == 'true'
 
 
 class ProductionConfig(Config):
     """Production configuration."""
     DEBUG = False
     TESTING = False
+    DOMAIN_VALIDATION_ENABLED = True
+    LLM_VALIDATION_ENABLED = True
 
 
 config_by_name = {
