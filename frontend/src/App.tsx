@@ -2,7 +2,7 @@ import React, { useLayoutEffect } from 'react';
 import { BrowserRouter, useLocation } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import { AppShell } from '@/components/layout/AppShell';
-import { AppRoutes } from '@/routes/AppRoutes';
+import { AppRoutes } from '@/AppRoutes';
 import { applyStoredTheme } from '@/hooks/useTheme';
 
 /**

@@ -3,8 +3,8 @@ import re
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
-FRONTEND_SRC = ROOT_DIR / "frontend" / "src"
-BACKEND_APP = ROOT_DIR / "backend" / "app"
+FRONTEND_SRC = ROOT_DIR / "Frontend" / "src"
+BACKEND_APP = ROOT_DIR / "Backend" / "src"
 ENV_EXAMPLE = ROOT_DIR / ".env.example"
 
 SOURCE_EXTENSIONS = ('.ts', '.tsx', '.js', '.jsx', '.html', '.css', '.py', '.json')

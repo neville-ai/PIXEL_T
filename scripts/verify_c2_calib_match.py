@@ -10,6 +10,7 @@ from pathlib import Path
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "Backend"))
 
 from ai.inference.domain_validator import ColonoscopyDomainValidator, DomainDecision
 from PIL import Image
@@ -119,3 +120,4 @@ for r in pos_reject + pos_uncertain:
 print("\n=== NEGATIVES yang ACCEPT (false acceptance) ===")
 for r in neg_accept:
     print(f"  [ACCEPT] {r['dataset']}/{r['filename']} | mucosa={r['mucosal_ratio']:.3f} cool={r['cool_ratio']:.3f} chroma={r['mean_chroma']:.1f} lines={r['line_density']:.3f}")
+

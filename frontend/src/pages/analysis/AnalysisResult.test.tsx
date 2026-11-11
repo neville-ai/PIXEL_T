@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { getAnalysis, type AnalysisDetail } from '@/services/analysis';
+import { getAnalysis, type AnalysisDetail } from '@/utils/analysis';
 import { AnalysisResult } from './AnalysisResult';
 
-vi.mock('@/services/analysis', () => ({
+vi.mock('@/utils/analysis', () => ({
   getAnalysis: vi.fn(),
 }));
 

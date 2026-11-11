@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useRef } from 'react';
-import { LogoPixelT } from '@/components/brand/LogoPixelT';
-import { stageIndex, type OpeningStage } from '@/lib/openingTimeline';
-import '@/styles/opening.css';
+import { LogoPixelT } from '@/components/ui/LogoPixelT';
+import { stageIndex, type OpeningStage } from '@/utils/openingTimeline';
+import '@/assets/opening.css';
 
 export interface OpeningAnimationProps {
   /** Current stage from `useOpeningAnimation`. */

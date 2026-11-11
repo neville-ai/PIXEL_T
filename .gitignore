@@ -39,8 +39,8 @@ htmlcov/
 *.ckpt
 *.onnx
 *.safetensors
-ai/models/*
-!ai/models/.gitkeep
+Backend/ai/models/*
+!Backend/ai/models/.gitkeep
 
 # Runtime / temporary files
 *.log

@@ -33,16 +33,16 @@
 | Pembuatan klien | **Per-permintaan** di dalam `validate_with_llm()` jika `client=None` | `llm_image_validator.py:109-124` |
 | Sumber API key | Env var `GEMINI_API_KEY` (nilai tidak ditampilkan) | `llm_image_validator.py:110` |
 | Nama model | Env var `GEMINI_MODEL`/`LLM_VALIDATION_MODEL`, default `gemini-3.8-flash` | `config.py:33-36` |
-| Pemakai Gemini lain di proyek | **Tidak ada** (hanya `llm_image_validator.py`) | Grep seluruh `backend/`, `ai/` |
+| Pemakai Gemini lain di proyek | **Tidak ada** (hanya `llm_image_validator.py`) | Grep seluruh `Backend/`, `ai/` |
 
 ### 1.2 Alur Unggah Penuh
 
 ```
-NewAnalysis.tsx:handleAnalyze()          [frontend/src/pages/analysis/NewAnalysis.tsx:220-258]
-  └─ analysis.ts:analyzeImage()          → POST /api/analysis  [frontend/src/services/analysis.ts]
-       └─ analysis.py:create_analysis()  [backend/app/routes/analysis.py:11-26]
-            └─ AnalysisController.create_analysis()  [backend/app/controllers/analysis_controller.py:13-35]
-                 └─ AnalysisService.create_analysis()  [backend/app/services/analysis_service.py:400-]
+NewAnalysis.tsx:handleAnalyze()          [Frontend/src/pages/analysis/NewAnalysis.tsx:220-258]
+  └─ analysis.ts:analyzeImage()          → POST /api/analysis  [Frontend/src/utils/analysis.ts]
+       └─ analysis.py:create_analysis()  [Backend/src/routes/analysis.py:11-26]
+            └─ AnalysisController.create_analysis()  [Backend/src/controllers/analysis_controller.py:13-35]
+                 └─ AnalysisService.create_analysis()  [Backend/src/services/analysis_service.py:400-]
                       ├─ validate_and_decode_image()          [:400-410] — ukuran, ekstensi, Pillow
                       ├─ ColonoscopyDomainValidator.validate_bytes()  [:420-450]
                       │       REJECT → APIError("NOT_COLONOSCOPY_IMAGE", msg, 400)
@@ -238,9 +238,9 @@ Keluarkan HANYA satu objek JSON, tanpa teks lain:
 ### A2.11 — Keamanan/Privasi (SESUAI)
 
 - API key hanya dari `os.getenv("GEMINI_API_KEY")` — tidak ada hardcode di kode sumber.
-- `git check-ignore -v backend/.env` → `.gitignore:11:.env  backend/.env` ✅
+- `git check-ignore -v Backend/.env` → `.gitignore:11:.env  Backend/.env` ✅
 - `git log --all -S "GEMINI_API_KEY"` → tidak ada commit yang mengandung nilai key ✅
-- Tidak ada `GEMINI_API_KEY` di berkas frontend (grep `frontend/src/**` → 0 hasil) ✅
+- Tidak ada `GEMINI_API_KEY` di berkas frontend (grep `Frontend/src/**` → 0 hasil) ✅
 - Bundle Vite tidak mengandung key backend (variabel env backend tidak dikirim ke frontend) ✅
 
 ### A2.12 — Verifikasi Angka Laporan Lama (SESUAI)

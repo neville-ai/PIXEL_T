@@ -6,7 +6,7 @@ import {
   OPENING_STAGE_START_MS,
   OPENING_STAGES,
   OPENING_TOTAL_DURATION_MS,
-} from '@/lib/openingTimeline';
+} from '@/utils/openingTimeline';
 
 type HookModule = typeof import('./useOpeningAnimation');
 

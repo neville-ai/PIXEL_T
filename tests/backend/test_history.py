@@ -17,9 +17,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.services.analysis_service import AnalysisService
-import app.routes.analysis as analysis_routes
-import app.core.auth as auth_module
+from src.services.analysis_service import AnalysisService
+import src.routes.analysis as analysis_routes
+import src.core.auth as auth_module
 
 
 def make_record(analysis_id, user_id, **overrides):

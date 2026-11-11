@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-scripts/eval_llm_gate.py — Skrip Evaluasi Empiris Gerbang LLM (Gemini Gate)
-PIXEL-T Project — 10 November 2026
+scripts/eval_llm_gate.py â€” Skrip Evaluasi Empiris Gerbang LLM (Gemini Gate)
+PIXEL-T Project â€” 10 November 2026
 
 PERHATIAN:
 Skrip ini disiapkan untuk dijalankan HANYA setelah mendapatkan izin tertulis
@@ -38,7 +38,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
-BACKEND_DIR = REPO_ROOT / "backend"
+BACKEND_DIR = REPO_ROOT / "Backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
@@ -251,7 +251,7 @@ class GateEvaluator:
 
     def evaluate_gemini_only(self, sample: EvalSample, min_confidence: float = 0.80) -> EvalResult:
         """Konfigurasi 3: Gemini saja"""
-        from backend.app.services.llm_image_validator import validate_with_llm
+        from backend.src.services.llm_image_validator import validate_with_llm
 
         t0 = time.perf_counter()
         with open(sample.path, "rb") as f:
@@ -482,7 +482,7 @@ def discover_dataset(eval_dir: Path) -> List[EvalSample]:
     return samples
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluasi Empiris Gerbang LLM (Gemini Gate) — PIXEL-T")
+    parser = argparse.ArgumentParser(description="Evaluasi Empiris Gerbang LLM (Gemini Gate) â€” PIXEL-T")
     parser.add_argument("--eval-dir", type=str, default="eval_new", help="Direktori dataset evaluasi")
     parser.add_argument("--dry-run", action="store_true", help="Hanya audit duplikasi dan estimasi kuota tanpa memanggil API")
     parser.add_argument("--execute", action="store_true", help="Jalankan evaluasi (HANYA dengan izin tertulis)")
@@ -518,4 +518,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

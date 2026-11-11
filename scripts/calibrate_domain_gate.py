@@ -1,14 +1,14 @@
 """
-calibrate_domain_gate.py — Fase A Kalibrasi ColonoscopyDomainValidator
+calibrate_domain_gate.py â€” Fase A Kalibrasi ColonoscopyDomainValidator
 =======================================================================
 Membaca HANYA subfolder "calib" dari calibration_data/{positive,negative}/<kelompok>/calib/
 Subfolder "holdout" TIDAK disentuh.
 
 Output:
-  scripts/output/calib_raw.csv        — satu baris per gambar asli
-  scripts/output/calib_variants.csv   — satu baris per varian sintetis (positif saja)
-  scripts/output/calib_summary.csv    — ringkasan per kelompok
-  scripts/output/calib_a0_report.txt  — laporan A0 (duplikat, berkas rusak, dll.)
+  scripts/output/calib_raw.csv        â€” satu baris per gambar asli
+  scripts/output/calib_variants.csv   â€” satu baris per varian sintetis (positif saja)
+  scripts/output/calib_summary.csv    â€” ringkasan per kelompok
+  scripts/output/calib_a0_report.txt  â€” laporan A0 (duplikat, berkas rusak, dll.)
 
 Jalankan dari root proyek:
   .venv\\Scripts\\python.exe scripts\\calibrate_domain_gate.py
@@ -34,10 +34,11 @@ from PIL import Image, ImageFilter
 warnings.filterwarnings("ignore")
 
 # ---------------------------------------------------------------------------
-# Path setup — agar ai.inference dapat diimpor
+# Path setup â€” agar ai.inference dapat diimpor
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "Backend"))
 
 from ai.inference.domain_validator import ColonoscopyDomainValidator, DomainDecision  # noqa: E402
 
@@ -307,9 +308,9 @@ def file_md5(path: Path) -> str:
 def run_a0() -> Tuple[List[Dict], List[str], List[str]]:
     """
     Kembalikan:
-      rows         — daftar dict per grup/split (untuk tabel)
-      corrupt      — path gambar yang gagal dibuka
-      dup_pairs    — pasangan duplikat (hash sama, jalur berbeda)
+      rows         â€” daftar dict per grup/split (untuk tabel)
+      corrupt      â€” path gambar yang gagal dibuka
+      dup_pairs    â€” pasangan duplikat (hash sama, jalur berbeda)
     """
     rows: List[Dict] = []
     all_files: Dict[str, Path] = {}       # md5 -> first path
@@ -504,7 +505,7 @@ def threshold_sweep_line(pos_rows, neg_rows, res_buckets=(0, 300, 600, 9999)):
 
 def main():
     print("=" * 70)
-    print("calibrate_domain_gate.py — Fase A")
+    print("calibrate_domain_gate.py â€” Fase A")
     print("=" * 70)
 
     # --- A0: Pra-pemeriksaan ---
@@ -513,7 +514,7 @@ def main():
 
     a0_report_path = OUTPUT_DIR / "calib_a0_report.txt"
     with open(a0_report_path, "w", encoding="utf-8") as f:
-        f.write("LAPORAN A0 — Pra-pemeriksaan Data Kalibrasi\n")
+        f.write("LAPORAN A0 â€” Pra-pemeriksaan Data Kalibrasi\n")
         f.write("=" * 60 + "\n\n")
         f.write(f"{'side':<10} {'group':<25} {'split':<8} {'count':>6} {'corrupt':>8} {'dups':>5} {'flag'}\n")
         f.write("-" * 80 + "\n")
@@ -536,13 +537,13 @@ def main():
         else:
             f.write("Duplikat lintas split/kelompok: tidak ada.\n")
 
-    print(f"  → Laporan A0 disimpan: {a0_report_path}")
+    print(f"  â†’ Laporan A0 disimpan: {a0_report_path}")
 
     # Tampilkan tabel di konsol
     print(f"\n  {'side':<10} {'group':<25} {'split':<8} {'count':>6} {'flag'}")
     print("  " + "-" * 65)
     for r in a0_rows:
-        flag_mark = f"⚠ {r['flag']}" if r["flag"] else ""
+        flag_mark = f"âš  {r['flag']}" if r["flag"] else ""
         print(f"  {r['side']:<10} {r['group']:<25} {r['split']:<8} {r['count']:>6}  {flag_mark}")
 
     # --- A1: Proses gambar calib ---
@@ -554,7 +555,7 @@ def main():
         for group in groups:
             calib_path = CALIB_DATA_ROOT / side / group / "calib"
             if not calib_path.exists():
-                print(f"  [SKIP] {side}/{group}/calib — folder tidak ada")
+                print(f"  [SKIP] {side}/{group}/calib â€” folder tidak ada")
                 continue
             imgs = sorted([p for p in calib_path.iterdir() if p.suffix.lower() in IMAGE_EXTENSIONS])
             print(f"  [{side}/{group}] {len(imgs)} gambar...", end=" ", flush=True)
@@ -584,7 +585,7 @@ def main():
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(raw_rows)
-        print(f"\n  → calib_raw.csv: {len(raw_rows)} baris → {raw_csv_path}")
+        print(f"\n  â†’ calib_raw.csv: {len(raw_rows)} baris â†’ {raw_csv_path}")
 
     # Simpan CSV varian
     var_csv_path = OUTPUT_DIR / "calib_variants.csv"
@@ -594,7 +595,7 @@ def main():
             writer = csv.DictWriter(f, fieldnames=fieldnames_v)
             writer.writeheader()
             writer.writerows(variant_rows)
-        print(f"  → calib_variants.csv: {len(variant_rows)} baris → {var_csv_path}")
+        print(f"  â†’ calib_variants.csv: {len(variant_rows)} baris â†’ {var_csv_path}")
 
     # --- A2: Analisis ---
     print("\n[A2] Menghasilkan analisis...")
@@ -726,7 +727,7 @@ def main():
     recon_report = verify_reconstruction_identity(raw_rows)
     summary_lines.append(f"\n--- A2.7 Verifikasi Rekonstruksi ---\n  {recon_report}")
 
-    # Varian blur — berapa persen REJECT?
+    # Varian blur â€” berapa persen REJECT?
     summary_lines.append("\n--- A2.8 Dampak Blur pada Positif ---")
     for vname in ["blur_k5", "blur_k9", "blur_k21"]:
         vrows = [r for r in variant_rows if r["variant"] == vname]
@@ -746,7 +747,7 @@ def main():
     summary_path = OUTPUT_DIR / "calib_summary.txt"
     with open(summary_path, "w", encoding="utf-8") as f:
         f.write(summary_text)
-    print(f"  → calib_summary.txt → {summary_path}")
+    print(f"  â†’ calib_summary.txt â†’ {summary_path}")
 
     # Simpan summary CSV per kelompok
     summary_csv_path = OUTPUT_DIR / "calib_summary.csv"
@@ -773,7 +774,7 @@ def main():
             writer = csv.DictWriter(f, fieldnames=list(summary_csv_rows[0].keys()))
             writer.writeheader()
             writer.writerows(summary_csv_rows)
-        print(f"  → calib_summary.csv → {summary_csv_path}")
+        print(f"  â†’ calib_summary.csv â†’ {summary_csv_path}")
 
     # Print summary ke konsol
     print()
@@ -784,4 +785,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

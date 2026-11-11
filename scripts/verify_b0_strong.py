@@ -1,5 +1,5 @@
 """
-verify_b0_strong.py — Verifikasi Komparasi Lanjutan B0: Kode Sekarang vs Baseline HEAD
+verify_b0_strong.py â€” Verifikasi Komparasi Lanjutan B0: Kode Sekarang vs Baseline HEAD
 =====================================================================================
 Menguji minimal 2 citra per sumber (6 sumber = 12 citra) dari folder calib:
 - Dice score
@@ -22,6 +22,7 @@ from PIL import Image
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "Backend"))
 
 from ai.config.model_config import MODEL_CONFIG
 from ai.inference.gradcam import generate_gradcam
@@ -114,4 +115,5 @@ with open(csv_out, "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=list(results[0].keys()))
     writer.writeheader()
     writer.writerows(results)
-print(f"\n→ Hasil disimpan ke: {csv_out}")
+print(f"\nâ†’ Hasil disimpan ke: {csv_out}")
+

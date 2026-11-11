@@ -1,4 +1,4 @@
-"""Tests for backend/app/services/admin_service.py.
+"""Tests for Backend/src/services/admin_service.py.
 
 Covers the doctor registration flows used by the Admin Dashboard:
 - list_doctors, get_statistics, approve_doctor, reject_doctor, _get_user_email.
@@ -11,8 +11,8 @@ import pytest
 
 from postgrest.exceptions import APIError as PostgrestAPIError
 
-from app.services.admin_service import AdminService
-from app.core.errors import APIError
+from src.services.admin_service import AdminService
+from src.core.errors import APIError
 
 
 LIST_DOCTORS_SELECT = (

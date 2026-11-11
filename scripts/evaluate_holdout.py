@@ -1,4 +1,4 @@
-"""C4 Holdout Evaluation — RUN EXACTLY ONCE.
+"""C4 Holdout Evaluation â€” RUN EXACTLY ONCE.
 Evaluates the production ColonoscopyDomainValidator on the holdout partition.
 """
 import sys
@@ -8,6 +8,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "Backend"))
 
 from ai.inference.domain_validator import ColonoscopyDomainValidator, DomainDecision
 from PIL import Image
@@ -95,7 +96,7 @@ negatives_main = [r for r in results if r["split"] == "negative" and r["dataset"
 ileum = [r for r in results if r["dataset"] == "endoskopi_non_kolon"]
 
 print("\n" + "="*70)
-print("RINGKASAN HOLDOUT — POSITIF (citra kolonoskopi sesungguhnya)")
+print("RINGKASAN HOLDOUT â€” POSITIF (citra kolonoskopi sesungguhnya)")
 print("="*70)
 
 datasets = sorted(set(r["dataset"] for r in positives))
@@ -131,7 +132,7 @@ if total_pos > 0:
     print(f"  {'TOTAL':20s}  n={total_pos:3d}  ACCEPT={total_accept:3d}  UNC={total_unc:2d}  REJ={total_rej:2d}  FRR={frr_total*100:5.1f}% [{lo_t*100:4.1f}%-{hi_t*100:4.1f}%]")
 
 print("\n" + "="*70)
-print("RINGKASAN HOLDOUT — NEGATIF UTAMA (bukan kolonoskopi)")
+print("RINGKASAN HOLDOUT â€” NEGATIF UTAMA (bukan kolonoskopi)")
 print("="*70)
 
 neg_datasets = sorted(set(r["dataset"] for r in negatives_main))
@@ -165,7 +166,7 @@ if total_neg > 0:
 
 if ileum:
     print("\n" + "="*70)
-    print("RINGKASAN HOLDOUT — ILEUM / ENDOSKOPI NON-KOLON (kontrol terpisah)")
+    print("RINGKASAN HOLDOUT â€” ILEUM / ENDOSKOPI NON-KOLON (kontrol terpisah)")
     print("="*70)
     n = len(ileum)
     accept = sum(1 for r in ileum if r["decision"] == "ACCEPT")
@@ -188,4 +189,5 @@ print("="*70)
 for r in [x for x in negatives_main if x["decision"] == "ACCEPT"]:
     print(f"  [ACCEPT   ] {r['dataset']}/{r['filename']}")
     print(f"    mucosa={r['mucosal_ratio']:.3f} cool={r['cool_ratio']:.3f} chroma={r['mean_chroma']:.1f} lines={r['line_density']:.3f}")
+
 

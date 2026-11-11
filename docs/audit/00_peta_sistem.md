@@ -54,41 +54,41 @@ PIXEL-T adalah aplikasi web berbasis *deep learning* untuk segmentasi polip kolo
 
 ## 2.2 Inventaris Endpoint / API Route
 
-Seluruh *endpoint* API terdaftar di bawah prefiks `/api` melalui Blueprints di [`backend/app/routes/__init__.py:6-10`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/routes/__init__.py#L6-L10).
+Seluruh *endpoint* API terdaftar di bawah prefiks `/api` melalui Blueprints di [`Backend/src/routes/__init__.py:6-10`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/routes/__init__.py#L6-L10).
 
 | Method | Path | Handler (File:Baris) | Auth & Role | Status | Keterangan |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/api/health` | [`backend/app/routes/health.py:7`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/routes/health.py#L7) | Public (Tanpa Auth) | Aktif | Health check kesiapan server backend |
-| `POST` | `/api/analysis` | [`backend/app/routes/analysis.py:13`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/routes/analysis.py#L13) | Bearer Token, Dokter (`approved`) | Aktif | Unggah citra, validasi gerbang domain, simpan storage, antrekan job |
-| `GET` | `/api/analysis/<id>` | [`backend/app/routes/analysis.py:31`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/routes/analysis.py#L31) | Bearer Token, Dokter (`approved`) | Aktif | Polling status, progres %, metrik & signed URL artefak |
-| `GET` | `/api/history` | [`backend/app/routes/analysis.py:47`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/routes/analysis.py#L47) | Bearer Token, Dokter (`approved`) | Aktif | Daftar paginasi riwayat analisis milik user terautentikasi |
-| `DELETE` | `/api/history/<id>` | [`backend/app/routes/analysis.py:58`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/routes/analysis.py#L58) | Bearer Token, Dokter (`approved`) | Aktif | Hapus rekaman sesi analisis dan artefak storage terkait |
-| `GET` | `/api/admin/doctors` | [`backend/app/routes/admin.py:11`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/routes/admin.py#L11) | Bearer Token, Admin (`app_metadata.role='admin'`) | Aktif | Daftar seluruh pendaftaran dokter (filter status opsional) |
-| `GET` | `/api/admin/doctors/stats` | [`backend/app/routes/admin.py:18`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/routes/admin.py#L18) | Bearer Token, Admin (`app_metadata.role='admin'`) | Aktif | Statistik agregat pendaftaran dokter (total, pending, approved, rejected) |
-| `GET` | `/api/admin/doctors/<id>` | [`backend/app/routes/admin.py:25`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/routes/admin.py#L25) | Bearer Token, Admin (`app_metadata.role='admin'`) | Aktif | Detail profil dokter individual untuk verifikasi |
-| `POST` | `/api/admin/doctors/<id>/approve` | [`backend/app/routes/admin.py:32`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/routes/admin.py#L32) | Bearer Token, Admin (`app_metadata.role='admin'`) | Aktif | Persetujuan akun dokter pending oleh administrator |
-| `POST` | `/api/admin/doctors/<id>/reject` | [`backend/app/routes/admin.py:38`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/routes/admin.py#L38) | Bearer Token, Admin (`app_metadata.role='admin'`) | Aktif | Penolakan akun dokter pending disertai alasan penolakan |
+| `GET` | `/api/health` | [`Backend/src/routes/health.py:7`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/routes/health.py#L7) | Public (Tanpa Auth) | Aktif | Health check kesiapan server backend |
+| `POST` | `/api/analysis` | [`Backend/src/routes/analysis.py:13`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/routes/analysis.py#L13) | Bearer Token, Dokter (`approved`) | Aktif | Unggah citra, validasi gerbang domain, simpan storage, antrekan job |
+| `GET` | `/api/analysis/<id>` | [`Backend/src/routes/analysis.py:31`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/routes/analysis.py#L31) | Bearer Token, Dokter (`approved`) | Aktif | Polling status, progres %, metrik & signed URL artefak |
+| `GET` | `/api/history` | [`Backend/src/routes/analysis.py:47`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/routes/analysis.py#L47) | Bearer Token, Dokter (`approved`) | Aktif | Daftar paginasi riwayat analisis milik user terautentikasi |
+| `DELETE` | `/api/history/<id>` | [`Backend/src/routes/analysis.py:58`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/routes/analysis.py#L58) | Bearer Token, Dokter (`approved`) | Aktif | Hapus rekaman sesi analisis dan artefak storage terkait |
+| `GET` | `/api/admin/doctors` | [`Backend/src/routes/admin.py:11`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/routes/admin.py#L11) | Bearer Token, Admin (`app_metadata.role='admin'`) | Aktif | Daftar seluruh pendaftaran dokter (filter status opsional) |
+| `GET` | `/api/admin/doctors/stats` | [`Backend/src/routes/admin.py:18`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/routes/admin.py#L18) | Bearer Token, Admin (`app_metadata.role='admin'`) | Aktif | Statistik agregat pendaftaran dokter (total, pending, approved, rejected) |
+| `GET` | `/api/admin/doctors/<id>` | [`Backend/src/routes/admin.py:25`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/routes/admin.py#L25) | Bearer Token, Admin (`app_metadata.role='admin'`) | Aktif | Detail profil dokter individual untuk verifikasi |
+| `POST` | `/api/admin/doctors/<id>/approve` | [`Backend/src/routes/admin.py:32`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/routes/admin.py#L32) | Bearer Token, Admin (`app_metadata.role='admin'`) | Aktif | Persetujuan akun dokter pending oleh administrator |
+| `POST` | `/api/admin/doctors/<id>/reject` | [`Backend/src/routes/admin.py:38`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/routes/admin.py#L38) | Bearer Token, Admin (`app_metadata.role='admin'`) | Aktif | Penolakan akun dokter pending disertai alasan penolakan |
 
 ---
 
 ## 2.3 Halaman & Navigasi Frontend
 
-Konfigurasi rute frontend dikelola secara terpusat di [`frontend/src/routes/AppRoutes.tsx:20-112`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/routes/AppRoutes.tsx#L20-L112).
+Konfigurasi rute frontend dikelola secara terpusat di [`Frontend/src/routes/AppRoutes.tsx:20-112`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/routes/AppRoutes.tsx#L20-L112).
 
 | Path URL | Komponen (File:Baris) | Proteksi / Guard | Fitur Utama |
 | :--- | :--- | :--- | :--- |
 | `/` | `Navigate to="/login"` | Public | Pengalihan otomatis ke halaman Login |
-| `/login` | [`frontend/src/pages/auth/Login.tsx:18`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/pages/auth/Login.tsx#L18) | `PublicOnlyRoute` | Form Sign In dokter/admin, Remember Me, tautan lupa kata sandi |
-| `/register` | [`frontend/src/pages/auth/Register.tsx:18`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/pages/auth/Register.tsx#L18) | `PublicOnlyRoute` | Registrasi akun calon dokter (masuk status `pending`) |
-| `/reset-password` | [`frontend/src/pages/auth/ResetPassword.tsx:11`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/pages/auth/ResetPassword.tsx#L11) | Public | Form pembaruan kata sandi dari token pemulihan Supabase |
-| `/dashboard` | [`frontend/src/pages/dashboard/Dashboard.tsx:21`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/pages/dashboard/Dashboard.tsx#L21) | `ProtectedRoute` | Metrik ringkasan aktivitas dokter, tautan cepat, status akun |
-| `/analysis/new` | [`frontend/src/pages/analysis/NewAnalysis.tsx:32`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/pages/analysis/NewAnalysis.tsx#L32) | `ProtectedRoute` | Drag-and-drop unggah citra, validasi klien, penanganan error 400 domain gate |
-| `/analysis/:id` | [`frontend/src/pages/analysis/AnalysisResult.tsx:55`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/pages/analysis/AnalysisResult.tsx#L55) | `ProtectedRoute` | Tampilan hasil segmentasi, Grad-CAM, metrik polip, badge verifikasi pasca-segmentasi |
-| `/history` | [`frontend/src/pages/history/History.tsx:22`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/pages/history/History.tsx#L22) | `ProtectedRoute` | Tabel riwayat analisis dengan pencarian nama, filter status, filter tanggal, paginasi |
-| `/history/:id` | [`frontend/src/pages/history/HistoryDetail.tsx:18`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/pages/history/HistoryDetail.tsx#L18) | `ProtectedRoute` | Detail riwayat analisis statis |
-| `/profile` | [`frontend/src/pages/profile/DoctorProfile.tsx:16`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/pages/profile/DoctorProfile.tsx#L16) | `DoctorRoute` | Manajemen profil dokter (spesialisasi, lisensi, RS, bio, avatar) |
-| `/admin` | [`frontend/src/pages/admin/AdminDashboard.tsx:23`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/pages/admin/AdminDashboard.tsx#L23) | `AdminRoute` | Verifikasi pendaftaran dokter, persetujuan/penolakan registrasi |
-| `*` | [`frontend/src/pages/NotFound.tsx:8`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/pages/NotFound.tsx#L8) | Public | Tampilan 404 Not Found dengan tombol kembali |
+| `/login` | [`Frontend/src/pages/auth/Login.tsx:18`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/pages/auth/Login.tsx#L18) | `PublicOnlyRoute` | Form Sign In dokter/admin, Remember Me, tautan lupa kata sandi |
+| `/register` | [`Frontend/src/pages/auth/Register.tsx:18`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/pages/auth/Register.tsx#L18) | `PublicOnlyRoute` | Registrasi akun calon dokter (masuk status `pending`) |
+| `/reset-password` | [`Frontend/src/pages/auth/ResetPassword.tsx:11`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/pages/auth/ResetPassword.tsx#L11) | Public | Form pembaruan kata sandi dari token pemulihan Supabase |
+| `/dashboard` | [`Frontend/src/pages/dashboard/Dashboard.tsx:21`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/pages/dashboard/Dashboard.tsx#L21) | `ProtectedRoute` | Metrik ringkasan aktivitas dokter, tautan cepat, status akun |
+| `/analysis/new` | [`Frontend/src/pages/analysis/NewAnalysis.tsx:32`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/pages/analysis/NewAnalysis.tsx#L32) | `ProtectedRoute` | Drag-and-drop unggah citra, validasi klien, penanganan error 400 domain gate |
+| `/analysis/:id` | [`Frontend/src/pages/analysis/AnalysisResult.tsx:55`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/pages/analysis/AnalysisResult.tsx#L55) | `ProtectedRoute` | Tampilan hasil segmentasi, Grad-CAM, metrik polip, badge verifikasi pasca-segmentasi |
+| `/history` | [`Frontend/src/pages/history/History.tsx:22`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/pages/history/History.tsx#L22) | `ProtectedRoute` | Tabel riwayat analisis dengan pencarian nama, filter status, filter tanggal, paginasi |
+| `/history/:id` | [`Frontend/src/pages/history/HistoryDetail.tsx:18`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/pages/history/HistoryDetail.tsx#L18) | `ProtectedRoute` | Detail riwayat analisis statis |
+| `/profile` | [`Frontend/src/pages/profile/DoctorProfile.tsx:16`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/pages/profile/DoctorProfile.tsx#L16) | `DoctorRoute` | Manajemen profil dokter (spesialisasi, lisensi, RS, bio, avatar) |
+| `/admin` | [`Frontend/src/pages/admin/AdminDashboard.tsx:23`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/pages/admin/AdminDashboard.tsx#L23) | `AdminRoute` | Verifikasi pendaftaran dokter, persetujuan/penolakan registrasi |
+| `*` | [`Frontend/src/pages/NotFound.tsx:8`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/pages/NotFound.tsx#L8) | Public | Tampilan 404 Not Found dengan tombol kembali |
 
 ---
 
@@ -134,7 +134,7 @@ Dibuat pada migrasi [`004_create_doctor_profiles.sql`](file:///c:/Users/nevil/On
 
 ## 2.5 Alur Pipeline AI End-to-End
 
-Pipeline AI dieksekusi secara sinkron di dalam thread *background worker* melalui pemanggilan [`ai/inference/pipeline.py:102-180`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/ai/inference/pipeline.py#L102-L180).
+Pipeline AI dieksekusi secara sinkron di dalam thread *background worker* melalui pemanggilan [`Backend/ai/inference/pipeline.py:102-180`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/ai/inference/pipeline.py#L102-L180).
 
 ```
 [ Citra Asli (Bytes) ]
@@ -165,25 +165,25 @@ Pipeline AI dieksekusi secara sinkron di dalam thread *background worker* melalu
 ```
 
 Rincian file dan baris implementasi tiap tahap:
-1. **Tahap 1 (Validasi Domain):** [`ai/inference/domain_validator.py:91-305`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/ai/inference/domain_validator.py#L91-L305). Dieksekusi ganda: pertama di *service gate* [`backend/app/services/analysis_service.py:410-435`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/services/analysis_service.py#L410-L435), kedua di dalam pipeline [`ai/inference/pipeline.py:134-138`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/ai/inference/pipeline.py#L134-L138).
-2. **Tahap 2 (Preprocessing):** [`ai/inference/preprocessing.py:1-45`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/ai/inference/preprocessing.py#L1-L45).
-3. **Tahap 3 (Inferensi & TTA):** [`ai/inference/segmentation.py:1-120`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/ai/inference/segmentation.py#L1-L120).
-4. **Tahap 4 (Pasca-Pemrosesan Masker):** [`ai/inference/postprocessing.py:26-42`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/ai/inference/postprocessing.py#L26-L42).
-5. **Tahap 5 (Pengukuran & Validasi Pasca-Segmentasi):** [`ai/inference/postprocessing.py:52-126`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/ai/inference/postprocessing.py#L52-L126).
-6. **Tahap 6 (Grad-CAM):** [`ai/inference/gradcam.py:99-188`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/ai/inference/gradcam.py#L99-L188).
-7. **Tahap 7 (Komposisi & Penyimpanan):** [`ai/inference/pipeline.py:165-180`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/ai/inference/pipeline.py#L165-L180) dan [`backend/app/services/analysis_service.py:500-560`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/services/analysis_service.py#L500-L560).
+1. **Tahap 1 (Validasi Domain):** [`Backend/ai/inference/domain_validator.py:91-305`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/ai/inference/domain_validator.py#L91-L305). Dieksekusi ganda: pertama di *service gate* [`Backend/src/services/analysis_service.py:410-435`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/services/analysis_service.py#L410-L435), kedua di dalam pipeline [`Backend/ai/inference/pipeline.py:134-138`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/ai/inference/pipeline.py#L134-L138).
+2. **Tahap 2 (Preprocessing):** [`Backend/ai/inference/preprocessing.py:1-45`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/ai/inference/preprocessing.py#L1-L45).
+3. **Tahap 3 (Inferensi & TTA):** [`Backend/ai/inference/segmentation.py:1-120`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/ai/inference/segmentation.py#L1-L120).
+4. **Tahap 4 (Pasca-Pemrosesan Masker):** [`Backend/ai/inference/postprocessing.py:26-42`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/ai/inference/postprocessing.py#L26-L42).
+5. **Tahap 5 (Pengukuran & Validasi Pasca-Segmentasi):** [`Backend/ai/inference/postprocessing.py:52-126`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/ai/inference/postprocessing.py#L52-L126).
+6. **Tahap 6 (Grad-CAM):** [`Backend/ai/inference/gradcam.py:99-188`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/ai/inference/gradcam.py#L99-L188).
+7. **Tahap 7 (Komposisi & Penyimpanan):** [`Backend/ai/inference/pipeline.py:165-180`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/ai/inference/pipeline.py#L165-L180) dan [`Backend/src/services/analysis_service.py:500-560`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/services/analysis_service.py#L500-L560).
 
 ---
 
 ## 2.6 Alur Async Worker / Background Task
 
 Sistem pemrosesan latar belakang dirancang menggunakan *pure Python standard library* (tanpa Celery/Redis) untuk menjaga portabilitas deployment:
-- **Kelas:** `AnalysisJobQueue` di [`backend/app/services/analysis_service.py:151-269`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/services/analysis_service.py#L151-L269).
+- **Kelas:** `AnalysisJobQueue` di [`Backend/src/services/analysis_service.py:151-269`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/services/analysis_service.py#L151-L269).
 - **Mekanisme Antrean:** In-memory FIFO berbasis `collections.deque` dengan koordinasi *thread-safety* menggunakan `threading.Condition` dan `threading.Lock`.
 - **Kapasitas:** Dibatasi ketat dengan `MAX_WAITING = 3` (total kapasitas antrean 4 job: 1 aktif + 3 menunggu). Jika antrean penuh, endpoint `POST /api/analysis` mengembalikan status HTTP `429 Too Many Requests`.
 - **Worker Thread:** Satu thread daemon mandiri (`analysis-worker`) yang mengambil job satu per satu secara sekuensial.
-- **Progress Reporting:** Kelas `AnalysisProgressReporter` ([`analysis_service.py:65-149`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/services/analysis_service.py#L65-L149)) memperbarui kolom `progress_percent` dan `current_step` di database PostgreSQL dengan *write throttling* (maksimal tiap 5 forward pass TTA) agar tidak membebani basis data.
-- **Deteksi Job Macet (*Stale Detection*):** Waktu henti 15 menit (`STALE_THRESHOLD = timedelta(minutes=15)` di [`analysis_service.py:32`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/services/analysis_service.py#L32)). Jika job berstatus `processing` lebih dari 15 menit dan tidak sedang aktif di thread lokal, sistem menandainya sebagai berpotensi macet tanpa mengubah status DB secara destruktif.
+- **Progress Reporting:** Kelas `AnalysisProgressReporter` ([`analysis_service.py:65-149`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/services/analysis_service.py#L65-L149)) memperbarui kolom `progress_percent` dan `current_step` di database PostgreSQL dengan *write throttling* (maksimal tiap 5 forward pass TTA) agar tidak membebani basis data.
+- **Deteksi Job Macet (*Stale Detection*):** Waktu henti 15 menit (`STALE_THRESHOLD = timedelta(minutes=15)` di [`analysis_service.py:32`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/services/analysis_service.py#L32)). Jika job berstatus `processing` lebih dari 15 menit dan tidak sedang aktif di thread lokal, sistem menandainya sebagai berpotensi macet tanpa mengubah status DB secara destruktif.
 
 ---
 
@@ -208,13 +208,13 @@ Arsitektur validasi domain pada PIXEL-T terdiri dari tiga komponen yang saling t
 ```
 
 1. **Titik 1: Input Domain Gate**  
-   - **Lokasi Kode:** [`ai/inference/domain_validator.py`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/ai/inference/domain_validator.py) & [`backend/app/services/analysis_service.py:410-435`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/services/analysis_service.py#L410-L435).
+   - **Lokasi Kode:** [`Backend/ai/inference/domain_validator.py`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/ai/inference/domain_validator.py) & [`Backend/src/services/analysis_service.py:410-435`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/services/analysis_service.py#L410-L435).
    - **Fungsi:** Memfilter input non-kolonoskopi (makanan, lanskap, orang, tangkapan layar, organ medis lain).
    - **Keputusan:** Tiga status (`ACCEPT`, `REJECT`, `UNCERTAIN`).
    - **Perilaku:** Jika `REJECT`, mengembalikan error `NOT_COLONOSCOPY_IMAGE` (400). Jika `UNCERTAIN`, mengembalikan error `UNCERTAIN_COLONOSCOPY_IMAGE` (400). Citra yang tidak lolos tidak pernah disimpan ke Supabase Storage dan tidak membuat rekaman sesi analisis.
 
 2. **Titik 2: Post-Segmentation Validation**  
-   - **Lokasi Kode:** [`ai/inference/postprocessing.py:96-113`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/ai/inference/postprocessing.py#L96-L113).
+   - **Lokasi Kode:** [`Backend/ai/inference/postprocessing.py:96-113`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/ai/inference/postprocessing.py#L96-L113).
    - **Fungsi:** Mengevaluasi keyakinan statistik masker polip hasil inferensi U-Net.
    - **Kriteria Evaluasi:**
      1. Probabilitas puncak polip: `max_prob < 0.70`
@@ -223,7 +223,7 @@ Arsitektur validasi domain pada PIXEL-T terdiri dari tiga komponen yang saling t
    - **Keluaran:** Memberi kategori `LOW_CONFIDENCE` apabila salah satu kriteria terpenuhi, atau `POLYP_DETECTED` jika seluruh kriteria terlampaui.
 
 3. **Titik 3: Visual Warning Flag**  
-   - **Lokasi Kode:** [`frontend/src/pages/analysis/AnalysisResult.tsx:250-278`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/pages/analysis/AnalysisResult.tsx#L250-L278) dan serialisasi API di [`backend/app/services/analysis_service.py:637-653`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/services/analysis_service.py#L637-L653).
+   - **Lokasi Kode:** [`Frontend/src/pages/analysis/AnalysisResult.tsx:250-278`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/pages/analysis/AnalysisResult.tsx#L250-L278) dan serialisasi API di [`Backend/src/services/analysis_service.py:637-653`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/services/analysis_service.py#L637-L653).
    - **Fungsi:** Menampilkan indikator visual yang membedakan polip meyakinkan, polip marjinal, dan ketiadaan deteksi:
      - `POLYP_DETECTED`: Badge hijau `"Polyp Detected"`.
      - `LOW_CONFIDENCE`: Badge kuning `"Low Confidence"` disertai banner peringatan klinis: *"Model mendeteksi area polip dengan tingkat keyakinan rendah atau marjinal. Hasil segmentasi kurang meyakinkan dan memerlukan verifikasi serta peninjauan visual langsung oleh dokter spesialis."*
@@ -233,7 +233,7 @@ Arsitektur validasi domain pada PIXEL-T terdiri dari tiga komponen yang saling t
 
 ## 2.8 Ringkasan Environment Variable & Konfigurasi
 
-Daftar seluruh variabel lingkungan yang digunakan backend diatur pada [`backend/app/core/config.py:15-85`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/core/config.py#L15-L85):
+Daftar seluruh variabel lingkungan yang digunakan backend diatur pada [`Backend/src/core/config.py:15-85`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/core/config.py#L15-L85):
 
 | Variabel Lingkungan | Nilai Default | Wajib / Opsional | Keterangan |
 | :--- | :--- | :--- | :--- |

@@ -3,13 +3,13 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { LogoPixelT } from '@/components/brand/LogoPixelT';
+import { LogoPixelT } from '@/components/ui/LogoPixelT';
 import { OpeningAnimation } from '@/components/auth/OpeningAnimation';
 import { useOpeningAnimation } from '@/hooks/useOpeningAnimation';
-import { getRememberedEmail, setRememberedEmail, stageIndex } from '@/lib/openingTimeline';
-import { resetPasswordUser } from '@/services/auth';
+import { getRememberedEmail, setRememberedEmail, stageIndex } from '@/utils/openingTimeline';
+import { resetPasswordUser } from '@/utils/auth';
 import { AlertCircle, ArrowRight, Eye, EyeOff, Send, User, ShieldCheck, ChevronDown } from 'lucide-react';
-import '@/styles/opening.css';
+import '@/assets/opening.css';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

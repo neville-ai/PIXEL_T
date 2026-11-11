@@ -18,3 +18,6 @@ Pillow>=10.2.0
 # Testing & Quality
 pytest>=8.0.0
 pytest-mock>=3.12.0
+
+# LLM domain validation gate (Gemini) — imported by app/services/llm_image_validator.py
+google-genai>=3.0.0,<3.1.0

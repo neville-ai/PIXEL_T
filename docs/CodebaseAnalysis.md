@@ -49,7 +49,7 @@ PIXEL-T/
 │   ├── inference/gradcam.py        Grad-CAM kustom (hook forward/backward)
 │   ├── inference/pipeline.py       orkestrasi 5 fase produksi artefak PNG
 │   └── models/PIXEL-T_Scenario1_UNet_ResNet50_Ver22_best.pth  checkpoint (~129 MB, gitignored)
-├── backend/
+├── Backend/
 │   ├── run.py                   entry point (create_app + app.run)
 │   ├── requirements.txt         Flask, supabase, torch, smp, opencv, pytest
 │   └── app/
@@ -65,7 +65,7 @@ PIXEL-T/
 │       ├── services/storage_service.py         path ownership, upload/download/signed/delete
 │       └── repositories/analysis_repository.py CRUD `analyses` + validasi status
 ├── database/migrations/         001 tabel+bucket+RLS, 002 metadata AI, 003 progress, 004 profil dokter
-├── frontend/
+├── Frontend/
 │   ├── vite.config.ts, tsconfig.json, tailwind.config.js, postcss.config.js
 │   └── src/
 │       ├── main.tsx / App.tsx   bootstrap; AppShell di semua rute kecuali /login
@@ -93,18 +93,18 @@ PIXEL-T/
 
 | File | Peran |
 |---|---|
-| `backend/app/services/analysis_service.py` | Inti backend: validasi citra, kompensasi kegagalan, queue in-memory, progress reporter, eksekusi pipeline, persistensi hasil |
-| `backend/app/services/storage_service.py` | Satu-satunya jalur penulisan/penghapusan objek; menegakkan kepemilikan path |
-| `ai/inference/segmentation.py` | Definisi perilaku inferensi sebenarnya (TTA & threshold) |
-| `ai/config/model_config.py` | Sumber tunggal hyperparameter & checkpoint; `validate()` dijalankan saat import |
-| `frontend/src/services/analysis.ts` | Klien API tunggal (auth header, refresh 401 sekali, envelope error) |
-| `frontend/src/context/AuthContext.tsx` | Sumber kebenaran sesi di klien |
-| `frontend/src/pages/analysis/NewAnalysis.tsx` | Validasi klien + orkestrasi polling pasca-202 |
+| `Backend/src/services/analysis_service.py` | Inti backend: validasi citra, kompensasi kegagalan, queue in-memory, progress reporter, eksekusi pipeline, persistensi hasil |
+| `Backend/src/services/storage_service.py` | Satu-satunya jalur penulisan/penghapusan objek; menegakkan kepemilikan path |
+| `Backend/ai/inference/segmentation.py` | Definisi perilaku inferensi sebenarnya (TTA & threshold) |
+| `Backend/ai/config/model_config.py` | Sumber tunggal hyperparameter & checkpoint; `validate()` dijalankan saat import |
+| `Frontend/src/utils/analysis.ts` | Klien API tunggal (auth header, refresh 401 sekali, envelope error) |
+| `Frontend/src/context/AuthContext.tsx` | Sumber kebenaran sesi di klien |
+| `Frontend/src/pages/analysis/NewAnalysis.tsx` | Validasi klien + orkestrasi polling pasca-202 |
 
 ### Artefak yang tidak termasuk kode aplikasi
 
 - `backend_foreground.log`, `backend_foreground_err.log` — log runtime di root (gitignored).
-- `frontend/dist/`, `frontend/tsconfig.tsbuildinfo` — hasil build (gitignored).
+- `Frontend/dist/`, `Frontend/tsconfig.tsbuildinfo` — hasil build (gitignored).
 - `package.json` + `package-lock.json` di root hanya berisi `@supabase/ssr` dan `@supabase/supabase-js`; **tidak ada impor `@supabase/ssr`** di seluruh repo. Dependensi yatim.
 
 ---
@@ -137,7 +137,7 @@ Browser (React SPA)
 
 ### C.2 Backend
 
-- **Factory:** `create_app()` di `backend/app/__init__.py`; konfigurasi dari `get_config()` berbasis `APP_ENV`.
+- **Factory:** `create_app()` di `Backend/src/__init__.py`; konfigurasi dari `get_config()` berbasis `APP_ENV`.
 - **CORS:** hanya untuk `/api/*`, origin dari `CORS_ALLOWED_ORIGINS` (default `http://localhost:5173,http://127.0.0.1:5173`), `supports_credentials=True`.
 - **Autentikasi:** dekorator `require_auth` (`core/auth.py`) mem-parse header, memanggil `client.auth.get_user(token)` dengan klien **anon**, lalu menaruh `g.current_user` dan `request.user`.
 - **Error:** `APIError` + handler HTTP 400/401/403/404/405/413/500 + catch-all. Semua respons error memakai `{success:false, error:{code,message}}`; traceback tidak dibocorkan.
@@ -188,7 +188,7 @@ frontend pages → services → { lib/supabase, VITE_API_BASE_URL }
 frontend pages → context/AuthContext → services/auth
 ```
 
-Tidak ada siklus impor yang ditemukan. `ai` diimpor backend lewat `sys.path` root (backend dijalankan dari root atau `backend/`), sehingga **backend bergantung pada direktori kerja** saat start — lihat §K.
+Tidak ada siklus impor yang ditemukan. `ai` diimpor backend lewat `sys.path` root (backend dijalankan dari root atau `Backend/`), sehingga **backend bergantung pada direktori kerja** saat start — lihat §K.
 
 ---
 
@@ -243,11 +243,11 @@ Format tiap fitur: tujuan · aktor · prasyarat · bukti implementasi · alur ·
 
 ### E.7 Pemrosesan & segmentasi polip
 
-Lihat §G. Bukti: `ai/inference/segmentation.py:74-130`, `pipeline.py:88-140`.
+Lihat §G. Bukti: `Backend/ai/inference/segmentation.py:74-130`, `pipeline.py:88-140`.
 
 ### E.8 Grad-CAM
 
-- **Bukti:** `ai/inference/gradcam.py:96-200`; dipanggil `pipeline.py` fase `gradcam`.
+- **Bukti:** `Backend/ai/inference/gradcam.py:96-200`; dipanggil `pipeline.py` fase `gradcam`.
 - **Metode:** forward pass kanonik (tanpa TTA) pada tensor 512; hook pada `decoder.blocks.4.conv2.0`; objektif = rata-rata logit pada area mask (mask dari prediksi threshold atau `target_mask`); bobot = rata-rata gradien spasial; `relu(sum(w·A))`; normalisasi min–max; kolormap "jet" deterministik; overlay alpha 0,45.
 - **Mask kosong:** objektif `logits.sum()*0.0` → heatmap nol deterministik, bukan error.
 - **Kegagalan:** target layer hilang → `GRADCAM_TARGET_LAYER_ERROR`; gradien hilang → `GRADCAM_GRADIENT_ERROR`; keduanya **menggagalkan seluruh job** (bukan non-blocking).
@@ -305,7 +305,7 @@ Lihat §G. Bukti: `ai/inference/segmentation.py:74-130`, `pipeline.py:88-140`.
 
 - **Klien:** `ProtectedRoute` menunggu `loading`, lalu redirect ke `/login` dengan `state.from`. `PublicOnlyRoute` mencegah halaman auth diakses saat login.
 - **Server:** setiap endpoint analisis memakai `@require_auth`; `user_id` selalu diambil dari token, **tidak pernah** dari body/query.
-- **Kepemilikan data:** semua query repository memakai `.eq('user_id', user_id)`; record milik orang lain menghasilkan 404 (bukan 403) agar tidak membocorkan keberadaan data. Diuji di `tests/backend/test_analysis.py::test_cross_user_get_is_hidden_as_not_found` dan `test_history.py::test_delete_case_e_foreign_id_is_hidden_as_not_found`.
+- **Kepemilikan data:** semua query repository memakai `.eq('user_id', user_id)`; record milik orang lain menghasilkan 404 (bukan 403) agar tidak membocorkan keberadaan data. Diuji di `tests/Backend/test_analysis.py::test_cross_user_get_is_hidden_as_not_found` dan `test_history.py::test_delete_case_e_foreign_id_is_hidden_as_not_found`.
 - **Storage:** `validate_path_ownership` memastikan path 5 segmen, segmen[1] = user, kategori valid, nama file aman.
 
 ### E.17 Error handling, loading, polling, retry
@@ -389,7 +389,7 @@ Lihat §G. Bukti: `ai/inference/segmentation.py:74-130`, `pipeline.py:88-140`.
 | Training | `research/segmentationcolonpolyp-unet-resnet50-gradcam.ipynb` | 130 epoch, batch 16, LR 1e-4, encoder dibekukan sampai epoch 5, EMA 0,999, loss BCE 0,10 + Dice 0,40 + Tversky 0,35 (α=0,3; β=0,7; γ=0,75) + Lovasz 0,15, `pos_weight`≈15,87, AMP, gradient clipping 1,0 |
 | Dataset | Notebook Cell 3 | **4.178 citra, 6 sumber**: BKAI-IGH-NeoPolyp (1.000), CVC-ClinicDB (612), CVC-ColonDB (380), ETIS-LaribPolypDB (196), Kvasir (1.000), HyperKvasir Polyp (990) — **semua citra berisi polip** ("tanpa citra normal") |
 | Evaluasi | `research/PIXEL-T_Scenario1_Ver22_evaluation_results.csv` | Best epoch 83; Dice validasi (EMA) 0,9507; threshold terpilih 0,55; **Test Dice 0,9510; Test IoU 0,9136; Accuracy 0,9918; Precision 0,9568; Recall 0,9685; HD95 12,9049** (TTA + postproc) |
-| Inferensi web | `ai/inference/*`, `ai/config/model_config.py` | Hyperparameter sama dengan config Ver.22 (kecuali `tta_enabled` tidak dibaca — §K) |
+| Inferensi web | `Backend/ai/inference/*`, `Backend/ai/config/model_config.py` | Hyperparameter sama dengan config Ver.22 (kecuali `tta_enabled` tidak dibaca — §K) |
 
 **Implikasi dataset tanpa citra normal (penting untuk BAB IV/pembahasan):** model tidak pernah belajar konsep "tidak ada polip". Status `not_detected` hanya muncul bila seluruh probabilitas < 0,55, bukan karena model mengenali kelas negatif. Karena itu, klaim performa pada citra tanpa polip tidak didukung evaluasi yang ada, dan risiko *false positive* pada citra normal belum terukur. Ini juga menjelaskan mengapa `Precision ≈ 0,9568` hanya berlaku pada distribusi data uji yang seluruhnya berpolip.
 
@@ -607,13 +607,13 @@ Dokumentasi juga menyebut `POST /api/analysis` dapat mengembalikan 413; kode mem
 
 | Topik | Lokasi |
 |---|---|
-| Factory & CORS | `backend/app/__init__.py` |
-| Konfigurasi | `backend/app/core/config.py` |
-| Middleware auth | `backend/app/core/auth.py::require_auth` |
-| Envelope error | `backend/app/core/errors.py` |
-| Klien Supabase | `backend/app/core/supabase.py` |
-| Endpoint | `backend/app/routes/analysis.py`, `routes/health.py` |
-| Controller | `backend/app/controllers/analysis_controller.py` |
+| Factory & CORS | `Backend/src/__init__.py` |
+| Konfigurasi | `Backend/src/core/config.py` |
+| Middleware auth | `Backend/src/core/auth.py::require_auth` |
+| Envelope error | `Backend/src/core/errors.py` |
+| Klien Supabase | `Backend/src/core/supabase.py` |
+| Endpoint | `Backend/src/routes/analysis.py`, `routes/health.py` |
+| Controller | `Backend/src/controllers/analysis_controller.py` |
 | Validasi citra | `analysis_service.py::validate_and_decode_image` |
 | Kompensasi & queue | `analysis_service.py::create_analysis`, `AnalysisJobQueue` |
 | Progress | `analysis_service.py::AnalysisProgressReporter` |
@@ -621,25 +621,25 @@ Dokumentasi juga menyebut `POST /api/analysis` dapat mengembalikan 413; kode mem
 | Baca detail | `analysis_service.py::get_analysis` |
 | Riwayat (limit 20) | `analysis_service.py::list_user_analyses`, `analysis_repository.py::list_by_user` |
 | Hapus | `analysis_service.py::delete_analysis` |
-| Path & signed URL | `backend/app/services/storage_service.py` |
-| CRUD & validasi status | `backend/app/repositories/analysis_repository.py` |
-| Konfigurasi model | `ai/config/model_config.py` |
-| Loader & device | `ai/inference/model_service.py` |
-| Preprocessing | `ai/inference/preprocessing.py::prepare_image` |
-| TTA & threshold | `ai/inference/segmentation.py::predict`, `_predict_scale`, `count_forward_passes` |
-| Postprocessing & metrik | `ai/inference/postprocessing.py` |
-| Grad-CAM | `ai/inference/gradcam.py::generate_gradcam` |
-| Orkestrasi 5 fase | `ai/inference/pipeline.py::run_pipeline` |
+| Path & signed URL | `Backend/src/services/storage_service.py` |
+| CRUD & validasi status | `Backend/src/repositories/analysis_repository.py` |
+| Konfigurasi model | `Backend/ai/config/model_config.py` |
+| Loader & device | `Backend/ai/inference/model_service.py` |
+| Preprocessing | `Backend/ai/inference/preprocessing.py::prepare_image` |
+| TTA & threshold | `Backend/ai/inference/segmentation.py::predict`, `_predict_scale`, `count_forward_passes` |
+| Postprocessing & metrik | `Backend/ai/inference/postprocessing.py` |
+| Grad-CAM | `Backend/ai/inference/gradcam.py::generate_gradcam` |
+| Orkestrasi 5 fase | `Backend/ai/inference/pipeline.py::run_pipeline` |
 | Skema & RLS | `database/migrations/001…004` |
-| Klien API | `frontend/src/services/analysis.ts` |
-| Auth klien | `frontend/src/services/auth.ts`, `context/AuthContext.tsx` |
-| Profil | `frontend/src/services/profile.ts`, `pages/profile/DoctorProfile.tsx` |
-| Validasi + polling unggah | `frontend/src/pages/analysis/NewAnalysis.tsx` |
-| Hasil + polling 12× | `frontend/src/pages/analysis/AnalysisResult.tsx` |
-| Riwayat & hapus | `frontend/src/pages/history/History.tsx` |
-| Sign out | `frontend/src/components/layout/AppShell.tsx` |
-| Rute | `frontend/src/routes/AppRoutes.tsx`, `components/auth/ProtectedRoute.tsx`, `PublicOnlyRoute.tsx` |
-| Remember email | `frontend/src/lib/openingTimeline.ts` |
+| Klien API | `Frontend/src/utils/analysis.ts` |
+| Auth klien | `Frontend/src/utils/auth.ts`, `context/AuthContext.tsx` |
+| Profil | `Frontend/src/utils/profile.ts`, `pages/profile/DoctorProfile.tsx` |
+| Validasi + polling unggah | `Frontend/src/pages/analysis/NewAnalysis.tsx` |
+| Hasil + polling 12× | `Frontend/src/pages/analysis/AnalysisResult.tsx` |
+| Riwayat & hapus | `Frontend/src/pages/history/History.tsx` |
+| Sign out | `Frontend/src/components/layout/AppShell.tsx` |
+| Rute | `Frontend/src/routes/AppRoutes.tsx`, `components/auth/ProtectedRoute.tsx`, `PublicOnlyRoute.tsx` |
+| Remember email | `Frontend/src/lib/openingTimeline.ts` |
 | Metrik model | `research/PIXEL-T_Scenario1_Ver22_evaluation_results.csv`, `…_config.json` |
 | Dataset & training | `research/segmentationcolonpolyp-unet-resnet50-gradcam.ipynb` (Cell 3) |
 
@@ -652,5 +652,5 @@ Dokumentasi juga menyebut `POST /api/analysis` dapat mengembalikan 413; kode mem
 3. **Perkuat integritas data:** cabut INSERT/UPDATE/DELETE langsung pada `analyses` untuk peran `authenticated` (biarkan backend dengan service role yang menulis), dan jaga `is_verified` agar tidak dapat diubah klien.
 4. **Selaraskan dokumentasi:** perbarui `APIContract.md` agar tidak mencantumkan `/api/auth/*`, atau implementasikan endpoint tersebut bila memang diinginkan.
 5. **Lengkapi flow reset password** (halaman `updateUser({password})` + penanganan token recovery) atau nyatakan sebagai batasan sistem pada skripsi.
-6. **Jalankan test backend/AI** di lingkungan yang mengizinkan DLL PyTorch (mis. WSL/Linux) agar klaim pengujian lengkap.
+6. **Jalankan test Backend/AI** di lingkungan yang mengizinkan DLL PyTorch (mis. WSL/Linux) agar klaim pengujian lengkap.
 7. **Untuk BAB IV:** gunakan `docs/diagrams/*.puml` yang sudah ada; perbaiki dua hal yang telah dikoreksi — Grad-CAM bersifat *blocking*, dan History memiliki fitur hapus.

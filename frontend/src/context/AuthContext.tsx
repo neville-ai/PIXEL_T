@@ -9,7 +9,7 @@ import {
   fetchUserProfileStatus,
   getAdminRoleFromAppMetadata,
   isRoleMatch,
-} from '@/services/auth';
+} from '@/utils/auth';
 
 /** Versioned sessionStorage key for one-time startup session reset per tab session. */
 const STARTUP_RESET_KEY = 'pixel-t-startup-reset-v1';

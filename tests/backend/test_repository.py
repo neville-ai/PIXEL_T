@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock
-from app.repositories.analysis_repository import AnalysisRepository
+from src.repositories.analysis_repository import AnalysisRepository
 
 
 @pytest.fixture

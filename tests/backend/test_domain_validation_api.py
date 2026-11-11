@@ -18,12 +18,12 @@ from PIL import Image
 from unittest.mock import MagicMock
 from types import SimpleNamespace
 
-from app import create_app
-from app.core.config import TestingConfig
-from app.services.analysis_service import AnalysisService
-from app.services.storage_service import StorageService
-import app.routes.analysis as analysis_routes
-import app.core.auth as auth_module
+from src import create_app
+from src.config.settings import TestingConfig
+from src.services.analysis_service import AnalysisService
+from src.services.storage_service import StorageService
+import src.routes.analysis as analysis_routes
+import src.core.auth as auth_module
 
 
 class FakeRepository:

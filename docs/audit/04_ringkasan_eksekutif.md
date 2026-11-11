@@ -35,10 +35,10 @@
 | Prioritas | Kategori | Deskripsi Isu | Lokasi Berkas / Bab | Rekomendasi Tindakan |
 | :---: | :---: | :--- | :--- | :--- |
 | **TINGGI** | **Revisi Skripsi** | Narasi naskah menyebutkan dua model paralel (U-Net untuk segmentasi dan ResNet-50 untuk klasifikasi/Grad-CAM). | Bab II, Bab IV, Bab V, `SPESIFIKASI_TUJUH_USE_CASE_PIXELT.md` | Revisi narasi menjadi satu model terpadu U-Net ber-backbone encoder ResNet-50 + scSE decoder attention. |
-| **TINGGI** | **Perbaikan Kode** | Algoritma $G5_{warm}$ baseline salah menolak citra kolonoskopi HD valid akibat artefak resolusi. | `ai/inference/domain_validator.py:175-239` | Terapkan perubahan **Kandidat 2** (skala normalisasi 256 + ambang 12.0 + G4 edukatif) pada Fase C. |
+| **TINGGI** | **Perbaikan Kode** | Algoritma $G5_{warm}$ baseline salah menolak citra kolonoskopi HD valid akibat artefak resolusi. | `Backend/ai/inference/domain_validator.py:175-239` | Terapkan perubahan **Kandidat 2** (skala normalisasi 256 + ambang 12.0 + G4 edukatif) pada Fase C. |
 | **TINGGI** | **Revisi Skripsi** | Diagram Use Case awal (7 use case) belum mencerminkan pemisahan hak akses peran Admin dan Dokter. | Bab IV (Use Case Diagram & Spesifikasi) | Adopsi diagram 14 use case hasil audit (`USE_CASE_DIAGRAM_PIXELT_AUDIT_REVISED`) yang memisahkan peran dokter dan admin. |
 | **SEDANG** | **Revisi Skripsi** | Naskah belum merinci mekanisme Test-Time Augmentation (TTA) secara matematis. | Bab IV & Bab V | Tambahkan dokumentasi bahwa inferensi menjalankan 25 forward passes (5 skala $\times$ 5 orientasi) untuk kestabilan tepi polip. |
-| **SEDANG** | **Perbaikan Kode** | Batas ukuran file 10 MB mengembalikan kode HTTP 400 bukannya semantik RFC 413 Payload Too Large. | `backend/app/services/analysis_service.py:345` & `frontend/src/pages/analysis/NewAnalysis.tsx:255` | Sinkronkan kontrak HTTP ke status 413 pada backend, penanganan error frontend, dan test suite. |
+| **SEDANG** | **Perbaikan Kode** | Batas ukuran file 10 MB mengembalikan kode HTTP 400 bukannya semantik RFC 413 Payload Too Large. | `Backend/src/services/analysis_service.py:345` & `Frontend/src/pages/analysis/NewAnalysis.tsx:255` | Sinkronkan kontrak HTTP ke status 413 pada backend, penanganan error frontend, dan test suite. |
 | **SEDANG** | **Revisi Skripsi** | Class diagram Bab IV memuat controller yang diimplementasikan langsung via Supabase RLS. | Bab IV (Class Diagram) | Jelaskan adopsi arsitektur hybrid BaaS (Supabase RLS untuk profil, Flask untuk pipeline AI berat). |
 | **RENDAH** | **Konfigurasi** | Berkas residual `"python check_calib.py"` berada di root repositori. | Root directory | Pertahankan berkas selama masa audit; bersihkan hanya jika ada instruksi tertulis khusus git clean. |
 
@@ -89,8 +89,8 @@
 
 Urutan langkah implementasi teknis Fase C yang direkomendasikan:
 1. **Langkah 1:** Pengguna memberikan persetujuan tertulis untuk mengadopsi **Kandidat 2**.
-2. **Langkah 2:** Memperbarui berkas `ai/inference/domain_validator.py` untuk mengintegrasikan normalisasi skala 256, ambang $G5_{warm} = 12.0$, dan perlakuan $G4$ UNCERTAIN edukatif.
-3. **Langkah 3:** Menjalankan `tests/ai/test_model_integration.py` dan `tests/backend/test_analysis.py` untuk memastikan seluruh tes unit dan integrasi lulus 100%.
+2. **Langkah 2:** Memperbarui berkas `Backend/ai/inference/domain_validator.py` untuk mengintegrasikan normalisasi skala 256, ambang $G5_{warm} = 12.0$, dan perlakuan $G4$ UNCERTAIN edukatif.
+3. **Langkah 3:** Menjalankan `tests/ai/test_model_integration.py` dan `tests/Backend/test_analysis.py` untuk memastikan seluruh tes unit dan integrasi lulus 100%.
 4. **Langkah 4:** Membuka dan mengevaluasi subfolder `holdout` pada `calibration_data` sebagai pengujian akhir *out-of-sample generalization*.
 5. **Langkah 5:** Melakukan kompilasi laporan akhir Fase C.
 
@@ -101,17 +101,17 @@ Urutan langkah implementasi teknis Fase C yang direkomendasikan:
 Audit ditutup dengan verifikasi independen hash kriptografis SHA-256 seluruh berkas produksi terhadap baseline awal:
 
 ```
-ai/inference/pipeline.py:                      07e776fb0779760fa764c54b6535c407edc5d07c44c92f14c6c19fa44e4c0ca4 (IDENTIK)
-ai/inference/postprocessing.py:                9d5f965fed2b6f87d91b76b48ca427785f1224b5e533731a49af053952ac9cf1 (IDENTIK)
-backend/app/core/config.py:                    5be1031f727d4f5b729639f0e2ca2298a172c23ce14c07d748f6c084a55def3a (IDENTIK)
-backend/app/services/analysis_service.py:       e8037b2641be4e3add0add797c81a2b98d715227118dbf48a22262db3d68e861 (IDENTIK)
-frontend/src/pages/analysis/AnalysisResult.tsx: d153369c05bbc6fb12d214fad6a566ec28424730e5ab6186c7e08e235c0bf3e8 (IDENTIK)
-frontend/src/pages/analysis/NewAnalysis.tsx:    7e1c035c5640070966cb84e04d2cf78092410dc6596f7f62bc091f2927a582b0 (IDENTIK)
-frontend/src/services/analysis.ts:             9ee6f0e5b6a4b363f94ac48442845d82877d84d2dd03808e3639680d35f33dbf (IDENTIK)
+Backend/ai/inference/pipeline.py:                      07e776fb0779760fa764c54b6535c407edc5d07c44c92f14c6c19fa44e4c0ca4 (IDENTIK)
+Backend/ai/inference/postprocessing.py:                9d5f965fed2b6f87d91b76b48ca427785f1224b5e533731a49af053952ac9cf1 (IDENTIK)
+Backend/src/core/config.py:                    5be1031f727d4f5b729639f0e2ca2298a172c23ce14c07d748f6c084a55def3a (IDENTIK)
+Backend/src/services/analysis_service.py:       e8037b2641be4e3add0add797c81a2b98d715227118dbf48a22262db3d68e861 (IDENTIK)
+Frontend/src/pages/analysis/AnalysisResult.tsx: d153369c05bbc6fb12d214fad6a566ec28424730e5ab6186c7e08e235c0bf3e8 (IDENTIK)
+Frontend/src/pages/analysis/NewAnalysis.tsx:    7e1c035c5640070966cb84e04d2cf78092410dc6596f7f62bc091f2927a582b0 (IDENTIK)
+Frontend/src/utils/analysis.ts:             9ee6f0e5b6a4b363f94ac48442845d82877d84d2dd03808e3639680d35f33dbf (IDENTIK)
 tests/ai/test_model_integration.py:            56d226fff12ac34998be90f73c4fe37e0f36543c934bb66d7fbf1ca5666755c5 (IDENTIK)
-tests/backend/test_analysis.py:                 e79fec87cf4858888432c5f6ead7ec7da6c24100dbb7dcb92ab72874ad113818 (IDENTIK)
+tests/Backend/test_analysis.py:                 e79fec87cf4858888432c5f6ead7ec7da6c24100dbb7dcb92ab72874ad113818 (IDENTIK)
 tests/conftest.py:                             e2fd03e02b9920fc002da07ba85fea4fca1bab876e642e22b9be13d002235b8c (IDENTIK)
-ai/inference/domain_validator.py:              c6caca64d4f7166afd85af82f9f8ea5022ef8639c1aeda578ae1e778f2d03b47 (IDENTIK)
+Backend/ai/inference/domain_validator.py:              c6caca64d4f7166afd85af82f9f8ea5022ef8639c1aeda578ae1e778f2d03b47 (IDENTIK)
 
 STATUS INTEGRITAS KODE PRODUKSI: 100% IDENTIK DAN BERSIH (ZERO MUTATION)
 ```

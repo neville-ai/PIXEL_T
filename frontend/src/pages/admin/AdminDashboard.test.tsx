@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { AdminDashboard } from './AdminDashboard';
+import { AdminDashboard } from './index';
 import { useAuth } from '@/context/AuthContext';
 
 vi.mock('@/context/AuthContext', () => ({

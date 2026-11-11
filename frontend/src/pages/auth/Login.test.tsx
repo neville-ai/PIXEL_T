@@ -3,18 +3,18 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, type InitialEntry } from 'react-router-dom';
 import { Login } from './Login';
 import { useAuth } from '@/context/AuthContext';
-import { resetPasswordUser } from '@/services/auth';
+import { resetPasswordUser } from '@/utils/auth';
 import {
   noteOpeningUnmount,
   OPENING_SESSION_STORAGE_KEY,
   REMEMBERED_EMAIL_STORAGE_KEY,
-} from '@/lib/openingTimeline';
+} from '@/utils/openingTimeline';
 
 vi.mock('@/context/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock('@/services/auth', () => ({
+vi.mock('@/utils/auth', () => ({
   resetPasswordUser: vi.fn(),
 }));
 

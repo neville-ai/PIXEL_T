@@ -7,12 +7,12 @@ from unittest.mock import MagicMock
 import pytest
 from PIL import Image
 
-from app import create_app
-from app.core.config import TestingConfig
-from app.services.analysis_service import AnalysisService
-from app.services.storage_service import StorageService
-import app.routes.analysis as analysis_routes
-import app.core.auth as auth_module
+from src import create_app
+from src.config.settings import TestingConfig
+from src.services.analysis_service import AnalysisService
+from src.services.storage_service import StorageService
+import src.routes.analysis as analysis_routes
+import src.core.auth as auth_module
 
 
 class FakeRepository:
@@ -856,8 +856,8 @@ def test_pipeline_failure_preserves_last_progress_and_failed_status(
 def test_execute_pipeline_early_failure_does_not_raise_unbound_local_error(
     analysis_dependencies, monkeypatch
 ):
-    import app.services.analysis_service as analysis_service_mod
-    from app.core.errors import APIError
+    import src.services.analysis_service as analysis_service_mod
+    from src.core.errors import APIError
 
     repository, _storage, service = analysis_dependencies
 
@@ -883,7 +883,7 @@ def test_execute_pipeline_failed_status_update_error_is_logged(
     analysis_dependencies, caplog
 ):
     import logging
-    from app.core.errors import APIError
+    from src.core.errors import APIError
 
     repository, _storage, service = analysis_dependencies
 

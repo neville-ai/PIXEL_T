@@ -3,8 +3,8 @@ import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Modal } from '@/components/ui/Modal';
-import { LogoPixelT } from '@/components/brand/LogoPixelT';
-import { getDisplayName, getUserInitials } from '@/lib/format';
+import { LogoPixelT } from '@/components/ui/LogoPixelT';
+import { getDisplayName, getUserInitials } from '@/utils/format';
 import {
   PlusCircle,
   History as HistoryIcon,

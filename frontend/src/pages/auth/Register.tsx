@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Ca
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { AlertCircle, ArrowRight, CheckCircle2, Mail, ShieldCheck, Eye, EyeOff } from 'lucide-react';
-import doctorIcon from '@/assets/icon-doctor.png';
+import doctorIcon from '@/assets/images/icon-doctor.png';
 
 interface RegistrationSuccess {
   message: string;

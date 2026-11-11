@@ -4,8 +4,8 @@ import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import '@/styles/opening.css';
+import { supabase } from '@/utils/supabase';
+import '@/assets/opening.css';
 
 export const ResetPassword: React.FC = () => {
   const { signOut } = useAuth();

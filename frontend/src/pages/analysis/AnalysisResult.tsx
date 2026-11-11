@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Activity, AlertCircle, ArrowLeft, History as HistoryIcon, ImageOff, Loader2 } from 'lucide-react';
-import { getAnalysis, type AnalysisDetail, type AnalysisStatus } from '@/services/analysis';
+import { getAnalysis, type AnalysisDetail, type AnalysisStatus } from '@/utils/analysis';
 
 const POLL_INTERVAL_MS = 5000;
 const MAX_POLL_ATTEMPTS = 12;

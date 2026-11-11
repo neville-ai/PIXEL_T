@@ -1,5 +1,5 @@
 """
-experiment_domain_gate.py — Fase B Eksperimen Gerbang Validasi Kolonoskopi
+experiment_domain_gate.py â€” Fase B Eksperimen Gerbang Validasi Kolonoskopi
 ===========================================================================
 Membaca HANYA subfolder "calib" dari calibration_data/{positive,negative}/<kelompok>/calib/
 Subfolder "holdout" DILARANG dibaca / dibuka / dijalankan.
@@ -36,6 +36,7 @@ warnings.filterwarnings("ignore")
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "Backend"))
 
 from ai.config.model_config import MODEL_CONFIG
 from ai.inference.domain_validator import ColonoscopyDomainValidator, DomainDecision
@@ -133,7 +134,7 @@ def run_b0_regression_experiment() -> List[Dict[str, Any]]:
         writer = csv.DictWriter(f, fieldnames=list(results[0].keys()))
         writer.writeheader()
         writer.writerows(results)
-    print(f"  → Disimpan ke: {csv_path}")
+    print(f"  â†’ Disimpan ke: {csv_path}")
     return results
 
 # ---------------------------------------------------------------------------
@@ -258,7 +259,7 @@ def run_b1_g5_analysis() -> Dict[str, Any]:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         writer.writeheader()
         writer.writerows(rows)
-    print(f"  → Data detail disimpan ke: {csv_path}")
+    print(f"  â†’ Data detail disimpan ke: {csv_path}")
 
     # Cek khusus 7 citra BKAI/HyperKvasir yang sebelumnya ditolak G5b
     print("\n  Periksa 7 Citra Positif yang Sebelumnya Ditolak G5b:")
@@ -342,7 +343,7 @@ def run_b2_special_images_analysis():
         writer = csv.DictWriter(f, fieldnames=list(grayscale_eval[0].keys()))
         writer.writeheader()
         writer.writerows(grayscale_eval)
-    print(f"  → Evaluasi grayscale disimpan ke: {csv_path}")
+    print(f"  â†’ Evaluasi grayscale disimpan ke: {csv_path}")
 
     # 3. Analisis Jaringan Merah Muda Halus
     fine_pink_samples = [
@@ -641,7 +642,7 @@ def run_b4_comparison() -> List[Dict[str, Any]]:
         writer = csv.DictWriter(f, fieldnames=list(csv_rows[0].keys()))
         writer.writeheader()
         writer.writerows(csv_rows)
-    print(f"\n  → Ringkasan kandidat disimpan ke: {csv_path}")
+    print(f"\n  â†’ Ringkasan kandidat disimpan ke: {csv_path}")
 
     return summary_results
 
@@ -650,7 +651,7 @@ def run_b4_comparison() -> List[Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     print("="*70)
-    print("EXPERIMENT DOMAIN GATE — FASE B (READ-ONLY CALIB DATA)")
+    print("EXPERIMENT DOMAIN GATE â€” FASE B (READ-ONLY CALIB DATA)")
     print("="*70)
 
     # B0.2
@@ -668,3 +669,4 @@ if __name__ == "__main__":
     print("\n" + "="*70)
     print("SEMUA EKSPERIMEN FASE B SELESAI DENGAN SUKSES!")
     print("="*70)
+

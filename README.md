@@ -31,7 +31,7 @@ PIXEL-T/
 │   ├── APIContract.md
 │   └── DataModelSpecification.md
 │
-├── frontend/
+├── Frontend/
 │   ├── package.json
 │   ├── vite.config.ts
 │   ├── tsconfig.json
@@ -55,9 +55,9 @@ PIXEL-T/
 │       ├── App.tsx
 │       └── main.tsx
 │
-├── backend/
+├── Backend/
 │   ├── requirements.txt
-│   ├── app/
+│   ├── src/
 │   │   ├── __init__.py
 │   │   ├── routes/
 │   │   ├── controllers/
@@ -67,9 +67,9 @@ PIXEL-T/
 │   │   ├── models/
 │   │   ├── core/
 │   │   └── utils/
-│   └── run.py
+│   └── src/main.py
 │
-├── ai/
+│   ├── ai/
 │   ├── inference/
 │   ├── config/
 │   ├── models/
@@ -82,8 +82,8 @@ PIXEL-T/
 │   └── README.md
 │
 ├── tests/
-│   ├── frontend/
-│   ├── backend/
+│   ├── Frontend/
+│   ├── Backend/
 │   └── ai/
 │
 └── scripts/
@@ -91,8 +91,47 @@ PIXEL-T/
     └── deployment/
 ```
 
-## 5. Project Status
+## 5. Prasyarat
+- **Python 3.11** (backend & AI module)
+- **Node.js 18+** (frontend)
+- **Git**
+- Akun **Supabase** (Auth, Postgres, Storage) — proyek Supabase aktif
+
+## 6. Instalasi & Menjalankan (2 Terminal)
+
+### Terminal 1 — Backend (port 5000)
+```bash
+cd Backend
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate     # Linux/macOS
+pip install -r requirements.txt
+
+cp .env.example .env            # lalu isi nilai sesungguhnya
+python src/main.py
+```
+
+Backend dapat diakses pada `http://localhost:5000` (health check: `GET /api/health`).
+
+### Terminal 2 — Frontend (port 5173)
+```bash
+cd Frontend
+npm install
+cp .env.example .env            # lalu isi nilai sesungguhnya
+npm run dev
+```
+
+Frontend dapat diakses pada `http://localhost:5173`.
+
+> **Catatan:** Model checkpoint berada di `Backend/ai/models/PIXEL-T_Scenario1_UNet_ResNet50_Ver22_best.pth` dan tidak ikut ter-clone (di-`gitignore`). Salin file checkpoint lokal sebelum menjalankan inferensi.
+
+## 7. Arsitektur (3 Pilar)
+1. **Frontend (React + Vite + Tailwind):** UI aplikasi, autentikasi Supabase Auth, polling status analisis, tampilan hasil (mask, overlay, Grad-CAM).
+2. **Backend (Flask):** REST API (`/api/analysis`, `/api/history`, `/api/admin/*`), validasi gambar, gerbang Domain Validation (heuristik + LLM Gemini fail-closed), penanganan storage/DB Supabase, worker background inferensi.
+3. **AI Module (PyTorch):** pipeline inferensi U-Net + ResNet50 (TTA 5×5, threshold 0.55, postprocessing) + Grad-CAM + Domain Validation heuristik.
+
+## 8. Project Status
 - **Status:** Foundation / implementation in progress (Task 01).
 
-## 6. Medical Disclaimer
+## 9. Medical Disclaimer
 > **Hasil yang ditampilkan merupakan keluaran analisis model AI dan ditujukan sebagai informasi pendukung bagi tenaga medis. Hasil ini tidak dimaksudkan sebagai diagnosis medis atau pengganti penilaian profesional tenaga medis.**

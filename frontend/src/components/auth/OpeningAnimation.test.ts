@@ -9,7 +9,7 @@
  * box away from the official ink silhouette.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
-import { OPENING_STAGE_START_MS } from '@/lib/openingTimeline';
+import { OPENING_STAGE_START_MS } from '@/utils/openingTimeline';
 
 type OpeningModule = typeof import('@/components/auth/OpeningAnimation');
 

@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
-import * as authService from '@/services/auth';
+import * as authService from '@/utils/auth';
 import type { User, Session } from '@supabase/supabase-js';
 
-vi.mock('@/services/auth', () => ({
+vi.mock('@/utils/auth', () => ({
   loginUser: vi.fn(),
   registerUser: vi.fn(),
   logoutUser: vi.fn(),

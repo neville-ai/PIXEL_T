@@ -5,8 +5,8 @@ import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAuth } from '@/context/AuthContext';
-import { OPENING_SESSION_STORAGE_KEY } from '@/lib/openingTimeline';
-import { listHistory } from '@/services/analysis';
+import { OPENING_SESSION_STORAGE_KEY } from '@/utils/openingTimeline';
+import { listHistory } from '@/utils/analysis';
 
 vi.mock('@/context/AuthContext', () => ({
   // Passthrough provider: no Supabase session machinery in this unit test.
@@ -16,7 +16,7 @@ vi.mock('@/context/AuthContext', () => ({
 
 // Halaman yang dirender di balik shell memanggil listHistory(); beri tiruan
 // agar unit test AppShell fokus pada perilaku chrome, bukan pada jaringan.
-vi.mock('@/services/analysis', () => ({
+vi.mock('@/utils/analysis', () => ({
   listHistory: vi.fn().mockResolvedValue({ items: [] }),
   getAnalysis: vi.fn(),
   createAnalysis: vi.fn(),

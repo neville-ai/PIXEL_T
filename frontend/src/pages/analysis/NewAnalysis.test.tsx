@@ -2,17 +2,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import {
+  ApiRequestError,
   createAnalysis,
   getAnalysis,
   type AnalysisDetail,
   type CreatedAnalysis,
-} from '@/services/analysis';
-import { NewAnalysis } from './NewAnalysis';
+} from '@/utils/analysis';
+import { NewAnalysis, PROGRESS_POLL_MAX_ATTEMPTS } from './index';
 
-vi.mock('@/services/analysis', () => ({
-  createAnalysis: vi.fn(),
-  getAnalysis: vi.fn(),
-}));
+vi.mock('@/utils/analysis', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/utils/analysis')>();
+  return {
+    createAnalysis: vi.fn(),
+    getAnalysis: vi.fn(),
+    ApiRequestError: actual.ApiRequestError,
+    REQUEST_TIMEOUT_ERROR_CODE: actual.REQUEST_TIMEOUT_ERROR_CODE,
+  };
+});
 
 const mockedCreateAnalysis = vi.mocked(createAnalysis);
 const mockedGetAnalysis = vi.mocked(getAnalysis);
@@ -672,5 +678,124 @@ describe('NewAnalysis — progres P-04 (202, QUEUE_FULL, polling berurutan)', ()
     expect(screen.getByText('Analysis Result Page')).toBeTruthy();
     // Percobaan ulang tidak membuat analisis baru atau mengirim ulang file.
     expect(mockedCreateAnalysis).toHaveBeenCalledTimes(1);
+  });
+
+  it('respons server terstruktur (ApiRequestError) menghentikan polling, bukan retry tanpa batas', async () => {
+    mockedCreateAnalysis.mockResolvedValue({
+      analysis_id: 'analysis-77',
+      status: 'processing',
+    });
+    mockedGetAnalysis.mockRejectedValue(
+      new ApiRequestError('NOT_FOUND', 'Analysis not found for this user.'),
+    );
+    renderPage();
+
+    selectViaInput(makeFile());
+    await screen.findByText('colonoscopy_frame_001.png');
+    vi.useFakeTimers();
+    fireEvent.click(submitButton());
+    await flushMicrotasks();
+
+    // Server benar-benar merespons (error terstruktur), jadi polling harus
+    // berhenti setelah satu panggilan — tanpa retry.
+    expect(mockedGetAnalysis).toHaveBeenCalledTimes(1);
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(120000); });
+    expect(mockedGetAnalysis).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Analysis Result Page')).toBeNull();
+    // Pesan server dari error menghentian ditampilkan sebagai peringatan progres.
+    expect(
+      screen.getByText('Analysis not found for this user.'),
+    ).toBeTruthy();
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(30000); });
+    expect(mockedGetAnalysis).toHaveBeenCalledTimes(1);
+  });
+
+  it('timeout (REQUEST_TIMEOUT) dianggap gangguan jaringan sementara, bukan error autentikasi', async () => {
+    mockedCreateAnalysis.mockResolvedValue({
+      analysis_id: 'analysis-77',
+      status: 'processing',
+    });
+    mockedGetAnalysis.mockRejectedValueOnce(
+      new ApiRequestError(
+        'REQUEST_TIMEOUT',
+        'Permintaan ke layanan analisis melebihi batas waktu. Silakan coba lagi.',
+      ),
+    );
+    mockedGetAnalysis.mockResolvedValue(makeDetail('completed'));
+    renderPage();
+
+    selectViaInput(makeFile());
+    await screen.findByText('colonoscopy_frame_001.png');
+    vi.useFakeTimers();
+    fireEvent.click(submitButton());
+    await flushMicrotasks();
+
+    expect(
+      screen.getByText(/connection issue while checking progress/i),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Sesi Anda telah berakhir/i)).toBeNull();
+
+    // Retry setelah timeout lalu status terminal menghentikan polling.
+    await act(async () => { await vi.advanceTimersByTimeAsync(120000); });
+    expect(mockedGetAnalysis).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('Analysis Result Page')).toBeTruthy();
+  });
+
+  it('polling berhenti setelah batas maksimum percobaan tanpa menandai analisis gagal', async () => {
+    mockedCreateAnalysis.mockResolvedValue({
+      analysis_id: 'analysis-77',
+      status: 'processing',
+    });
+    mockedGetAnalysis.mockRejectedValue(new Error('Network error'));
+    renderPage();
+
+    selectViaInput(makeFile());
+    await screen.findByText('colonoscopy_frame_001.png');
+    vi.useFakeTimers();
+    fireEvent.click(submitButton());
+    await flushMicrotasks();
+
+    expect(mockedGetAnalysis).toHaveBeenCalledTimes(1);
+
+    // Toleransi interval + minimal: cukup untuk `PROGRESS_POLL_MAX_ATTEMPTS` × 2 s.
+    const windowMs = (PROGRESS_POLL_MAX_ATTEMPTS + 2) * 2000;
+    await act(async () => { await vi.advanceTimersByTimeAsync(windowMs); });
+
+    expect(mockedGetAnalysis).toHaveBeenCalledTimes(PROGRESS_POLL_MAX_ATTEMPTS);
+    // Batas tercapai → polling berhenti, tidak ke halaman hasil.
+    expect(screen.queryByText('Analysis Result Page')).toBeNull();
+    expect(mockedCreateAnalysis).toHaveBeenCalledTimes(1);
+    // Analisis bukan gagal: pengujian tetap di halaman progress dengan pemberitahuan batas waktu.
+    expect(screen.getByText(/still running/i)).toBeTruthy();
+
+    // Tidak ada jadwal retri setelah batas tercapai.
+    await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
+    expect(mockedGetAnalysis).toHaveBeenCalledTimes(PROGRESS_POLL_MAX_ATTEMPTS);
+  });
+
+  it('polling dibatalkan ketika komponen unmount', async () => {
+    mockedCreateAnalysis.mockResolvedValue({
+      analysis_id: 'analysis-77',
+      status: 'processing',
+    });
+    mockedGetAnalysis.mockResolvedValue(makeDetail('processing'));
+    const { unmount } = renderPage();
+
+    selectViaInput(makeFile());
+    await screen.findByText('colonoscopy_frame_001.png');
+    vi.useFakeTimers();
+    fireEvent.click(submitButton());
+    await flushMicrotasks();
+
+    expect(mockedGetAnalysis).toHaveBeenCalledTimes(1);
+
+    unmount();
+    await act(async () => { await vi.advanceTimersByTimeAsync(120000); });
+
+    // Setelah unmount tidak ada polling / fetch lebih lanjut.
+    expect(mockedGetAnalysis).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Analysis Result Page')).toBeNull();
   });
 });

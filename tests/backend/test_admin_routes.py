@@ -8,9 +8,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import app.core.auth as auth_module
-import app.routes.admin as admin_routes
-from app.core.errors import APIError
+import src.core.auth as auth_module
+import src.routes.admin as admin_routes
+from src.core.errors import APIError
 
 
 def _make_user(token):
@@ -147,7 +147,7 @@ def test_approve_service_failure_returns_500_update_failed(admin_api_client, mon
     assert response.status_code == 500
     payload = response.get_json()
     assert payload['success'] is False
-    assert payload['code'] == 'UPDATE_FAILED'
+    assert payload['error']['code'] == 'UPDATE_FAILED'
 
 
 def test_reject_admin_still_works(admin_api_client, fake_service):

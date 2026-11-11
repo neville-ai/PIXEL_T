@@ -27,16 +27,16 @@ Masalah serupa ada pada `reject_doctor`. Perbaikan sebelumnya sudah menghapus ko
 
 | No. | Komponen | Penyebab | Bukti | Dampak |
 |-----|----------|----------|-------|--------|
-| 1 | `backend/app/services/admin_service.py` (`approve_doctor` dan `reject_doctor`) | Pengecekan `if update_result.error:` pada objek `APIResponse` milik postgrest-py 2.31.0. `APIResponse` hanyalah Pydantic model dengan field `data` + `count` — **tidak memiliki atribut `.error`**. Aksesnya memicu `AttributeError` (unhandled → Flask → 500). | `inspect.getsource(postgrest.types.APIResponse)` → field hanya `data`, `count`. `execute()` sukses mengembalikan `APIResponse`; gagal melempar `postgrest.exceptions.APIError` (terdapat `.message`, `.code`). | Setiap aksi Approve/Reject berhasil di database (update telah terkirim), tetapi responsnya 500 dan frontend tidak merefresh tabel/statistik. |
-| 2 | `frontend/src/pages/admin/AdminDashboard.tsx` | Gejala: `throw new Error('HTTP ' + res.status)` menampilkan "HTTP 500" ke user. | Baris 76 fungsi `approveDoctor` | User menampilkan `ERROR — HTTP 500`; bukan akar penyebab. |
+| 1 | `Backend/src/services/admin_service.py` (`approve_doctor` dan `reject_doctor`) | Pengecekan `if update_result.error:` pada objek `APIResponse` milik postgrest-py 2.31.0. `APIResponse` hanyalah Pydantic model dengan field `data` + `count` — **tidak memiliki atribut `.error`**. Aksesnya memicu `AttributeError` (unhandled → Flask → 500). | `inspect.getsource(postgrest.types.APIResponse)` → field hanya `data`, `count`. `execute()` sukses mengembalikan `APIResponse`; gagal melempar `postgrest.exceptions.APIError` (terdapat `.message`, `.code`). | Setiap aksi Approve/Reject berhasil di database (update telah terkirim), tetapi responsnya 500 dan frontend tidak merefresh tabel/statistik. |
+| 2 | `Frontend/src/pages/admin/AdminDashboard.tsx` | Gejala: `throw new Error('HTTP ' + res.status)` menampilkan "HTTP 500" ke user. | Baris 76 fungsi `approveDoctor` | User menampilkan `ERROR — HTTP 500`; bukan akar penyebab. |
 
 Beda antara akar masalah dan gejala: akar = penanganan response postgrest yang salah di backend service; gejala = pesan HTTP 500 yang tampil di Admin Dashboard.
 
 ## C. File yang diperiksa
 
-**Frontend:** `frontend/src/pages/admin/AdminDashboard.tsx`, `AdminDashboard.test.tsx`, `frontend/src/components/auth/AdminRoute.tsx`, `ProtectedRoute.tsx`, `PublicOnlyRoute.tsx`, `DoctorRoute.tsx`, `context/AuthContext.tsx`, `components/ui/{Button,Input,Modal,ErrorState}.tsx`, `routes/AppRoutes.tsx`.
+**Frontend:** `Frontend/src/pages/admin/AdminDashboard.tsx`, `AdminDashboard.test.tsx`, `Frontend/src/components/auth/AdminRoute.tsx`, `ProtectedRoute.tsx`, `PublicOnlyRoute.tsx`, `DoctorRoute.tsx`, `context/AuthContext.tsx`, `components/ui/{Button,Input,Modal,ErrorState}.tsx`, `routes/AppRoutes.tsx`.
 
-**Backend:** `backend/app/routes/admin.py`, `controllers/admin_controller.py`, `services/admin_service.py`, `core/auth.py` (`require_admin`, role dari `app_metadata.role`), `core/errors.py` (envelope respons terstruktur), `core/supabase.py`, `app/__init__.py`.
+**Backend:** `Backend/src/routes/admin.py`, `controllers/admin_controller.py`, `services/admin_service.py`, `core/auth.py` (`require_admin`, role dari `app_metadata.role`), `core/errors.py` (envelope respons terstruktur), `core/supabase.py`, `app/__init__.py`.
 
 **Database:** `database/migrations/004_create_doctor_profiles.sql`, `006_add_avatar_url_to_doctor_profiles.sql`, `007_add_role_and_account_status.sql` (`account_status`, `approved_by UUID REFERENCES auth.users(id)`, `approved_at`), `008_create_doctor_profile_trigger.sql` (sudah dijalankan, tidak dijalankan ulang), `database/verify_doctor_registration.sql` (read-only).
 
@@ -46,10 +46,10 @@ Beda antara akar masalah dan gejala: akar = penanganan response postgrest yang s
 
 | File | Perubahan | Alasan |
 |------|-----------|--------|
-| `backend/app/services/admin_service.py` | Hapus `if update_result.error:`; `approve_doctor` dan `reject_doctor` sekarang bungkus `.update(...).execute()` dalam `try/except PostgrestAPIError` → `APIError(code="UPDATE_FAILED", status_code=500)`. `approved_by` diisi dari parameter `approved_by_user_id` (yang diisi controller dari `g.current_user['id']` / token terverifikasi), tidak dari input frontend. `approved_at` diisi `datetime.now(timezone.utc)`. | Mengganti deteksi kegagalan yang salah (`.error` yang tidak ada) dengan penanganan exception yang benar; response sukses kini 200 dengan data terbaru melalui `get_doctor()`. |
-| `tests/backend/test_admin_service.py` | `FakeQuery.execute` meniru perilaku asli postgrest-py (sukses → objek tanpa `.error`; gagal → `raise PostgrestAPIError`); ditambahkan 4 tes regresi: sukses tanpa atribut error, metadata `approved_by`/`approved_at` tersimpan, DB error → `UPDATE_FAILED` 500 (approve & reject). | Memastikan regresi HTTP 500 tidak kembali; `approved_by` tidak boleh dipercaya dari frontend (terjaga dari token). |
-| `tests/backend/test_admin_routes.py` | File baru: 7 tes endpoint (autentikasi 401, token invalid 401, doctor dilarang 403 untuk approve & reject, admin sukses, `approved_by` berasal dari token admin yang terautentikasi, DB gagal → 500 `UPDATE_FAILED`, reject admin masih bekerja). | Memverifikasi otorisasi dan kontrak endpoint. |
-| `frontend/src/pages/admin/AdminDashboard.test.tsx` | +3 tes: tombol Setujui/Tolak tidak muncul pada akun non-pending, pesan error ditampilkan saat Approve gagal, flow Reject mengirim `rejection_reason` via POST. | Cakupan fase VII.B (tombol kondisional, error handling, reject flow). |
+| `Backend/src/services/admin_service.py` | Hapus `if update_result.error:`; `approve_doctor` dan `reject_doctor` sekarang bungkus `.update(...).execute()` dalam `try/except PostgrestAPIError` → `APIError(code="UPDATE_FAILED", status_code=500)`. `approved_by` diisi dari parameter `approved_by_user_id` (yang diisi controller dari `g.current_user['id']` / token terverifikasi), tidak dari input frontend. `approved_at` diisi `datetime.now(timezone.utc)`. | Mengganti deteksi kegagalan yang salah (`.error` yang tidak ada) dengan penanganan exception yang benar; response sukses kini 200 dengan data terbaru melalui `get_doctor()`. |
+| `tests/Backend/test_admin_service.py` | `FakeQuery.execute` meniru perilaku asli postgrest-py (sukses → objek tanpa `.error`; gagal → `raise PostgrestAPIError`); ditambahkan 4 tes regresi: sukses tanpa atribut error, metadata `approved_by`/`approved_at` tersimpan, DB error → `UPDATE_FAILED` 500 (approve & reject). | Memastikan regresi HTTP 500 tidak kembali; `approved_by` tidak boleh dipercaya dari frontend (terjaga dari token). |
+| `tests/Backend/test_admin_routes.py` | File baru: 7 tes endpoint (autentikasi 401, token invalid 401, doctor dilarang 403 untuk approve & reject, admin sukses, `approved_by` berasal dari token admin yang terautentikasi, DB gagal → 500 `UPDATE_FAILED`, reject admin masih bekerja). | Memverifikasi otorisasi dan kontrak endpoint. |
+| `Frontend/src/pages/admin/AdminDashboard.test.tsx` | +3 tes: tombol Setujui/Tolak tidak muncul pada akun non-pending, pesan error ditampilkan saat Approve gagal, flow Reject mengirim `rejection_reason` via POST. | Cakupan fase VII.B (tombol kondisional, error handling, reject flow). |
 
 **Tidak diubah:** migration 007 dan 008 tidak dijalankan ulang; tidak ada migration baru; `require_admin`, `require_approved_doctor`, RLS, dan fitur non-Admin tidak disentuh.
 
@@ -57,9 +57,9 @@ Beda antara akar masalah dan gejala: akar = penanganan response postgrest yang s
 
 | Pengujian | Hasil | Keterangan |
 |-----------|-------|------------|
-| Backend unit (`tests/backend/test_admin_service.py`) | 16/16 lulus | Termasuk regresi `.error` → `AttributeError` dan DB error `UPDATE_FAILED`. |
-| Backend endpoint (`tests/backend/test_admin_routes.py`) | 7/7 lulus | Otorisasi admin/doctor/anonim, contract respons. |
-| Backend + AI keseluruhan (`tests/backend/`, `tests/ai/test_gradcam.py`) | 109/109 lulus | Tidak ada regresi. |
+| Backend unit (`tests/Backend/test_admin_service.py`) | 16/16 lulus | Termasuk regresi `.error` → `AttributeError` dan DB error `UPDATE_FAILED`. |
+| Backend endpoint (`tests/Backend/test_admin_routes.py`) | 7/7 lulus | Otorisasi admin/doctor/anonim, contract respons. |
+| Backend + AI keseluruhan (`tests/Backend/`, `tests/ai/test_gradcam.py`) | 109/109 lulus | Tidak ada regresi. |
 | `py_compile` admin_service + routes + controller | Lulus (exit 0) | Kompilasi bersih. |
 | Frontend unit (`vitest run`) | 279/279 lulus, 18 file | Sebelumnya 276; +3 tes baru. |
 | `tsc --noEmit` | Lulus (exit 0) | TypeScript tanpa error. |

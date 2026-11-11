@@ -1,5 +1,5 @@
 """
-generate_section1_data.py — Menghasilkan Data Lengkap untuk Dokumen 01_tindak_lanjut_fase_b.md
+generate_section1_data.py â€” Menghasilkan Data Lengkap untuk Dokumen 01_tindak_lanjut_fase_b.md
 =============================================================================================
 1.1 Rincian perpindahan keputusan Baseline vs Kandidat 2 (per-image breakdown).
 1.2 Sensitivitas ambang G5 (line_density 6..16) pada norm 256 dan norm 512.
@@ -26,6 +26,7 @@ from PIL import Image
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "Backend"))
 
 from ai.config.model_config import MODEL_CONFIG
 from ai.inference.domain_validator import DomainDecision
@@ -133,7 +134,7 @@ with open(csv_diff_path, "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=list(decision_diffs[0].keys()))
     writer.writeheader()
     writer.writerows(decision_diffs)
-print(f"  → Total citra berpindah keputusan: {len(decision_diffs)} berkas. Disimpan ke: {csv_diff_path}")
+print(f"  â†’ Total citra berpindah keputusan: {len(decision_diffs)} berkas. Disimpan ke: {csv_diff_path}")
 
 # ---------------------------------------------------------------------------
 # 1.2 Sensitivitas Ambang G5 (line_density 6..16)
@@ -272,7 +273,7 @@ with open(csv_sens_path, "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=list(sensitivity_results[0].keys()))
     writer.writeheader()
     writer.writerows(sensitivity_results)
-print(f"  → Sensitivitas G5 disimpan ke: {csv_sens_path}")
+print(f"  â†’ Sensitivitas G5 disimpan ke: {csv_sens_path}")
 
 # ---------------------------------------------------------------------------
 # 1.3 Koreksi Analisis Korelasi Resolusi
@@ -331,7 +332,7 @@ with open(csv_corr_path, "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=list(corr_records[0].keys()))
     writer.writeheader()
     writer.writerows(corr_records)
-print(f"  → Koreksi korelasi resolusi disimpan ke: {csv_corr_path}")
+print(f"  â†’ Koreksi korelasi resolusi disimpan ke: {csv_corr_path}")
 
 # ---------------------------------------------------------------------------
 # 1.4 Wilson Score Interval 95% untuk FRR dan FAR
@@ -379,7 +380,7 @@ with open(csv_wilson_path, "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=list(wilson_records[0].keys()))
     writer.writeheader()
     writer.writerows(wilson_records)
-print(f"  → Wilson Score CI disimpan ke: {csv_wilson_path}")
+print(f"  â†’ Wilson Score CI disimpan ke: {csv_wilson_path}")
 
 # ---------------------------------------------------------------------------
 # 1.5 Grayscale: Visualisasi Mask, Overlay, & Grad-CAM Heatmap
@@ -429,4 +430,5 @@ for g_fname in ["images (22).jpg", "images (23).jpg"]:
 print("\n" + "=" * 80)
 print("SELURUH DATA BAGIAN 1 BERHASIL DIHASILKAN!")
 print("=" * 80)
+
 

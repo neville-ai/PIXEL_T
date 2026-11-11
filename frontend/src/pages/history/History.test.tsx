@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
-import { deleteAnalysis, listHistory, type HistoryItem, type HistoryList } from '@/services/analysis';
-import { History } from './History';
+import { deleteAnalysis, listHistory, type HistoryItem, type HistoryList } from '@/utils/analysis';
+import { History } from './index';
 
-vi.mock('@/services/analysis', () => ({
+vi.mock('@/utils/analysis', () => ({
   listHistory: vi.fn(),
   deleteAnalysis: vi.fn(),
 }));

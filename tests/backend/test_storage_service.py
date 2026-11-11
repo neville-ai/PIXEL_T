@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock
-from app.services.storage_service import StorageService
+from src.services.storage_service import StorageService
 
 
 def test_generate_asset_path_valid():

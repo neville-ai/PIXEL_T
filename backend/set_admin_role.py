@@ -15,11 +15,11 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 if not SUPABASE_URL:
-    sys.exit("ERROR: SUPABASE_URL belum diisi pada backend/.env")
+    sys.exit("ERROR: SUPABASE_URL belum diisi pada Backend/.env")
 
 if not SUPABASE_SERVICE_ROLE_KEY:
     sys.exit(
-        "ERROR: SUPABASE_SERVICE_ROLE_KEY belum diisi pada backend/.env"
+        "ERROR: SUPABASE_SERVICE_ROLE_KEY belum diisi pada Backend/.env"
     )
 
 

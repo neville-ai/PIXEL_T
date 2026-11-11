@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from flask import Blueprint, jsonify, g
-from app.core.auth import require_auth
+from src.core.auth import require_auth
 
 # Create a test blueprint using require_auth to test the decorator in isolation
 test_auth_bp = Blueprint('test_auth', __name__)
@@ -60,8 +60,8 @@ def test_invalid_token(auth_client):
     """Invalid or expired Supabase tokens must return 401 UNAUTHORIZED without leaking the token."""
     dummy_token = "invalid-or-expired-token-xyz"
 
-    with patch('app.core.auth.is_supabase_configured', return_value=True), \
-         patch('app.core.auth.get_supabase_client') as mock_get_client:
+    with patch('src.core.auth.is_supabase_configured', return_value=True), \
+         patch('src.core.auth.get_supabase_client') as mock_get_client:
 
         mock_supabase = MagicMock()
         mock_supabase.auth.get_user.side_effect = Exception("JWT expired or invalid")
@@ -91,8 +91,8 @@ def test_valid_token_sets_user_context(auth_client):
     mock_response = MagicMock()
     mock_response.user = mock_user
 
-    with patch('app.core.auth.is_supabase_configured', return_value=True), \
-         patch('app.core.auth.get_supabase_client') as mock_get_client:
+    with patch('src.core.auth.is_supabase_configured', return_value=True), \
+         patch('src.core.auth.get_supabase_client') as mock_get_client:
 
         mock_supabase = MagicMock()
         mock_supabase.auth.get_user.return_value = mock_response

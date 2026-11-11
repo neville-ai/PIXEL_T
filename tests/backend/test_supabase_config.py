@@ -1,11 +1,11 @@
 import pytest
 from unittest.mock import patch
-from app.core.supabase import (
+from src.config.supabase import (
     is_supabase_configured,
     get_supabase_config_status,
     get_supabase_client,
 )
-import app.core.supabase as supabase_module
+import src.config.supabase as supabase_module
 
 
 @pytest.fixture(autouse=True)
@@ -20,7 +20,7 @@ def reset_supabase_singletons():
 
 def test_supabase_unconfigured():
     """Verify safe behavior when Supabase environment variables are absent."""
-    with patch('app.core.supabase.get_config') as mock_get_config:
+    with patch('src.config.supabase.get_config') as mock_get_config:
         class EmptyConfig:
             SUPABASE_URL = ''
             SUPABASE_ANON_KEY = ''
@@ -47,7 +47,7 @@ def test_supabase_unconfigured():
 
 def test_supabase_configured_status():
     """Verify safe status reporting when Supabase variables are configured."""
-    with patch('app.core.supabase.get_config') as mock_get_config:
+    with patch('src.config.supabase.get_config') as mock_get_config:
         class DummyConfig:
             SUPABASE_URL = 'https://dummy-project.supabase.co'
             SUPABASE_ANON_KEY = 'dummy-anon-key'
@@ -71,8 +71,8 @@ def test_supabase_configured_status():
 
 def test_supabase_client_initialization_and_singleton():
     """Verify that clients are initialized and cached as singletons."""
-    with patch('app.core.supabase.get_config') as mock_get_config, \
-         patch('app.core.supabase.create_client') as mock_create_client:
+    with patch('src.config.supabase.get_config') as mock_get_config, \
+         patch('src.config.supabase.create_client') as mock_create_client:
         
         class MockConfig:
             SUPABASE_URL = 'https://dummy-project.supabase.co'

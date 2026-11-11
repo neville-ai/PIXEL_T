@@ -30,11 +30,11 @@
 
 | Aspek | Temuan | Bukti |
 |---|---|---|
-| SDK/Library | `google-genai` versi **3.0.0** | `backend/requirements.txt` |
+| SDK/Library | `google-genai` versi **3.0.0** | `Backend/requirements.txt` |
 | Cara buat klien | `genai.Client(api_key=..., http_options=types.HttpOptions(...))` | `llm_image_validator.py:118-124` |
-| Nama variabel env API key | `GEMINI_API_KEY` (nilai **tidak** ditampilkan) | `backend/.env` (key name saja) |
-| Nama variabel env model | `GEMINI_MODEL` (nilai aktif: `gemini-3.8-flash`) | `backend/.env` |
-| Penggunaan Gemini sebelum perubahan | **Belum ada** — hanya API key di `.env`, tidak ada kode produksi yang memanggilnya | Grep di `backend/`, `ai/`: 0 hasil `genai.Client` |
+| Nama variabel env API key | `GEMINI_API_KEY` (nilai **tidak** ditampilkan) | `Backend/.env` (key name saja) |
+| Nama variabel env model | `GEMINI_MODEL` (nilai aktif: `gemini-3.8-flash`) | `Backend/.env` |
+| Penggunaan Gemini sebelum perubahan | **Belum ada** — hanya API key di `.env`, tidak ada kode produksi yang memanggilnya | Grep di `Backend/`, `ai/`: 0 hasil `genai.Client` |
 | Fungsi yang bisa dipakai ulang | Tidak ada (klien baru dibuat di `llm_image_validator.py`) | — |
 | API multimodal | `client.models.generate_content(model, contents=[pil_img, prompt], config=cfg)` | `llm_image_validator.py:82-87` |
 
@@ -85,7 +85,7 @@ POST /api/analysis  →  analysis.py:create_analysis()  →  AnalysisController.
                     →  AnalysisService.create_analysis()  →  job_queue.try_enqueue()
 ```
 
-Bukti (grep seluruh `.py` di `backend/` dan `ai/`):
+Bukti (grep seluruh `.py` di `Backend/` dan `ai/`):
 
 | Berkas | Baris | Konten |
 |---|---|---|
@@ -145,16 +145,16 @@ Tidak ada skrip atau endpoint terpisah yang memanggil `run_pipeline` secara lang
 
 | Berkas | Jenis Perubahan |
 |---|---|
-| `backend/app/services/llm_image_validator.py` | **BARU** — modul validator LLM |
-| `backend/app/core/config.py` | **DIUBAH** — tambah 4 variabel `LLM_VALIDATION_*` |
-| `backend/app/services/analysis_service.py` | **DIUBAH** — sisipkan ~45 baris LLM gate |
-| `tests/backend/test_llm_image_validator.py` | **BARU** — 18 tes (semuanya mock) |
+| `Backend/src/services/llm_image_validator.py` | **BARU** — modul validator LLM |
+| `Backend/src/core/config.py` | **DIUBAH** — tambah 4 variabel `LLM_VALIDATION_*` |
+| `Backend/src/services/analysis_service.py` | **DIUBAH** — sisipkan ~45 baris LLM gate |
+| `tests/Backend/test_llm_image_validator.py` | **BARU** — 18 tes (semuanya mock) |
 
 ---
 
 ## 3. Implementasi — Diff per Berkas (Langkah 3)
 
-### 3.1 `backend/app/services/llm_image_validator.py` (BARU, 162 baris)
+### 3.1 `Backend/src/services/llm_image_validator.py` (BARU, 162 baris)
 
 Berkas baru sepenuhnya. Komponen utama:
 
@@ -168,7 +168,7 @@ Berkas baru sepenuhnya. Komponen utama:
 
 **Fail-closed:** Semua exception (`json.JSONDecodeError`, `ValueError`, `network`, `timeout`, `auth error`) ditangkap di `except Exception` baris 152 → kembalikan `LlmDecision(ok=False, status="ERROR")`.
 
-### 3.2 `backend/app/core/config.py` (+8 baris efektif)
+### 3.2 `Backend/src/core/config.py` (+8 baris efektif)
 
 ```python
 # Baris 31-38 (Config):
@@ -181,7 +181,7 @@ LLM_VALIDATION_TIMEOUT_S = float(os.getenv('LLM_VALIDATION_TIMEOUT_S', '15.0'))
 LLM_VALIDATION_ENABLED = os.getenv('LLM_VALIDATION_ENABLED', 'false').lower() == 'true'
 ```
 
-### 3.3 `backend/app/services/analysis_service.py` (+~45 baris)
+### 3.3 `Backend/src/services/analysis_service.py` (+~45 baris)
 
 **Parameter baru di `__init__` (baris 289–309):**
 ```python
@@ -262,8 +262,8 @@ if self.is_llm_validation_enabled:
 
 | Berkas | Baris | Konteks |
 |---|---|---|
-| `backend/app/controllers/analysis_controller.py` | 32 | **SATU-SATUNYA** pemanggil produksi |
-| `tests/backend/test_llm_image_validator.py` | 266,310,357,398,441,477,513,573 | Tes (mock) |
+| `Backend/src/controllers/analysis_controller.py` | 32 | **SATU-SATUNYA** pemanggil produksi |
+| `tests/Backend/test_llm_image_validator.py` | 266,310,357,398,441,477,513,573 | Tes (mock) |
 
 Tidak ada pemanggil lain — dikonfirmasi dengan grep `\.create_analysis\(` di seluruh `.py`.
 
@@ -398,19 +398,19 @@ Ringkasan (detail di Bagian 5.3):
 
 | Hash SHA-256 | Berkas |
 |---|---|
-| `5be1031f...a55def3a` | `backend/app/core/config.py` |
-| `e6dabcf2...cbe341` | `backend/app/services/analysis_service.py` |
-| `289c50ae...4ee8ce` | `frontend/src/pages/analysis/NewAnalysis.tsx` |
+| `5be1031f...a55def3a` | `Backend/src/core/config.py` |
+| `e6dabcf2...cbe341` | `Backend/src/services/analysis_service.py` |
+| `289c50ae...4ee8ce` | `Frontend/src/pages/analysis/NewAnalysis.tsx` |
 
 ### Sesudah Perubahan
 *(dijalankan: `Get-FileHash ... -Algorithm SHA256`)*
 
 | Hash SHA-256 | Berkas |
 |---|---|
-| `897fd1e5...2dd6761` | `backend/app/core/config.py` |
-| `6b20024d...1a8bdc` | `backend/app/services/analysis_service.py` |
-| `52ecb636...7aaea12` | `backend/app/services/llm_image_validator.py` *(BARU)* |
-| `26517e7f...897c874` | `tests/backend/test_llm_image_validator.py` *(BARU)* |
+| `897fd1e5...2dd6761` | `Backend/src/core/config.py` |
+| `6b20024d...1a8bdc` | `Backend/src/services/analysis_service.py` |
+| `52ecb636...7aaea12` | `Backend/src/services/llm_image_validator.py` *(BARU)* |
+| `26517e7f...897c874` | `tests/Backend/test_llm_image_validator.py` *(BARU)* |
 
 **`NewAnalysis.tsx`** tidak berubah — hash identik dengan sebelum perubahan.
 
@@ -421,27 +421,27 @@ Ringkasan (detail di Bagian 5.3):
 ### `git status --short` (output aktual, 2026-11-10)
 
 ```
- M ai/inference/pipeline.py
- M ai/inference/postprocessing.py
- M backend/app/core/config.py
- M backend/app/services/analysis_service.py
- M frontend/src/context/AuthContext.tsx
- M frontend/src/pages/analysis/AnalysisResult.tsx
- M frontend/src/pages/analysis/NewAnalysis.tsx
- M frontend/src/pages/auth/Login.test.tsx
- M frontend/src/pages/auth/Login.tsx
- M frontend/src/services/analysis.ts
- M frontend/src/services/auth.test.ts
- M frontend/src/services/auth.ts
+ M Backend/ai/inference/pipeline.py
+ M Backend/ai/inference/postprocessing.py
+ M Backend/src/core/config.py
+ M Backend/src/services/analysis_service.py
+ M Frontend/src/context/AuthContext.tsx
+ M Frontend/src/pages/analysis/AnalysisResult.tsx
+ M Frontend/src/pages/analysis/NewAnalysis.tsx
+ M Frontend/src/pages/auth/Login.test.tsx
+ M Frontend/src/pages/auth/Login.tsx
+ M Frontend/src/utils/analysis.ts
+ M Frontend/src/utils/auth.test.ts
+ M Frontend/src/utils/auth.ts
  M tests/ai/test_model_integration.py
- M tests/backend/test_analysis.py
+ M tests/Backend/test_analysis.py
  M tests/conftest.py
-?? ai/inference/domain_validator.py
-?? backend/app/services/llm_image_validator.py
+?? Backend/ai/inference/domain_validator.py
+?? Backend/src/services/llm_image_validator.py
 ?? calibration_data/
 ?? docs/audit/
 ?? scripts/smoke_llm_gate.py
-?? tests/backend/test_llm_image_validator.py
+?? tests/Backend/test_llm_image_validator.py
 [... dan berkas untracked lainnya dari fase A/B/C ...]
 ```
 
@@ -450,20 +450,20 @@ Ringkasan (detail di Bagian 5.3):
 ### `git diff --stat` (output aktual)
 
 ```
- ai/inference/pipeline.py                       |  21 +++-
- ai/inference/postprocessing.py                 |  51 +++++++-
- backend/app/core/config.py                     |  16 +++
- backend/app/services/analysis_service.py       | 158 ++++++++++++++++++++++++-
- frontend/src/context/AuthContext.tsx           | 106 +++++++++++------
- frontend/src/pages/analysis/AnalysisResult.tsx |  33 +++++-
- frontend/src/pages/analysis/NewAnalysis.tsx    |  24 +++-
+ Backend/ai/inference/pipeline.py                       |  21 +++-
+ Backend/ai/inference/postprocessing.py                 |  51 +++++++-
+ Backend/src/core/config.py                     |  16 +++
+ Backend/src/services/analysis_service.py       | 158 ++++++++++++++++++++++++-
+ Frontend/src/context/AuthContext.tsx           | 106 +++++++++++------
+ Frontend/src/pages/analysis/AnalysisResult.tsx |  33 +++++-
+ Frontend/src/pages/analysis/NewAnalysis.tsx    |  24 +++-
  ...
  15 files changed, 445 insertions(+), 57 deletions(-)
 ```
 
 ### `.env` di `.gitignore`
 
-Dikonfirmasi: `.gitignore:11:.env  backend/.env` — **`backend/.env` terlindungi, tidak ter-track git.**
+Dikonfirmasi: `.gitignore:11:.env  Backend/.env` — **`Backend/.env` terlindungi, tidak ter-track git.**
 
 ---
 

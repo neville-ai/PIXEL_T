@@ -21,7 +21,7 @@ import numpy as np
 from PIL import Image
 
 sys.path.insert(0, ".")
-sys.path.insert(0, "backend")
+sys.path.insert(0, "Backend")
 
 from ai.inference.domain_validator import ColonoscopyDomainValidator, DomainDecision
 
@@ -380,7 +380,7 @@ print("=" * 70)
 # GET  /api/history → list_history
 # DELETE /api/history/<id> → delete_analysis
 
-print(f"{INFO}  Routes verified in backend/app/routes/analysis.py:")
+print(f"{INFO}  Routes verified in Backend/src/routes/analysis.py:")
 print(f"       POST   /api/analysis        → create_analysis (domain-validated) ✓")
 print(f"       GET    /api/analysis/<id>   → get_analysis (read-only, no inference) ✓")
 print(f"       GET    /api/history         → list_history (read-only) ✓")

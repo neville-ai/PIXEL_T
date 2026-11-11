@@ -1,7 +1,7 @@
 # LAPORAN FORENSIK — APPROVE DOKTER & ADMIN DASHBOARD PIXEL-T
 
 **Tanggal:** 2026-11-04
-**Lingkungan yang diuji:** Supabase nyata (project dari `backend/.env`) + server Flask berjalan di `http://127.0.0.1:5000`
+**Lingkungan yang diuji:** Supabase nyata (project dari `Backend/.env`) + server Flask berjalan di `http://127.0.0.1:5000`
 **Commit terkait:** `e1aeb33` (perbaikan utama) + `3e83d2a` (test FK error) + commit audit single-target (hardening UUID & verifikasi 1 baris)
 **Status ringkas:** HTTP 500 = **TERBUKTI & DIPERBAIKI**; approve pada DB nyata = **LULUS PENGUJIAN**; **single-target (hanya akun terpilih yang berubah) = TERBUKTI pada DB nyata**; pengujian klik browser = **BELUM DIVERIFIKASI** (tidak ada browser automation di sesi ini).
 
@@ -25,7 +25,7 @@ Akun target `dr. Kharis` (`83973d49-...`, profil `d2b74384-...`) sekarang **appr
 ```
 EXCEPTION TYPE: AttributeError
 EXCEPTION STR: 'SyncSelectRequestBuilder' object has no attribute 'maybeSingle'
-  File "backend/app/services/admin_service.py", line 140, in approve_doctor
+  File "Backend/src/services/admin_service.py", line 140, in approve_doctor
     .maybeSingle()
     ^^^^^^^^^^^
 ```
@@ -159,9 +159,9 @@ ID yang dipakai: **`doctor_profiles.id`** (bukan `user_id`, bukan `auth.users.id
 
 ## 6. File yang diperiksa
 
-**Frontend:** `frontend/src/pages/admin/AdminDashboard.tsx`, `AdminDashboard.test.tsx`, `components/auth/AdminRoute.tsx`, `DoctorRoute.tsx`, `ProtectedRoute.tsx`, `context/AuthContext.tsx`, `services/auth.ts`, `routes/AppRoutes.tsx`, `components/ui/{ErrorState,Modal,Button}.tsx`.
+**Frontend:** `Frontend/src/pages/admin/AdminDashboard.tsx`, `AdminDashboard.test.tsx`, `components/auth/AdminRoute.tsx`, `DoctorRoute.tsx`, `ProtectedRoute.tsx`, `context/AuthContext.tsx`, `services/auth.ts`, `routes/AppRoutes.tsx`, `components/ui/{ErrorState,Modal,Button}.tsx`.
 
-**Backend:** `backend/app/routes/admin.py`, `controllers/admin_controller.py`, `services/admin_service.py`, `core/auth.py`, `core/errors.py`, `core/supabase.py`, `core/config.py`, `run.py`.
+**Backend:** `Backend/src/routes/admin.py`, `controllers/admin_controller.py`, `services/admin_service.py`, `core/auth.py`, `core/errors.py`, `core/supabase.py`, `core/config.py`, `run.py`.
 
 **Database:** `database/migrations/004_create_doctor_profiles.sql`, `006`, `007_add_role_and_account_status.sql` (`approved_by UUID REFERENCES auth.users(id)`), `008_create_doctor_profile_trigger.sql` (tidak dijalankan ulang), `database/verify_doctor_registration.sql`.
 
@@ -175,17 +175,17 @@ ID yang dipakai: **`doctor_profiles.id`** (bukan `user_id`, bukan `auth.users.id
 
 | File | Perubahan | Alasan |
 |---|---|---|
-| `backend/app/services/admin_service.py` | 3× `.maybeSingle()` → `.maybe_single()` (get_doctor, approve, reject) | Method camelCase tidak ada di SDK Python → AttributeError → HTTP 500 |
-| `backend/app/services/admin_service.py` | Update memakai `.eq('account_status','pending')` + verifikasi `result.data` (0 baris → 409 `UPDATE_CONFLICT`; status tidak sesuai → 500 `UPDATE_FAILED`) | Jangan kembalikan 200 jika status tidak benar-benar berubah |
-| `backend/app/core/auth.py` | `.maybeSingle()` → `.maybe_single()`; `except: pass` → `logger.exception(...)` | `require_approved_doctor` selalu menolak dokter approved karena exception ditelan; kegagalan kini tercatat |
-| `tests/backend/test_admin_service.py` | Fake SDK hanya menyediakan `maybe_single` (bukan `maybeSingle`); flag `fail_no_rows`; flag `update_error` + 3 test baru (0 baris → 409, DB error → 500 `UPDATE_FAILED`, FK error → 500 `UPDATE_FAILED`) | Agar regresi nama method SDK tertangkap test, bukan di produksi; FK violation harus ditangkap sebagai APIError, bukan crash HTTP 500 |
-| `backend/app/services/admin_service.py` | Validasi `doctor_id` harus UUID (`_is_valid_uuid`) → `400 INVALID_ID` sebelum menyentuh DB | Mencegah parameter kosong/asing menyentuh query; target selalu `doctor_profiles.id` (PK), bukan `user_id` |
-| `backend/app/services/admin_service.py` | Update difilter `.eq('id', doctor_id).eq('account_status','pending')` dan **wajib** `len(updated_rows) == 1` (0 atau >1 → `409 UPDATE_CONFLICT`) | Tidak boleh melaporkan sukses bila baris yang berubah bukan tepat satu; mencegah update massal tersamarkan sebagai sukses |
-| `frontend/src/pages/admin/AdminDashboard.tsx` | `rejectTarget` — modal konfirmasi Tolak menampilkan nama + email akun yang benar | Admin harus melihat akun yang persis akan ditolak, bukan deskripsi generik |
-| `frontend/src/pages/admin/AdminDashboard.test.tsx` | +3 test single-target: approve baris A hanya memanggil `/doctors/doc-A/approve`; approve baris B hanya `doc-B`; modal tolak menyebut Dr. A dan hanya memanggil `doc-A/reject` | Membuktikan identitas per-baris tidak tertukar |
-| `tests/backend/test_admin_service.py` | Fake SDK mencatat filter `eq`; +3 test: filter update tepat `id`+`account_status=pending`, ID non-UUID → `400 INVALID_ID` (approve & reject), ID valid tak ditemukan → `404 NOT_FOUND` | Membuktikan target filter dan validasi ID di lapisan service |
-| `frontend/src/pages/admin/AdminDashboard.tsx` | `statsError` & `actionError` terpisah; `listSeqRef` guard; effect statistik/daftar dipisah; `describeApiError` | Memperbaiki race/penghapusan error, mencegah satu kegagalan mengosongkan dashboard, pesan error informatif |
-| `frontend/src/pages/admin/AdminDashboard.test.tsx` | Update assertion; +3 test (statistik gagal ≠ daftar kosong; filter tidak refetch statistik; reload setelah approve) | Bukti perilaku dashboard yang diperbaiki |
+| `Backend/src/services/admin_service.py` | 3× `.maybeSingle()` → `.maybe_single()` (get_doctor, approve, reject) | Method camelCase tidak ada di SDK Python → AttributeError → HTTP 500 |
+| `Backend/src/services/admin_service.py` | Update memakai `.eq('account_status','pending')` + verifikasi `result.data` (0 baris → 409 `UPDATE_CONFLICT`; status tidak sesuai → 500 `UPDATE_FAILED`) | Jangan kembalikan 200 jika status tidak benar-benar berubah |
+| `Backend/src/core/auth.py` | `.maybeSingle()` → `.maybe_single()`; `except: pass` → `logger.exception(...)` | `require_approved_doctor` selalu menolak dokter approved karena exception ditelan; kegagalan kini tercatat |
+| `tests/Backend/test_admin_service.py` | Fake SDK hanya menyediakan `maybe_single` (bukan `maybeSingle`); flag `fail_no_rows`; flag `update_error` + 3 test baru (0 baris → 409, DB error → 500 `UPDATE_FAILED`, FK error → 500 `UPDATE_FAILED`) | Agar regresi nama method SDK tertangkap test, bukan di produksi; FK violation harus ditangkap sebagai APIError, bukan crash HTTP 500 |
+| `Backend/src/services/admin_service.py` | Validasi `doctor_id` harus UUID (`_is_valid_uuid`) → `400 INVALID_ID` sebelum menyentuh DB | Mencegah parameter kosong/asing menyentuh query; target selalu `doctor_profiles.id` (PK), bukan `user_id` |
+| `Backend/src/services/admin_service.py` | Update difilter `.eq('id', doctor_id).eq('account_status','pending')` dan **wajib** `len(updated_rows) == 1` (0 atau >1 → `409 UPDATE_CONFLICT`) | Tidak boleh melaporkan sukses bila baris yang berubah bukan tepat satu; mencegah update massal tersamarkan sebagai sukses |
+| `Frontend/src/pages/admin/AdminDashboard.tsx` | `rejectTarget` — modal konfirmasi Tolak menampilkan nama + email akun yang benar | Admin harus melihat akun yang persis akan ditolak, bukan deskripsi generik |
+| `Frontend/src/pages/admin/AdminDashboard.test.tsx` | +3 test single-target: approve baris A hanya memanggil `/doctors/doc-A/approve`; approve baris B hanya `doc-B`; modal tolak menyebut Dr. A dan hanya memanggil `doc-A/reject` | Membuktikan identitas per-baris tidak tertukar |
+| `tests/Backend/test_admin_service.py` | Fake SDK mencatat filter `eq`; +3 test: filter update tepat `id`+`account_status=pending`, ID non-UUID → `400 INVALID_ID` (approve & reject), ID valid tak ditemukan → `404 NOT_FOUND` | Membuktikan target filter dan validasi ID di lapisan service |
+| `Frontend/src/pages/admin/AdminDashboard.tsx` | `statsError` & `actionError` terpisah; `listSeqRef` guard; effect statistik/daftar dipisah; `describeApiError` | Memperbaiki race/penghapusan error, mencegah satu kegagalan mengosongkan dashboard, pesan error informatif |
+| `Frontend/src/pages/admin/AdminDashboard.test.tsx` | Update assertion; +3 test (statistik gagal ≠ daftar kosong; filter tidak refetch statistik; reload setelah approve) | Bukti perilaku dashboard yang diperbaiki |
 | `docs/ADMIN_DASHBOARD_AND_APPROVE_FORENSIC_REPORT.md` | Laporan ini | Dokumentasi forensik |
 
 **Tidak diubah:** migration 007/008 (tidak dijalankan ulang), RLS/policy, `require_admin`, kebijakan transisi status, fitur dokter/AI.
@@ -206,9 +206,9 @@ ID yang dipakai: **`doctor_profiles.id`** (bukan `user_id`, bukan `auth.users.id
 
 | Pengujian | Jenis | Hasil | Keterangan |
 |---|---|---|---|
-| `pytest tests/backend/test_admin_service.py` | Unit + mock | **22/22 LULUS** | Termasuk regresi `maybe_single`, 0/>1 baris → 409, DB error → 500 `UPDATE_FAILED`, FK error → 500 `UPDATE_FAILED`, filter `id`+`account_status=pending`, ID non-UUID → 400, ID valid tak ditemukan → 404 |
-| `pytest tests/backend/test_admin_routes.py` | Integration (Flask test client, service fake) | **7/7 LULUS** | 401/403/200/500, `approved_by` dari token |
-| `pytest tests/backend/ tests/ai/test_gradcam.py` | Suite backend + AI | **112/112 LULUS** | `py_compile` exit 0 |
+| `pytest tests/Backend/test_admin_service.py` | Unit + mock | **22/22 LULUS** | Termasuk regresi `maybe_single`, 0/>1 baris → 409, DB error → 500 `UPDATE_FAILED`, FK error → 500 `UPDATE_FAILED`, filter `id`+`account_status=pending`, ID non-UUID → 400, ID valid tak ditemukan → 404 |
+| `pytest tests/Backend/test_admin_routes.py` | Integration (Flask test client, service fake) | **7/7 LULUS** | 401/403/200/500, `approved_by` dari token |
+| `pytest tests/Backend/ tests/ai/test_gradcam.py` | Suite backend + AI | **112/112 LULUS** | `py_compile` exit 0 |
 | `vitest run src/pages/admin/AdminDashboard.test.tsx` | Unit frontend (dashboard) | **17/17 LULUS** | Termasuk 3 test single-target (approve A / approve B / modal tolak A) |
 | `vitest run` | Unit frontend (seluruh suite) | **282/282 LULUS** (18 file) | |
 | `tsc --noEmit` | Type check | **LULUS** (exit 0) | |
@@ -230,7 +230,7 @@ ID yang dipakai: **`doctor_profiles.id`** (bukan `user_id`, bukan `auth.users.id
 | Autentikasi & role admin | **TIDAK BERUBAH** | Tetap `app_metadata.role`; `require_admin` tidak disentuh; 401/403 terverifikasi |
 | Dokter approved mengakses fitur klinis | **DIPERBAIKI** | `_get_user_role_and_status` kini mengembalikan `doctor/approved` (sebelumnya selalu `None/None` → 403) |
 | Dokter pending/rejected | **TIDAK BERUBAH** | Decorator tetap menolak; tidak ada pelonggaran aturan |
-| Doctor Profile / Upload Image / Segmentation / History | **TIDAK BERUBAH** (kode) | Suite backend/AI lulus; tidak ada perubahan pada modul tersebut |
+| Doctor Profile / Upload Image / Segmentation / History | **TIDAK BERUBAH** (kode) | Suite Backend/AI lulus; tidak ada perubahan pada modul tersebut |
 | Routing (AdminRoute/DoctorRoute/ProtectedRoute) | **TIDAK BERUBAH** | Tidak ada perubahan |
 | RLS / migration | **TIDAK BERUBAH** | Tidak ada migration baru; 007/008 tidak dijalankan ulang |
 

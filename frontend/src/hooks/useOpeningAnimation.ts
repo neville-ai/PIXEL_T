@@ -8,7 +8,7 @@ import {
   prefersReducedMotion,
   shouldPlayIntro,
   type OpeningStage,
-} from '@/lib/openingTimeline';
+} from '@/utils/openingTimeline';
 
 export interface UseOpeningAnimationResult {
   /** Current timeline stage; `finalHold` when skipped or finished. */

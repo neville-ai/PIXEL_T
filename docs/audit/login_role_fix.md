@@ -10,7 +10,7 @@
 
 Pada implementasi sebelumnya, ketika pengguna memilih opsi **"Dokter"** pada dropdown *"Masuk sebagai"* lalu memasukkan kredensial akun dengan peran **ADMIN**, login **berhasil** dan pengguna diarahkan ke `/admin`. Hal ini bertentangan dengan aturan otorisasi dua arah.
 
-### Kutipan Kode Sebelum Perbaikan (`frontend/src/context/AuthContext.tsx` baris 141–171):
+### Kutipan Kode Sebelum Perbaikan (`Frontend/src/context/AuthContext.tsx` baris 141–171):
 
 ```tsx
     if (result.data) {
@@ -47,7 +47,7 @@ Pada implementasi sebelumnya, ketika pengguna memilih opsi **"Dokter"** pada dro
 1. **Pencemaran State Sebelum Verifikasi:**  
    State `user` dan `session` (baris 142–143) serta `role` dan `accountStatus` (baris 154–155) telah di-commit ke state React `AuthContext` **SEBELUM** evaluasi kecocokan role dijalankan.
 2. **Pengambilalihan Rute oleh `PublicOnlyRoute` (*Hijack Redirect*):**  
-   Halaman `/login` dibungkus oleh `<PublicOnlyRoute>` (`frontend/src/routes/AppRoutes.tsx:29`). Begitu `user` terisi dan `role === 'admin'`, `PublicOnlyRoute` langsung mengevaluasi `if (user && role === 'admin') return <Navigate to="/admin" replace />;` pada render cycle berikutnya. Komponen `<Login />` seketika di-unmount dan pengguna terlempar ke `/admin` sebelum pesan error sempat ditampilkan.
+   Halaman `/login` dibungkus oleh `<PublicOnlyRoute>` (`Frontend/src/routes/AppRoutes.tsx:29`). Begitu `user` terisi dan `role === 'admin'`, `PublicOnlyRoute` langsung mengevaluasi `if (user && role === 'admin') return <Navigate to="/admin" replace />;` pada render cycle berikutnya. Komponen `<Login />` seketika di-unmount dan pengguna terlempar ke `/admin` sebelum pesan error sempat ditampilkan.
 3. **Ketiadaan Pembersihan Sesi (`signOut` Tidak Dipanggil):**  
    Saat blok mismatch mengembalikan objek `{ error: ... }`, fungsi `logoutUser()` atau `supabase.auth.signOut()` **sama sekali tidak dipanggil**. Akibatnya, sesi Supabase Auth tetap aktif tersimpan di `localStorage` peramban. Jika pengguna me-refresh halaman, pengguna langsung dikenali sebagai admin terotentikasi.
 4. **Race Condition pada Listener `onAuthStateChange`:**  
@@ -59,7 +59,7 @@ Pada implementasi sebelumnya, ketika pengguna memilih opsi **"Dokter"** pada dro
 
 Perbaikan dirancang minimalis dan ketat pada 3 file kode utama:
 
-### 1. `frontend/src/services/auth.ts`
+### 1. `Frontend/src/utils/auth.ts`
 - **Penambahan fungsi `isRoleMatch` (baris 336–347):**
   ```ts
   export function isRoleMatch(
@@ -71,7 +71,7 @@ Perbaikan dirancang minimalis dan ketat pada 3 file kode utama:
   ```
   *Alasan:* Menyediakan fungsi perbandingan tegas dua arah (*strict equality*) tanpa percabangan khusus, memastikan `'doctor'` hanya cocok dengan `'doctor'` dan `'admin'` hanya cocok dengan `'admin'`.
 
-### 2. `frontend/src/context/AuthContext.tsx`
+### 2. `Frontend/src/context/AuthContext.tsx`
 - **Penambahan `isVerifyingRoleRef` & Proteksi `onAuthStateChange` (baris 56, 107–111):**  
   Mencegah listener `onAuthStateChange` memperbarui state React saat alur `signIn` sedang memvalidasi kecocokan peran.
 - **Pengecekan Dua Arah Sebelum Commit State & Pembersihan Penuh (baris 171–193):**  
@@ -83,7 +83,7 @@ Perbaikan dirancang minimalis dan ketat pada 3 file kode utama:
 - **Pembaruan signature `signIn` (baris 25–29):**  
   Mengembalikan `{ error?: string; role?: string | null; accountStatus?: string | null }` agar komponen pemanggil dapat membaca role hasil resolusi tanpa bergantung pada closure render lama.
 
-### 3. `frontend/src/pages/auth/Login.tsx`
+### 3. `Frontend/src/pages/auth/Login.tsx`
 - **Penyelarasan Navigasi Berdasarkan Hasil Resolusi (baris 126–128):**  
   Menggunakan `const resolvedRole = result.role ?? role;` dan `const resolvedStatus = result.accountStatus ?? accountStatus;` sehingga navigasi admin ke `/admin` atau dokter approved ke `/dashboard` tidak mengalami *stale closure*.
 
@@ -111,7 +111,7 @@ Perbaikan dirancang minimalis dan ketat pada 3 file kode utama:
 
 | Suite Pengujian | Baseline Sebelum Perbaikan | Hasil Sesudah Perbaikan | Status |
 | :--- | :---: | :---: | :---: |
-| **Frontend Vitest** (`frontend/`) | 285 passed (18 files) | **294 passed (19 files)** | **LULUS 100% (+9 tests baru)** |
+| **Frontend Vitest** (`Frontend/`) | 285 passed (18 files) | **294 passed (19 files)** | **LULUS 100% (+9 tests baru)** |
 | **Backend Pytest** (`tests/`) | 159 passed | **159 passed** | **LULUS 100% (No Regression)** |
 | **Typecheck & Build** (`tsc -b && vite build`) | — | **0 errors, built in 15.13s** | **LULUS 100%** |
 
@@ -133,10 +133,10 @@ Dilakukan audit kode pemanggil terhadap fungsi yang dimodifikasi (`signIn`, `Aut
 Berikut adalah temuan arsitektural yang dicatat selama audit tanpa diubah pada perbaikan minimal ini:
 
 1. **Otorisasi Sisi Server (Backend Flask):**  
-   - *Status:* **AMAN / ROBUST**. Endpoint `/api/admin/*` diverifikasi ketat oleh decorator `@require_admin` di `backend/app/core/auth.py` yang memeriksa klaim token `app_metadata.role == 'admin'`. Bahkan jika seorang dokter membobol proteksi frontend, panggilan API ke admin route akan menerima HTTP 403 Forbidden.
+   - *Status:* **AMAN / ROBUST**. Endpoint `/api/admin/*` diverifikasi ketat oleh decorator `@require_admin` di `Backend/src/core/auth.py` yang memeriksa klaim token `app_metadata.role == 'admin'`. Bahkan jika seorang dokter membobol proteksi frontend, panggilan API ke admin route akan menerima HTTP 403 Forbidden.
 2. **Pengecekan Peran pada `ProtectedRoute`:**  
    - *Severity:* **LOW (Peningkatan Arsitektural)**.  
-   - *Observasi:* `ProtectedRoute` (`frontend/src/components/auth/ProtectedRoute.tsx`) saat ini memeriksa `!user`, `accountStatus === 'pending'`, dan `accountStatus === 'rejected'`. Karena admin memiliki `accountStatus === null`, admin secara teknis diizinkan oleh `ProtectedRoute` jika mengakses URL `/dashboard` secara langsung (meskipun tombol menu disembunyikan di `AppShell`).  
+   - *Observasi:* `ProtectedRoute` (`Frontend/src/components/auth/ProtectedRoute.tsx`) saat ini memeriksa `!user`, `accountStatus === 'pending'`, dan `accountStatus === 'rejected'`. Karena admin memiliki `accountStatus === null`, admin secara teknis diizinkan oleh `ProtectedRoute` jika mengakses URL `/dashboard` secara langsung (meskipun tombol menu disembunyikan di `AppShell`).  
    - *Rekomendasi:* Di masa mendatang, `ProtectedRoute` dapat ditambahkan klausul `if (role === 'admin') return <Navigate to="/admin" replace />;` sebagaimana yang sudah ada di `DoctorRoute`.
 
 ---
@@ -174,12 +174,12 @@ Berikut adalah temuan arsitektural yang dicatat selama audit tanpa diubah pada p
 
 | File Path | SHA-256 Sebelum Perbaikan | SHA-256 Sesudah Perbaikan |
 | :--- | :--- | :--- |
-| `frontend/src/services/auth.ts` | `58e20b99215bec279d3c2a50d12b0912974b7974b4199bdbcb9e86df5ba589f3` | `156f84986d592ca758eaab08870d902fba26761e985bcc9fc1d23a5bb661f65b` |
-| `frontend/src/context/AuthContext.tsx` | `6f886e5f01f27270e6f7525a6d307493c71757d05859587d5db2933d4ee56572` | `80ece6d8828eaacf2a0a62a57d5f16761ebde840f7cfb26c2f71650e68722366` |
-| `frontend/src/pages/auth/Login.tsx` | `46d5aee154c0889681b01964cbea71812e0eb9f02678cb895a02bf1be9066921` | `59cc00b0e0872fad5fe8c8f8625e8ca2e2c5f67df4f8b81b9c5cd042545e5229` |
-| `frontend/src/services/auth.test.ts` | `e1e95559f342ca16d5986a9a86c59d16ec0a8075cceee617d8ccfa8ea7b52fb9` | `43f00a27d3e100fde830e3b321681d5763b3b3401b2e8010cecf05c758dc952b` |
-| `frontend/src/pages/auth/Login.test.tsx` | `b663791534c23e82e89bf54d3e7866a9d472f596ac8e80b9f2242e3588b4987c` | `0e38135d6a45fcba1fa83a5d05415e10b75f1d2c3434fa67b3f07b39faf47d96` |
-| `frontend/src/context/AuthContext.test.tsx` | *(Berkas baru)* | `c8ac193c1a228f269ee3a25aa3cb7c76deae36f853d9d0afff93d93bef8e9d68` |
+| `Frontend/src/utils/auth.ts` | `58e20b99215bec279d3c2a50d12b0912974b7974b4199bdbcb9e86df5ba589f3` | `156f84986d592ca758eaab08870d902fba26761e985bcc9fc1d23a5bb661f65b` |
+| `Frontend/src/context/AuthContext.tsx` | `6f886e5f01f27270e6f7525a6d307493c71757d05859587d5db2933d4ee56572` | `80ece6d8828eaacf2a0a62a57d5f16761ebde840f7cfb26c2f71650e68722366` |
+| `Frontend/src/pages/auth/Login.tsx` | `46d5aee154c0889681b01964cbea71812e0eb9f02678cb895a02bf1be9066921` | `59cc00b0e0872fad5fe8c8f8625e8ca2e2c5f67df4f8b81b9c5cd042545e5229` |
+| `Frontend/src/utils/auth.test.ts` | `e1e95559f342ca16d5986a9a86c59d16ec0a8075cceee617d8ccfa8ea7b52fb9` | `43f00a27d3e100fde830e3b321681d5763b3b3401b2e8010cecf05c758dc952b` |
+| `Frontend/src/pages/auth/Login.test.tsx` | `b663791534c23e82e89bf54d3e7866a9d472f596ac8e80b9f2242e3588b4987c` | `0e38135d6a45fcba1fa83a5d05415e10b75f1d2c3434fa67b3f07b39faf47d96` |
+| `Frontend/src/context/AuthContext.test.tsx` | *(Berkas baru)* | `c8ac193c1a228f269ee3a25aa3cb7c76deae36f853d9d0afff93d93bef8e9d68` |
 
 - **Pernyataan:** **TIDAK ADA COMMIT GIT** yang dibuat. Seluruh perubahan dibiarkan uncommitted di working tree sesuai instruksi.
 

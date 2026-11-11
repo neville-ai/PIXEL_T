@@ -7,7 +7,7 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Modal } from '@/components/ui/Modal';
 import { ArrowLeft, ArrowRight, Trash2 } from 'lucide-react';
-import { deleteAnalysis, getAnalysis, type AnalysisDetail } from '@/services/analysis';
+import { deleteAnalysis, getAnalysis, type AnalysisDetail } from '@/utils/analysis';
 
 function segmentationLabel(detail: AnalysisDetail | null): string {
   if (!detail) return '-';

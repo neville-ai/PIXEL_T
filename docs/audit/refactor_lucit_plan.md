@@ -16,7 +16,7 @@ Diukur langsung pada branch `refactor/struktur-lucit` pada 10 November 2026:
 | **pytest Suite** (Backend & AI) | **188 passed, 1 skipped** (0 failed) | `python -m pytest tests/ -x --ignore=tests/ai/audit_domain_validator_deep.py --ignore=tests/ai/measure_real_samples_stage2.py` (durasi: 113.67s) | ✅ Lulus 100% |
 | **vitest Suite** (Frontend) | **298 passed** (0 failed) | `npx vitest run` (19 test files, durasi: 74.47s) | ✅ Lulus 100% |
 | **Frontend Production Build** | **Berhasil** (`dist/` generated) | `npm run build` (`tsc -b && vite build`, durasi: 19.64s) | ✅ 0 error |
-| **Model Checkpoint SHA-256** | `46521ae90d12f57f77a7b9921881910b41071dbbb1eff4d2172a2c437564c581` | File: `ai/models/PIXEL-T_Scenario1_UNet_ResNet50_Ver22_best.pth` (135.644.553 bytes) | ✅ Checksum Terkunci |
+| **Model Checkpoint SHA-256** | `46521ae90d12f57f77a7b9921881910b41071dbbb1eff4d2172a2c437564c581` | File: `Backend/ai/models/PIXEL-T_Scenario1_UNet_ResNet50_Ver22_best.pth` (135.644.553 bytes) | ✅ Checksum Terkunci |
 | **Git Working Branch** | `refactor/struktur-lucit` | `git branch --show-current` | ✅ Terisolasi dari main |
 
 ---
@@ -33,14 +33,14 @@ PIXEL-T/
 │   ├── config/ (model_config.py, model_config.example.yaml)
 │   ├── inference/ (pipeline.py, segmentation.py, gradcam.py, postprocessing.py, preprocessing.py, domain_validator.py, model_service.py)
 │   └── models/ (PIXEL-T_Scenario1_UNet_ResNet50_Ver22_best.pth)
-├── backend/
+├── Backend/
 │   ├── app/ (controllers, core, models, repositories, routes, schemas, services, utils)
 │   ├── requirements.txt
 │   └── run.py
 ├── database/
 │   ├── migrations/ (001 s/d 008)
 │   └── seed/ (seed_doctor_profiles.sql)
-├── frontend/
+├── Frontend/
 │   ├── src/ (assets, components, context, hooks, lib, pages, routes, services, types, utils)
 │   ├── package.json, tsconfig.json, vite.config.ts
 ├── tests/ (ai, backend, frontend, conftest.py)
@@ -88,8 +88,8 @@ Berdasarkan pembacaan kode riil pada `LUCIT-master/Backend/src/services/ai_valid
 ### 2. Temuan dan Usulan Penamaan / Penempatan
 - Di LUCIT, penamaan `ai_validator_service.py` berada di dalam `Backend/src/services/`.
 - Di PIXEL-T saat ini:
-  - `ai/inference/domain_validator.py` (Domain Heuristic Validator)
-  - `backend/app/services/llm_image_validator.py` (LLM Semantic Validator)
+  - `Backend/ai/inference/domain_validator.py` (Domain Heuristic Validator)
+  - `Backend/src/services/llm_image_validator.py` (LLM Semantic Validator)
 - **Usulan:** Penamaan dan penempatan modular di PIXEL-T saat ini **jauh lebih baik, bersih, dan sesuai standar Clean Architecture** dibandingkan LUCIT yang mencampurkan prompt generator teks ke dalam validator.
 - **Sesuai instruksi pengguna:** Modul validasi ini **TIDAK AKAN DIPINDAHKAN** pada refactor ini untuk melindungi integritas naskah skripsi Bab IV dan pengujian suite.
 
@@ -115,10 +115,10 @@ Berdasarkan pembacaan kode riil pada `LUCIT-master/Backend/src/services/ai_valid
    .env
    ```
 4. **Verifikasi Pemuatan `.env` & `.env.example`:**
-   - Frontend memuat file `.env` di direktori `frontend/.env` via bundler Vite (`VITE_*`).
-   - Backend memuat `.env` via `load_dotenv()` di `backend/app/core/config.py`.
-   - Pengujian keamanan `tests/frontend/test_frontend_env_safety.py` secara eksplisit memeriksa file `ROOT_DIR / ".env.example"`.
-   - **Keputusan:** File `.env.example` di root **TIDAK BOLEH DIHAPUS**. Kita hanya menambahkan `backend/.env.example` dan `frontend/.env.example` sebagai template pendamping spesifik sub-proyek.
+   - Frontend memuat file `.env` di direktori `Frontend/.env` via bundler Vite (`VITE_*`).
+   - Backend memuat `.env` via `load_dotenv()` di `Backend/src/core/config.py`.
+   - Pengujian keamanan `tests/Frontend/test_frontend_env_safety.py` secara eksplisit memeriksa file `ROOT_DIR / ".env.example"`.
+   - **Keputusan:** File `.env.example` di root **TIDAK BOLEH DIHAPUS**. Kita hanya menambahkan `Backend/.env.example` dan `Frontend/.env.example` sebagai template pendamping spesifik sub-proyek.
 5. **Branching & Commit:**
    - Seluruh pekerjaan dilakukan di branch `refactor/struktur-lucit`.
    - **Satu commit per langkah** dengan pesan jelas.
@@ -145,9 +145,9 @@ Berdasarkan pembacaan kode riil pada `LUCIT-master/Backend/src/services/ai_valid
 - Pastikan `_archive/` **TIDAK** ada di `.gitignore`.
 - Verifikasi: `git status` tidak lagi melacak file log dan `.freebuff/`, suite tes lulus, commit Langkah 2.
 
-#### Langkah 3: Penyediaan Template Lingkungan Pendamping (`backend/.env.example` & `frontend/.env.example`)
-- Buat `backend/.env.example` berisi variabel spesifik backend (Flask, Supabase Service Role, Model, Gemini).
-- Buat `frontend/.env.example` berisi variabel spesifik frontend (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL`).
+#### Langkah 3: Penyediaan Template Lingkungan Pendamping (`Backend/.env.example` & `Frontend/.env.example`)
+- Buat `Backend/.env.example` berisi variabel spesifik backend (Flask, Supabase Service Role, Model, Gemini).
+- Buat `Frontend/.env.example` berisi variabel spesifik frontend (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL`).
 - Pertahankan file `.env.example` di root tanpa modifikasi yang merusak `test_frontend_env_safety.py`.
 - Verifikasi: `test_frontend_env_safety.py` lulus, commit Langkah 3.
 
@@ -175,7 +175,7 @@ Instruksi pengguna: *"Langkah 6 (opsional, laporkan dulu sebelum dikerjakan): ra
 2. **Ketergantungan Path Relatif Root:**
    Semua skrip di `scripts/` menggunakan konstruksi:
    `PROJECT_ROOT = Path(__file__).resolve().parents[1]` (naik 1 tingkat ke root proyek).
-   Jika skrip dipindahkan ke dalam subfolder (misal `scripts/calibration/foo.py`), maka `parents[1]` menjadi `scripts/` dan bukan root proyek, sehingga akses ke `calibration_data/`, `ai/`, dan `backend/` akan gagal.
+   Jika skrip dipindahkan ke dalam subfolder (misal `scripts/calibration/foo.py`), maka `parents[1]` menjadi `scripts/` dan bukan root proyek, sehingga akses ke `calibration_data/`, `ai/`, dan `Backend/` akan gagal.
 3. **Ketergantungan Output:**
    File `scripts/verify_c2_calib_match.py` membaca `scripts/output/b1_1_decision_differences.csv`.
 - **Rekomendasi:** Langkah 6 dilaporkan sebagai opsional dan **TIDAK DIJALANKAN terlebih dahulu** pada penataan utama agar tidak menimbulkan risiko regresi pada skrip-skrip kalibrasi. Kita fokus menyelesaikan Langkah 1 s/d 5 terlebih dahulu secara sempurna.

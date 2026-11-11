@@ -2,20 +2,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabase';
-import { listHistory, type HistoryList } from '@/services/analysis';
-import * as profileService from '@/services/profile';
-import { DoctorProfile } from './DoctorProfile';
+import { supabase } from '@/utils/supabase';
+import { listHistory, type HistoryList } from '@/utils/analysis';
+import * as profileService from '@/utils/profile';
+import { DoctorProfile } from './index';
 
 vi.mock('@/context/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock('@/services/analysis', () => ({
+vi.mock('@/utils/analysis', () => ({
   listHistory: vi.fn(),
 }));
 
-vi.mock('@/lib/supabase', () => ({
+vi.mock('@/utils/supabase', () => ({
   supabase: {
     auth: {
       getSession: vi.fn(),

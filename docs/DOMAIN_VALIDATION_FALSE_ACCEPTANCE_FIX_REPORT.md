@@ -13,8 +13,8 @@
 | Cabang | `main`, HEAD `faa0aaaaac82949999d19e8578da13a0433dfc2a` |
 | Status git | 9 modified + 7 untracked (pre-existing, belum dicommits oleh pekerjaan ini); perubahan pekerjaan ini **uncommitted** |
 | Hard negatif target | `images (2).jpg` — SHA256 `c3452023543d13344a647eb02f64e8248d76aa651f348f73482d0fa1562f4c63` (identik baseline) |
-| File yang diubah pekerjaan ini | `ai/inference/domain_validator.py` (baru, untracked), `ai/inference/pipeline.py`, `backend/app/services/analysis_service.py`, `tests/ai/test_model_integration.py` (stub pengujian) |
-| File yang DIHINDARI (tidak disentuh) | checkpoint/model (`ai/models/*`), `ai/config/model_config.py`, TTA/threshold segmentasi, skema DB, `references/*`, file frontend (kecuali build uji) |
+| File yang diubah pekerjaan ini | `Backend/ai/inference/domain_validator.py` (baru, untracked), `Backend/ai/inference/pipeline.py`, `Backend/src/services/analysis_service.py`, `tests/ai/test_model_integration.py` (stub pengujian) |
+| File yang DIHINDARI (tidak disentuh) | checkpoint/model (`Backend/ai/models/*`), `Backend/ai/config/model_config.py`, TTA/threshold segmentasi, skema DB, `references/*`, file frontend (kecuali build uji) |
 | Bukti eksternal (temp) | `C:\Users\nevil\AppData\Local\Temp\opencode\pizza_e2e_3.log`, `stage2_after_fix.log`, `validator_tests.log`, `full_py_tests.log`, `frontend_tests.log`, `frontend_build.log` |
 
 ---
@@ -23,8 +23,8 @@
 
 Kelas citra PIZZA (makanan) diterima secara **salah** oleh domain validator sebagai kolonoskopi (false acceptance: `ACCEPT` 0.91, mucosal 94.9%), sehingga alur U-Net/TTA/Grad-CAM, mask/overlay, dan pencatatan `POLYP_DETECTED` akan dieksekusi padahal citra bukan kolonoskopi. Kelebihan keyakinan berasal dari dua celah bersama di kode:
 
-1. `ai/inference/pipeline.py` — `run_pipeline(...)` hanya menjalankan domain validation ketika `validate_domain=True` (default `False`) → pemanggil langsung dapat melewati gate (L109, L127-132 sebelum perbaikan).
-2. `ai/inference/domain_validator.py` — gate garis lurus hanya aktif jika `mucosal_ratio < 0.55` (L211), dan `line_penalty = 0` ketika `mucosal_ratio >= 0.70` (L284) → pizza (mukosa 0.949) dikecualikan, confidence 0.949 × 0.962 ≈ 0.91 → ACCEPT.
+1. `Backend/ai/inference/pipeline.py` — `run_pipeline(...)` hanya menjalankan domain validation ketika `validate_domain=True` (default `False`) → pemanggil langsung dapat melewati gate (L109, L127-132 sebelum perbaikan).
+2. `Backend/ai/inference/domain_validator.py` — gate garis lurus hanya aktif jika `mucosal_ratio < 0.55` (L211), dan `line_penalty = 0` ketika `mucosal_ratio >= 0.70` (L284) → pizza (mukosa 0.949) dikecualikan, confidence 0.949 × 0.962 ≈ 0.91 → ACCEPT.
 
 Pemisah terbersih adalah **`line_density`**: pizza 22.81 dan daging mentah bertekstur 14.13, sementara 4 frame kolonoskopi nyata (normal, lumen/OSD, ulser, lesi polip) max **6.84**. Jarak [6.84, 13.98], titik tengah ≈ 9.8 → ambang `straight_edge_warm_threshold = 10.0`.
 
@@ -98,18 +98,18 @@ Hasil verifikasi end-to-end nyata (pizza file asli melalui `POST /api/analysis`)
 
 | No | Komponen | Penyebab akar | Bukti (baris) | Dampak |
 |----|----------|---------------|---------------|--------|
-| 1 | `ai/inference/pipeline.py` | `run_pipeline` hanya validasi domain saat `validate_domain=True` (default `False`) → caller langsung dapat lewati gate | L109 default `False`; L127-132 sebelum perbaikan | Pizza bisa masuk ke U-Net/TTA/Grad-CAM tanpa validasi |
-| 2 | `ai/inference/domain_validator.py` | Gate garis lurus hanya aktif jika `mucosal_ratio < 0.55` (L211) | Pizza mucosal 0.949 → gate dilewati | Pizza tidak ditolak meskipun line_density 22.81 |
-| 3 | `ai/inference/domain_validator.py` | `line_penalty = 0` saat `mucosal_ratio >= 0.70` (L284) | Pizza 0.949 → penalty nol | Confidence 0.949 × 0.962 ≈ 0.91 → ACCEPT (false acceptance) |
-| 4 | `backend/app/services/analysis_service.py` | `run_segmentation`/`run_gradcam` memanggil model langsung tanpa cek domain | L1021/L1034 sebelum perbaikan | Pemanggilan batas model dapat lewati validasi upload |
+| 1 | `Backend/ai/inference/pipeline.py` | `run_pipeline` hanya validasi domain saat `validate_domain=True` (default `False`) → caller langsung dapat lewati gate | L109 default `False`; L127-132 sebelum perbaikan | Pizza bisa masuk ke U-Net/TTA/Grad-CAM tanpa validasi |
+| 2 | `Backend/ai/inference/domain_validator.py` | Gate garis lurus hanya aktif jika `mucosal_ratio < 0.55` (L211) | Pizza mucosal 0.949 → gate dilewati | Pizza tidak ditolak meskipun line_density 22.81 |
+| 3 | `Backend/ai/inference/domain_validator.py` | `line_penalty = 0` saat `mucosal_ratio >= 0.70` (L284) | Pizza 0.949 → penalty nol | Confidence 0.949 × 0.962 ≈ 0.91 → ACCEPT (false acceptance) |
+| 4 | `Backend/src/services/analysis_service.py` | `run_segmentation`/`run_gradcam` memanggil model langsung tanpa cek domain | L1021/L1034 sebelum perbaikan | Pemanggilan batas model dapat lewati validasi upload |
 
 ---
 
 ## 6. Perbaikan (minimal, 3 file produksi + 1 penyesuaian tes)
 
-- `ai/inference/domain_validator.py`: tambah parameter `straight_edge_warm_threshold = 10.0` (L60, L72) dan gate baru (L221-238): jika `line_density > 10.0` **dan** `mucosal_ratio > mucosal_accept_threshold` (0.55) → REJECT 0.15 (geometri permukaan makanan, non-endoskopi), terlepas dari konsistensi mukosa. Kasus di bawah ambang tetap UNCERTAIN.
-- `ai/inference/pipeline.py`: `validate_domain` diubah default ke `True` (L109) dan validasi dijalankan **selalu** (L132-138) → raise `ValueError` kalau != ACCEPT sebelum preprocessing/inferensi/Grad-CAM. Parameter dipertahankan untuk kompatibilitas tanda tangan.
-- `backend/app/services/analysis_service.py`: `analysis_id` dibuat **sebelum** gate (L405); baris `[DOMAIN]` per `analysis_id` mencatat decision/confidence/reasons/feature values sebelum storage/DB/queue (L411-...); tambah `_require_domain_accept()` statis (L1033) dipasang pada `run_segmentation` (L1063) dan `run_gradcam` (L1076) sehingga pemanggilan batas model tidak bisa bypass.
+- `Backend/ai/inference/domain_validator.py`: tambah parameter `straight_edge_warm_threshold = 10.0` (L60, L72) dan gate baru (L221-238): jika `line_density > 10.0` **dan** `mucosal_ratio > mucosal_accept_threshold` (0.55) → REJECT 0.15 (geometri permukaan makanan, non-endoskopi), terlepas dari konsistensi mukosa. Kasus di bawah ambang tetap UNCERTAIN.
+- `Backend/ai/inference/pipeline.py`: `validate_domain` diubah default ke `True` (L109) dan validasi dijalankan **selalu** (L132-138) → raise `ValueError` kalau != ACCEPT sebelum preprocessing/inferensi/Grad-CAM. Parameter dipertahankan untuk kompatibilitas tanda tangan.
+- `Backend/src/services/analysis_service.py`: `analysis_id` dibuat **sebelum** gate (L405); baris `[DOMAIN]` per `analysis_id` mencatat decision/confidence/reasons/feature values sebelum storage/DB/queue (L411-...); tambah `_require_domain_accept()` statis (L1033) dipasang pada `run_segmentation` (L1063) dan `run_gradcam` (L1076) sehingga pemanggilan batas model tidak bisa bypass.
 - `tests/ai/test_model_integration.py`: stub domain validator untuk 2 tes mekanisme pipeline (phase ordering, callback observability) yang pakai citra sintetis 64×64 (bukan kolonoskopi); validasi domain sendiri sudah tercakup oleh `test_domain_validator.py` dan `test_domain_validation_api.py`. Tidak melemahkan gate produksi.
 
 Tidak ada perubahan arsitektur, bobot/checkpoint, konfigurasi TTA, ambang segmentasi, skema DB, atau referensi.
@@ -121,14 +121,14 @@ Tidak ada perubahan arsitektur, bobot/checkpoint, konfigurasi TTA, ambang segmen
 | Suite | Status | Detail |
 |-------|--------|--------|
 | `tests/ai/test_domain_validator.py` | **PASS** | 16/16 — pizza REJECT, kolonoskopi ACCEPT, wajah/food/dokumen/kendaraan/X-ray/hewan REJECT, underexposed UNCERTAIN |
-| `tests/backend/test_domain_validation_api.py` | **PASS** | 4/4 — landscape/face/food REJECT 400, underexposed UNCERTAIN, kolonoskopi ACCEPT 202; 0 storage/DB pada reject |
-| `tests/backend/test_analysis.py` | **PASS** | 38/38 — alur antrean, status, GET, queue, progress, failure, storage sequential |
+| `tests/Backend/test_domain_validation_api.py` | **PASS** | 4/4 — landscape/face/food REJECT 400, underexposed UNCERTAIN, kolonoskopi ACCEPT 202; 0 storage/DB pada reject |
+| `tests/Backend/test_analysis.py` | **PASS** | 38/38 — alur antrean, status, GET, queue, progress, failure, storage sequential |
 | `tests/ai/test_model_integration.py` | **PASS** | 12/12 — checkpoint hash/strict load, config, inference contract, phase order, callbacks (setelah stub tes) |
 | **Seluruh Python (ai + backend)** | **PASS** | **152/152** dalam 110,17 detik |
 | `npm test --prefix frontend` | **PASS** | **285/285** (18 berkas uji) |
 | `npm run build --prefix frontend` | **PASS** | Build sukses, `dist/` dihasilkan (hanya peringatan ukuran chunk >500 kB, bukan error) |
 | Verifikasi end-to-end pizza nyata | **PASS** | HTTP 400 `NOT_COLONOSCOPY_IMAGE`, 0 storage/DB/pipeline/antrean (bukti: `pizza_e2e_3.log`) |
-| Ukuran pembatas (torch DLL WinError 4551) | **TIDAK TERJADI** | Seluruh uji backend/AI berjalan tanpa OSError pada sesi ini |
+| Ukuran pembatas (torch DLL WinError 4551) | **TIDAK TERJADI** | Seluruh uji Backend/AI berjalan tanpa OSError pada sesi ini |
 
 Semua kriteria akseptasi terpenuhi: pizza → REJECT, tidak ada U-Net/TTA/Grad-CAM, tidak ada mask/overlay, tidak ada `POLYP_DETECTED`, tidak ada catatan/artefak tak wajar; kolonoskopi normal + polip tetap ACCEPT; ambigu → UNCERTAIN; mask kosong bukan syarat non-koloskopi.
 
@@ -144,7 +144,7 @@ Semua kriteria akseptasi terpenuhi: pizza → REJECT, tidak ada U-Net/TTA/Grad-C
 
 ## 9. Kepatuhan batas pekerjaan
 
-- Tidak ada perubahan arsitektur/model/bobot/checkpoint/config oleh pekerjaan ini (checkpoint SHA256 terpindai, tidak dimodifikasi). `backend/app/core/config.py` berisi flag `DOMAIN_VALIDATION_ENABLED` **sebelum** pekerjaan perbaikan ini dimulai dan tidak diubah oleh perbaikan ini (tidak ada config/TTA baru ditambahkan).
+- Tidak ada perubahan arsitektur/model/bobot/checkpoint/config oleh pekerjaan ini (checkpoint SHA256 terpindai, tidak dimodifikasi). `Backend/src/core/config.py` berisi flag `DOMAIN_VALIDATION_ENABLED` **sebelum** pekerjaan perbaikan ini dimulai dan tidak diubah oleh perbaikan ini (tidak ada config/TTA baru ditambahkan).
 - Tidak ada pelatihan/fine-tuning.
 - Tidak ada perubahan TTA atau ambang segmentasi.
 - Tidak ada perubahan skema DB.

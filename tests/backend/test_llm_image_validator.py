@@ -10,15 +10,15 @@ import pytest
 from unittest.mock import MagicMock, patch
 from PIL import Image
 
-from app.core.errors import APIError
-from app.services.llm_image_validator import (
+from src.core.errors import APIError
+from src.services.llm_image_validator import (
     validate_with_llm,
     prepare_image_for_llm,
     LlmDecision,
     PROMPT,
     MSG_LLM_SERVICE_ERROR,
 )
-from app.services.analysis_service import AnalysisService
+from src.services.analysis_service import AnalysisService
 from ai.inference.domain_validator import DomainValidationResult, DomainDecision
 
 
@@ -606,13 +606,13 @@ def test_subtest_k_rejection_messages_do_not_contain_object_names():
 # --- B1: Spy nilai timeout yang diteruskan ke konstruktor genai.Client ---
 
 def test_b1_timeout_milliseconds_passed_to_client():
-    """B1: Spy pada genai.Client untuk membuktikan timeout_s=15.0 menghasilkan
-    timeout=15000 (milidetik) yang diteruskan via HttpOptions ke konstruktor klien.
+    """B1: Spy pada genai.Client untuk membuktikan default timeout 30 detik menghasilkan
+    timeout=30000 (milidetik) yang diteruskan via HttpOptions ke konstruktor klien.
 
     Dasar: SDK terpasang (google-genai 3.0.0), inspect.getsource(types.HttpOptions):
       timeout: Optional[int] = Field(default=None,
         description='Timeout for the request in milliseconds.')
-    Konversi di kode: int(timeout_s * 1000) → 15.0 × 1000 = 15000.
+    Konversi di kode: int(timeout_s * 1000) → 30.0 × 1000 = 30000.
     """
     raw_bytes = create_dummy_image_bytes()
     captured_kwargs: dict = {}
@@ -629,14 +629,14 @@ def test_b1_timeout_milliseconds_passed_to_client():
 
     with patch("google.genai.Client", side_effect=spy_client_constructor):
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key-not-real"}):
-            validate_with_llm(image_bytes=raw_bytes, client=None, timeout_s=15.0)
+            validate_with_llm(image_bytes=raw_bytes, client=None)
 
     http_opts = captured_kwargs.get("http_options")
     assert http_opts is not None, "http_options harus disetel di genai.Client"
-    assert http_opts.timeout == 15000, (
+    assert http_opts.timeout == 30000, (
         f"SDK HttpOptions.timeout adalah MILIDETIK. "
-        f"timeout_s=15.0 harus menghasilkan 15000, didapat: {http_opts.timeout}. "
-        "Konversi: int(15.0 * 1000) = 15000."
+        f"Default timeout 30 detik harus menghasilkan 30000, didapat: {http_opts.timeout}. "
+        "Konversi: int(30.0 * 1000) = 30000."
     )
 
 
@@ -663,6 +663,69 @@ def test_b1_timeout_custom_value_conversion():
     assert http_opts.timeout == 30000, (
         f"timeout_s=30.0 harus menghasilkan 30000 ms, didapat: {http_opts.timeout}"
     )
+
+
+def test_generate_content_config_uses_strict_schema_and_low_thinking():
+    """Konfigurasi Gemini 3: tanpa temperature, skema JSON ketat, thinking low, dan batas token."""
+    mock_client = MagicMock()
+    mock_response = MagicMock()
+    mock_response.text = json.dumps({
+        "is_colonoscopy": True,
+        "confidence": 0.95,
+        "image_type": "colonoscopy",
+    })
+    mock_response.candidates = None
+    mock_client.models.generate_content.return_value = mock_response
+
+    dec = validate_with_llm(
+        image_bytes=create_dummy_image_bytes(),
+        client=mock_client,
+        timeout_s=30.0,
+    )
+
+    assert dec.status == "PASS"
+    call_kwargs = mock_client.models.generate_content.call_args.kwargs
+    config = call_kwargs["config"]
+
+    assert config.temperature is None, "temperature harus dihapus agar memakai default model"
+    assert config.response_mime_type == "application/json"
+    assert config.max_output_tokens == 1024
+
+    schema = config.response_schema
+    assert schema["type"] == "OBJECT"
+    assert schema["properties"]["is_colonoscopy"]["type"] == "BOOLEAN"
+    assert schema["properties"]["confidence"]["type"] == "NUMBER"
+    assert schema["properties"]["confidence"]["minimum"] == 0.0
+    assert schema["properties"]["confidence"]["maximum"] == 1.0
+    assert schema["properties"]["image_type"]["enum"] == [
+        "colonoscopy",
+        "other_endoscopy",
+        "skin_or_oral",
+        "retina",
+        "document",
+        "radiology",
+        "histology",
+        "photo",
+        "other",
+    ]
+    assert schema["required"] == ["is_colonoscopy", "confidence", "image_type"]
+
+    assert config.thinking_config is not None
+    thinking_level = getattr(
+        config.thinking_config.thinking_level,
+        "value",
+        config.thinking_config.thinking_level,
+    )
+    assert thinking_level == "LOW"
+
+
+def test_default_timeout_is_30_seconds():
+    """Default timeout LLM harus 30 detik, bukan 15 detik."""
+    import inspect
+    from src.config.settings import Config
+
+    assert inspect.signature(validate_with_llm).parameters["timeout_s"].default == 30.0
+    assert Config.LLM_VALIDATION_TIMEOUT_S == 30.0
 
 
 # --- B2: Regresi mask pipeline ---
@@ -813,7 +876,7 @@ def test_b6_safety_blocked_response_fail_closed():
     mock_client.models.generate_content.return_value = mock_response
 
     import logging
-    with patch("app.services.llm_image_validator.logger") as mock_logger:
+    with patch("src.services.llm_image_validator.logger") as mock_logger:
         dec = validate_with_llm(image_bytes=create_dummy_image_bytes(), client=mock_client)
 
     assert dec.ok is False
@@ -856,7 +919,7 @@ def test_b6_prohibited_content_blocked_fail_closed():
     mock_response.candidates = [mock_candidate]
     mock_client.models.generate_content.return_value = mock_response
 
-    with patch("app.services.llm_image_validator.logger") as mock_logger:
+    with patch("src.services.llm_image_validator.logger") as mock_logger:
         dec = validate_with_llm(image_bytes=create_dummy_image_bytes(), client=mock_client)
 
     assert dec.ok is False
@@ -871,7 +934,7 @@ def test_b5_msg_llm_service_error_constant_matches_analysis_service():
     """B5: Verifikasi bahwa konstanta MSG_LLM_SERVICE_ERROR di llm_image_validator.py
     konsisten dengan pesan yang digunakan di analysis_service.py.
     """
-    from app.services.llm_image_validator import MSG_LLM_SERVICE_ERROR
+    from src.services.llm_image_validator import MSG_LLM_SERVICE_ERROR
 
     # Pesan yang seharusnya ada di analysis_service.py (via import konstanta)
     expected = "Validasi citra belum dapat diselesaikan. Silakan coba lagi beberapa saat."

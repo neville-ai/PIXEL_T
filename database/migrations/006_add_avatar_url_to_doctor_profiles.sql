@@ -6,8 +6,8 @@
 --              clinician profile.
 --
 -- This column is referenced by:
---   frontend/src/services/profile.ts line 124  (read: row.avatar_url)
---   frontend/src/services/profile.ts line 360  (write: avatar_url in upsert payload)
+--   Frontend/src/utils/profile.ts line 124  (read: row.avatar_url)
+--   Frontend/src/utils/profile.ts line 360  (write: avatar_url in upsert payload)
 --
 -- The column is intentionally nullable because not every doctor uploads a photo.
 -- ==============================================================================

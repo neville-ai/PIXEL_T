@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "Backend"))
 
 from ai.inference.domain_validator import ColonoscopyDomainValidator, DomainDecision
 
@@ -31,7 +32,7 @@ PROMPT = (
 )
 
 def load_env_config():
-    env_path = PROJECT_ROOT / "backend" / ".env"
+    env_path = PROJECT_ROOT / "Backend" / ".env"
     cfg = dotenv_values(str(env_path))
     api_key = cfg.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
     model_name = cfg.get("GEMINI_MODEL", "gemini-3.8-flash")
@@ -271,3 +272,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

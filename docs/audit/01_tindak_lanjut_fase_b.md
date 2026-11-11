@@ -181,16 +181,16 @@ Tabel perbandingan nilai hash SHA-256 terhadap baseline [`scripts/output/hash_pr
 
 | File Produksi | Hash Baseline | Hash Saat Ini | Status Integritas |
 | :--- | :--- | :--- | :---: |
-| `ai/inference/domain_validator.py` | `c6caca64d4f7166afd85af82f9f8ea5022ef8639c1aeda578ae1e778f2d03b47` | Identik | **TIDAK BERUBAH** |
-| `ai/inference/pipeline.py` | `07e776fb0779760fa764c54b6535c407edc5d07c44c92f14c6c19fa44e4c0ca4` | Identik | **TIDAK BERUBAH** |
-| `ai/inference/postprocessing.py` | `9d5f965fed2b6f87d91b76b48ca427785f1224b5e533731a49af053952ac9cf1` | Identik | **TIDAK BERUBAH** |
-| `backend/app/core/config.py` | `5be1031f727d4f5b729639f0e2ca2298a172c23ce14c07d748f6c084a55def3a` | Identik | **TIDAK BERUBAH** |
-| `backend/app/services/analysis_service.py` | `e8037b2641be4e3add0add797c81a2b98d715227118dbf48a22262db3d68e861` | Identik | **TIDAK BERUBAH** |
-| `frontend/src/pages/analysis/AnalysisResult.tsx` | `d153369c05bbc6fb12d214fad6a566ec28424730e5ab6186c7e08e235c0bf3e8` | Identik | **TIDAK BERUBAH** |
-| `frontend/src/pages/analysis/NewAnalysis.tsx` | `7e1c035c5640070966cb84e04d2cf78092410dc6596f7f62bc091f2927a582b0` | Identik | **TIDAK BERUBAH** |
-| `frontend/src/services/analysis.ts` | `9ee6f0e5b6a4b363f94ac48442845d82877d84d2dd03808e3639680d35f33dbf` | Identik | **TIDAK BERUBAH** |
+| `Backend/ai/inference/domain_validator.py` | `c6caca64d4f7166afd85af82f9f8ea5022ef8639c1aeda578ae1e778f2d03b47` | Identik | **TIDAK BERUBAH** |
+| `Backend/ai/inference/pipeline.py` | `07e776fb0779760fa764c54b6535c407edc5d07c44c92f14c6c19fa44e4c0ca4` | Identik | **TIDAK BERUBAH** |
+| `Backend/ai/inference/postprocessing.py` | `9d5f965fed2b6f87d91b76b48ca427785f1224b5e533731a49af053952ac9cf1` | Identik | **TIDAK BERUBAH** |
+| `Backend/src/core/config.py` | `5be1031f727d4f5b729639f0e2ca2298a172c23ce14c07d748f6c084a55def3a` | Identik | **TIDAK BERUBAH** |
+| `Backend/src/services/analysis_service.py` | `e8037b2641be4e3add0add797c81a2b98d715227118dbf48a22262db3d68e861` | Identik | **TIDAK BERUBAH** |
+| `Frontend/src/pages/analysis/AnalysisResult.tsx` | `d153369c05bbc6fb12d214fad6a566ec28424730e5ab6186c7e08e235c0bf3e8` | Identik | **TIDAK BERUBAH** |
+| `Frontend/src/pages/analysis/NewAnalysis.tsx` | `7e1c035c5640070966cb84e04d2cf78092410dc6596f7f62bc091f2927a582b0` | Identik | **TIDAK BERUBAH** |
+| `Frontend/src/utils/analysis.ts` | `9ee6f0e5b6a4b363f94ac48442845d82877d84d2dd03808e3639680d35f33dbf` | Identik | **TIDAK BERUBAH** |
 | `tests/ai/test_model_integration.py` | `56d226fff12ac34998be90f73c4fe37e0f36543c934bb66d7fbf1ca5666755c5` | Identik | **TIDAK BERUBAH** |
-| `tests/backend/test_analysis.py` | `e79fec87cf4858888432c5f6ead7ec7da6c24100dbb7dcb92ab72874ad113818` | Identik | **TIDAK BERUBAH** |
+| `tests/Backend/test_analysis.py` | `e79fec87cf4858888432c5f6ead7ec7da6c24100dbb7dcb92ab72874ad113818` | Identik | **TIDAK BERUBAH** |
 | `tests/conftest.py` | `e2fd03e02b9920fc002da07ba85fea4fca1bab876e642e22b9be13d002235b8c` | Identik | **TIDAK BERUBAH** |
 
 ### 2. Status Git Working Tree
@@ -222,12 +222,12 @@ Pengujian regresi mendalam dijalankan melalui skrip [`scripts/verify_b0_strong.p
 
 ## 1.9 Analisis Status HTTP 400 vs 413 pada Batas Ukuran Berkas
 
-Saat ini di [`backend/app/services/analysis_service.py:345`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/backend/app/services/analysis_service.py#L345):
+Saat ini di [`Backend/src/services/analysis_service.py:345`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Backend/src/services/analysis_service.py#L345):
 ```python
 if len(file_bytes) > self.MAX_FILE_SIZE_BYTES:
     raise APIError("FILE_TOO_LARGE", "File size exceeds the 10 MB limit.", 400)
 ```
 - **Kondisi Saat Ini:** Backend mengembalikan status HTTP `400 Bad Request` dengan amplop JSON error berlabel `code: "FILE_TOO_LARGE"`.
-- **Frontend Contract:** Di [`frontend/src/pages/analysis/NewAnalysis.tsx:255`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/frontend/src/pages/analysis/NewAnalysis.tsx#L255), frontend menangkap error berdasarkan `error.code === 'FILE_TOO_LARGE'` dan menampilkan pesan informatif kepada klinisi.
+- **Frontend Contract:** Di [`Frontend/src/pages/analysis/NewAnalysis.tsx:255`](file:///c:/Users/nevil/OneDrive/Dokumen/SKRIPSI/WEB_PIXELT/Frontend/src/pages/analysis/NewAnalysis.tsx#L255), frontend menangkap error berdasarkan `error.code === 'FILE_TOO_LARGE'` dan menampilkan pesan informatif kepada klinisi.
 - **Rekomendasi Arsitektural:** Standar RFC 7231 / RFC 9110 menetapkan status `413 Payload Too Large` sebagai kode semantik yang lebih tepat untuk batas ukuran berkas. Namun, karena frontend dan tes unit `test_analysis.py` saat ini mengandalkan kode status 400, setiap migrasi ke status 413 harus dilakukan serempak pada kontrak API, tes unit, dan penanganan klien pada Fase C.
 

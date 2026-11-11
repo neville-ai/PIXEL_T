@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, ".")
-sys.path.insert(0, "backend")
+sys.path.insert(0, "Backend")
 
 from ai.inference.domain_validator import ColonoscopyDomainValidator
 
